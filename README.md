@@ -137,7 +137,7 @@ Banco de Dados / Serviços
 
 ## Banco de Dados
 
-* Firebase
+* Supabase
 
 ## Controle de Versão
 

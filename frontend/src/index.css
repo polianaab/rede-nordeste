@@ -1,0 +1,10 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary-earth: #394158; /* Azul Acinzentado */
+  --color-accent-clay: #f9943b;   /* Laranja */
+  --color-accent-red: #55833d;    /* Verde Musgo */
+  --color-bg-sand: #F5F2ED;      /* Bege Areia */
+  
+  --shadow-brutal: 8px 8px 0px 0px rgba(45, 58, 39, 1);
+}
