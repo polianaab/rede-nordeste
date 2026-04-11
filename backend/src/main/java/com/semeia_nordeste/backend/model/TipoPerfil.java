@@ -4,5 +4,4 @@ public enum TipoPerfil {
     PRODUTOR,
     COMPRADOR,
     ADMIN
-
 }
