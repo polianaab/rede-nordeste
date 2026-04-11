@@ -145,29 +145,32 @@ export default function Home() {
           </Link>
         </div>
 
-        {/* NOSSA MISSÃO */}
-        <section className="w-full py-28 flex justify-center bg-white border-b border-gray-100">
-          <div className="w-full max-w-5xl px-6 grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
-            <div className="flex flex-col items-start space-y-6">
-              <div className="flex items-center gap-3 text-[#55833d]">
-                <Target size={24} strokeWidth={2.5} />
-                <h2 className="font-black uppercase italic tracking-[0.2em] text-sm text-[#394158]/40">Nossa Missão</h2>
+          {/* NOSSA MISSÃO */}
+            <section className="w-full py-28 flex justify-center bg-white border-b border-gray-100">
+              <div className="w-full max-w-5xl px-6 grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+                <div className="flex flex-col items-start space-y-6">
+                  <div className="flex items-center gap-3 text-[#55833d]">
+                    <Target size={24} strokeWidth={2.5} />
+                    <h2 className="font-black uppercase italic tracking-[0.2em] text-sm text-[#394158]/40">Nossa Missão</h2>
+                  </div>
+                  <h3 className="font-black text-3xl md:text-4xl text-[#394158] uppercase italic leading-tight tracking-tight">
+                    Por que usar <br /> a Rede Nordeste?
+                  </h3>
+                  <div className="space-y-4 text-sm md:text-base font-medium text-[#394158]/80 leading-relaxed">
+                    <p>Nascemos da necessidade de valorizar o pequeno produtor e o artesão nordestino. Muitas vezes, quem produz com tanto carinho não consegue acessar o consumidor final devido às barreiras logísticas.</p>
+                    <p>A Rede Nordeste surge como uma ponte digital segura e justa. Queremos garantir que produtos frescos cheguem à sua mesa, fortalecendo a economia familiar.</p>
+                  </div>
+                </div>
+                {/* Container da Imagem com efeito hover e ZOOM aplicado */}
+                <div className="w-full aspect-[4/3] bg-[#F5F2ED] rounded-[3rem] border border-gray-100 flex items-center justify-center shadow-inner group overflow-hidden">
+                  <img 
+                    src="/assets/image-home.png" 
+                    alt="Ilustração da Missão Rede Nordeste" 
+                    className="w-full h-full object-cover transition-transform duration-500 scale-120 group-hover:scale-130"
+                  />
+                </div>
               </div>
-              <h3 className="font-black text-3xl md:text-4xl text-[#394158] uppercase italic leading-tight tracking-tight">
-                Por que criamos <br /> a Rede Nordeste?
-              </h3>
-              <div className="space-y-4 text-sm md:text-base font-medium text-[#394158]/80 leading-relaxed">
-                <p>Nascemos da necessidade de valorizar o pequeno produtor e o artesão nordestino. Muitas vezes, quem produz com tanto carinho não consegue acessar o consumidor final devido às barreiras logísticas.</p>
-                <p>A Rede Nordeste surge como uma ponte digital segura e justa. Queremos garantir que produtos frescos cheguem à sua mesa, fortalecendo a economia familiar.</p>
-              </div>
-            </div>
-            <div className="w-full aspect-[4/3] bg-[#F5F2ED] rounded-[3rem] border border-gray-100 flex items-center justify-center shadow-inner group overflow-hidden">
-              <span className="text-[10px] font-black uppercase tracking-widest text-[#394158]/30 group-hover:scale-110 transition-transform">
-                [ Espaço para Imagem da Missão ]
-              </span>
-            </div>
-          </div>
-        </section>
+            </section>
 
         {/* HISTÓRIAS DE SUCESSO (MODIFICADO: LADO A LADO, APENAS TRÊS) */}
         <section className="w-full flex justify-center py-24">
@@ -175,11 +178,11 @@ export default function Home() {
             <h2 className="font-black uppercase italic tracking-[0.2em] text-sm mb-12 text-[#394158]/40">Histórias de Sucesso</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {HISTORIAS_DB.slice(0, 3).map((hist) => (
-                <div key={hist.id} className="bg-[#394158] p-8 rounded-[3rem] shadow-2xl flex flex-col gap-6 hover:-translate-y-2 transition-all duration-300">
+                <div key={hist.id} className="bg-[#ff8a23] p-8 rounded-[3rem] shadow-2xl flex flex-col gap-6 hover:-translate-y-2 transition-all duration-300">
                   <div className="flex items-center gap-5">
                     <img src={hist.foto} className="w-20 h-20 object-cover rounded-2xl border-2 border-white/10" alt={hist.nome} />
                     <div>
-                      <span className="text-[9px] font-black uppercase tracking-widest text-[#C4D663]">{hist.perfil}</span>
+                      <span className="text-[9px] font-black uppercase tracking-widest text-[#394158]">{hist.perfil}</span>
                       <h3 className="text-xl font-black uppercase italic text-white leading-tight">{hist.nome}</h3>
                       <p className="text-[9px] font-bold uppercase opacity-50 text-white">{hist.local}</p>
                     </div>
@@ -194,25 +197,30 @@ export default function Home() {
         </section>
 
         {/* DO CAMPO À SUA MESA */}
-        <section className="w-full py-24 flex justify-center">
+        <section className="w-full py-24 flex justify-center bg-white border-y border-gray-100">
           <div className="w-full max-w-5xl px-6 flex flex-col items-center">
-            <h2 className="font-black uppercase italic tracking-[0.2em] text-sm mb-16 text-[#394158]/40 self-start">Do campo à sua mesa</h2>
+            <h2 className="font-black uppercase italic tracking-[0.2em] text-sm mb-16 text-[#394158]/40 self-start">
+              Da Rede Nordeste à sua mesa
+            </h2>
             <div className="w-full grid grid-cols-1 md:grid-cols-4 gap-8 relative">
-              <div className="hidden md:block absolute top-14 left-10 right-10 h-[2px] border-t-2 border-dashed border-[#394158]/10 -z-10"></div>
+              <div className="hidden md:block absolute top-10 left-[12.5%] right-[12.5%] h-0 border-t-2 border-dashed border-[#55833d]/20 -z-0"></div>
               {TRAJETO_DB.map((item) => (
-                <div key={item.id} className="flex flex-col items-center text-center space-y-4 group">
-                  <div className="w-20 h-20 bg-white border-2 border-[#394158]/5 rounded-3xl flex items-center justify-center shadow-xl shadow-gray-200/50 transition-all group-hover:border-[#55833d] group-hover:bg-[#55833d] group-hover:text-white group-hover:-translate-y-2">
-                    <item.Icon size={32} strokeWidth={1.5} />
-                  </div>
-                  <div className="space-y-1 px-4">
-                    <h4 className="font-black uppercase text-xs tracking-widest text-[#394158]">{item.titulo}</h4>
-                    <p className="text-[10px] font-bold italic leading-relaxed text-[#394158]/50">{item.desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+                <div key={item.id} className="flex flex-col items-center text-center space-y-4 group relative z-10">
+          <div className="w-20 h-20 bg-white border-2 border-[#394158]/5 rounded-3xl flex items-center justify-center shadow-xl shadow-gray-200/50 transition-all group-hover:border-[#55833d] group-hover:bg-[#55833d] group-hover:text-white group-hover:-translate-y-2">
+            <item.Icon size={32} strokeWidth={1.5} />
           </div>
-        </section>
+          <div className="space-y-1 px-4">
+            <h4 className="font-black uppercase text-xs tracking-widest text-[#394158]">{item.titulo}</h4>
+            <p className="text-[10px] font-bold italic leading-relaxed text-[#394158]/50">
+              {item.desc}
+            </p>
+          </div>
+          
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
 
       </main>
 

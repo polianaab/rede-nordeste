@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { 
   Search, ShoppingCart, User, Plus, Filter, MapPin, 
   Star, LayoutGrid, Palette, Beef, Sprout, Wheat, Carrot, Milk 
@@ -35,11 +35,26 @@ export default function Home2() {
   const [termoPesquisado, setTermoPesquisado] = useState('');
   const [ordenacao, setOrdenacao] = useState('recomendados');
   
+  const location = useLocation(); // Hook para receber dados de outras rotas
+
   // LOGICA DO CARRINHO PERSISTENTE
   const [carrinhoCount, setCarrinhoCount] = useState(() => {
     const salvo = localStorage.getItem('carrinho_count');
     return salvo ? parseInt(salvo) : 0;
   });
+
+  // EFEITO PARA CAPTURAR BUSCA VINDA DA PÁGINA DE RECEITAS
+  useEffect(() => {
+    if (location.state && (location.state as any).buscaReceita) {
+      const termo = (location.state as any).buscaReceita;
+      setBusca(termo);
+      setTermoPesquisado(termo);
+      setCatAtiva('Todos'); // Garante que mostre resultados de todas as categorias
+      
+      // Limpa o estado da navegação para não repetir a busca se atualizar a página
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
 
   useEffect(() => {
     const atualizarCarrinho = () => {
@@ -51,8 +66,8 @@ export default function Home2() {
   }, []);
 
   const adicionarRapido = (e: React.MouseEvent) => {
-    e.preventDefault(); // Impede que o clique no botão abra o link do produto
-    e.stopPropagation(); // Garante que o clique não suba para o componente pai
+    e.preventDefault();
+    e.stopPropagation();
     const novoValor = carrinhoCount + 1;
     setCarrinhoCount(novoValor);
     localStorage.setItem('carrinho_count', novoValor.toString());
@@ -106,7 +121,14 @@ export default function Home2() {
         
         {/* BUSCA */}
         <div className="relative w-full max-w-5xl mb-16 group">
-          <input type="text" value={busca} onChange={(e) => setBusca(e.target.value)} onKeyDown={handleKeyDown} placeholder="O que você está procurando hoje?" className="w-full bg-white py-4 pl-8 pr-16 rounded-full border border-gray-100 shadow-sm outline-none text-base font-medium text-[#394158]" />
+          <input 
+            type="text" 
+            value={busca} 
+            onChange={(e) => setBusca(e.target.value)} 
+            onKeyDown={handleKeyDown} 
+            placeholder="O que você está procurando hoje?" 
+            className="w-full bg-white py-4 pl-8 pr-16 rounded-full border border-gray-100 shadow-sm outline-none text-base font-medium text-[#394158]" 
+          />
           <button onClick={handlePesquisa} className="absolute right-2 top-1/2 -translate-y-1/2 bg-[#55833d] text-white p-3 rounded-full active:scale-95 transition-all"><Search size={18} strokeWidth={2.5} /></button>
         </div>
 
@@ -163,12 +185,10 @@ export default function Home2() {
               {produtosExibidos.map(prod => (
                 <div key={prod.id} className="bg-white p-5 rounded-[2.5rem] shadow-xl shadow-gray-200/30 flex flex-col group border border-transparent hover:border-[#55833d]/10 transition-all hover:-translate-y-1">
                   
-                  {/* Link na Imagem */}
                   <div className="relative overflow-hidden rounded-[2rem] mb-4 aspect-square">
                     <Link to={`/produto/${prod.id}`}>
                         <img src={prod.img} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt={prod.nome} />
                     </Link>
-                    {/* BOTÃO "+" DINÂMICO */}
                     <button 
                       onClick={adicionarRapido} 
                       className="absolute bottom-4 right-4 bg-[#f9943b] text-white p-2.5 rounded-full shadow-xl z-10 active:scale-90 transition-transform"
@@ -194,7 +214,15 @@ export default function Home2() {
               ))}
             </div>
           ) : (
-            <div className="w-full py-20 text-center text-[#394158]/40 font-bold italic tracking-widest uppercase">Nenhum produto encontrado.</div>
+            <div className="w-full py-20 text-center flex flex-col items-center gap-4">
+               <div className="text-[#394158]/40 font-bold italic tracking-widest uppercase">Nenhum produto encontrado.</div>
+               <button 
+                onClick={() => { setBusca(''); setTermoPesquisado(''); }}
+                className="text-[10px] font-black uppercase text-[#55833d] border-b border-[#55833d]"
+               >
+                Limpar filtros
+               </button>
+            </div>
           )}
         </section>
 
@@ -208,21 +236,16 @@ export default function Home2() {
                 <div>
                   <h3 className="font-bold text-sm text-[#394158]">{prod.nome}</h3>
                   <p className="text-sm font-black text-[#f9943b] mt-1">R$ {prod.preco.toFixed(2)}</p>
-                  {/* BOTÃO "ADICIONAR" DINÂMICO */}
-                  <button 
-                    onClick={adicionarRapido} 
-                    className="mt-2 text-[9px] font-black uppercase text-[#55833d] hover:text-[#f9943b] transition-colors"
-                  >
-                    Adicionar
-                  </button>
+                  <button onClick={adicionarRapido} className="mt-2 text-[9px] font-black uppercase text-[#55833d] hover:text-[#f9943b] transition-colors">Adicionar</button>
                 </div>
               </div>
             ))}
           </div>
         </section>
-
-        {/* ... histórico e footer inalterados ... */}
       </main>
+      <footer className="w-full text-center p-10 bg-gray-50 text-[#394158]/20">
+        <span className="text-[9px] font-black uppercase tracking-[0.3em]">© 2026 Rede Nordeste</span>
+      </footer>
     </div>
   );
 }
