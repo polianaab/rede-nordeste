@@ -175,7 +175,7 @@ export default function Home() {
         {/* HISTÓRIAS DE SUCESSO (MODIFICADO: LADO A LADO, APENAS TRÊS) */}
         <section className="w-full flex justify-center py-24">
           <div className="w-full max-w-7xl px-6">
-            <h2 className="font-black uppercase italic tracking-[0.2em] text-sm mb-12 text-[#394158]/40">Histórias de Sucesso</h2>
+            <h2 className="font-black uppercase italic tracking-[0.2em] text-sm mb-12 text-[#f9943b]/40">Histórias de Sucesso</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {HISTORIAS_DB.slice(0, 3).map((hist) => (
                 <div key={hist.id} className="bg-[#ff8a23] p-8 rounded-[3rem] shadow-2xl flex flex-col gap-6 hover:-translate-y-2 transition-all duration-300">
