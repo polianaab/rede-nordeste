@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   Search, ShoppingCart, User, Plus, Filter, MapPin, 
-  Star, LayoutGrid, Palette, Beef, Sprout, Wheat, Carrot, Milk 
+  Star, LayoutGrid, Palette, Beef, Sprout, Wheat, Carrot, Milk,
+  MessageCircle 
 } from 'lucide-react';
 
 // --- BANCO DE DADOS POPULADO ---
@@ -35,23 +36,19 @@ export default function Home2() {
   const [termoPesquisado, setTermoPesquisado] = useState('');
   const [ordenacao, setOrdenacao] = useState('recomendados');
   
-  const location = useLocation(); // Hook para receber dados de outras rotas
+  const location = useLocation();
 
-  // LOGICA DO CARRINHO PERSISTENTE
   const [carrinhoCount, setCarrinhoCount] = useState(() => {
     const salvo = localStorage.getItem('carrinho_count');
     return salvo ? parseInt(salvo) : 0;
   });
 
-  // EFEITO PARA CAPTURAR BUSCA VINDA DA PÁGINA DE RECEITAS
   useEffect(() => {
     if (location.state && (location.state as any).buscaReceita) {
       const termo = (location.state as any).buscaReceita;
       setBusca(termo);
       setTermoPesquisado(termo);
-      setCatAtiva('Todos'); // Garante que mostre resultados de todas as categorias
-      
-      // Limpa o estado da navegação para não repetir a busca se atualizar a página
+      setCatAtiva('Todos'); 
       window.history.replaceState({}, document.title);
     }
   }, [location]);
@@ -65,12 +62,30 @@ export default function Home2() {
     return () => window.removeEventListener('storage', atualizarCarrinho);
   }, []);
 
-  const adicionarRapido = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const novoValor = carrinhoCount + 1;
-    setCarrinhoCount(novoValor);
-    localStorage.setItem('carrinho_count', novoValor.toString());
+  const adicionarRapido = (e: React.MouseEvent, id: number) => {
+    e.preventDefault(); 
+    e.stopPropagation(); 
+    
+    const carrinhoSalvo = localStorage.getItem('carrinho_itens');
+    let itensIds = [];
+    
+    if (carrinhoSalvo) {
+      try {
+        itensIds = JSON.parse(carrinhoSalvo);
+        if (!Array.isArray(itensIds)) itensIds = [];
+      } catch (err) {
+        itensIds = [];
+      }
+    }
+    
+    if (!itensIds.includes(id)) {
+      const novosIds = [...itensIds, id];
+      localStorage.setItem('carrinho_itens', JSON.stringify(novosIds));
+      localStorage.setItem('carrinho_count', novosIds.length.toString());
+      
+      setCarrinhoCount(novosIds.length);
+      window.dispatchEvent(new Event('storage'));
+    }
   };
 
   const handlePesquisa = () => { setTermoPesquisado(busca); setCatAtiva('Todos'); };
@@ -108,11 +123,18 @@ export default function Home2() {
             </nav>
           </div>
           <div className="flex items-center gap-6">
-            <div className="relative cursor-pointer">
-              <ShoppingCart size={22} />
+            {/* ÍCONE DE CHAT */}
+            <Link to="/chat" className="text-[#394158] hover:text-[#55833d] transition-all">
+              <MessageCircle size={22} />
+            </Link>
+
+            {/* ÍCONE DE CARRINHO */}
+            <Link to="/carrinho" className="relative cursor-pointer group">
+              <ShoppingCart size={22} className="group-hover:text-[#55833d] transition-colors" />
               {carrinhoCount > 0 && <span className="absolute -top-2 -right-2 bg-[#f9943b] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center border-2 border-white">{carrinhoCount}</span>}
-            </div>
-            <User size={22} className="cursor-pointer hover:text-[#55833d]" />
+            </Link>
+
+            <User size={22} className="cursor-pointer hover:text-[#55833d] transition-colors" />
           </div>
         </div>
       </header>
@@ -190,7 +212,7 @@ export default function Home2() {
                         <img src={prod.img} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt={prod.nome} />
                     </Link>
                     <button 
-                      onClick={adicionarRapido} 
+                      onClick={(e) => adicionarRapido(e, prod.id)} 
                       className="absolute bottom-4 right-4 bg-[#f9943b] text-white p-2.5 rounded-full shadow-xl z-10 active:scale-90 transition-transform"
                     >
                       <Plus size={18} />
@@ -216,12 +238,7 @@ export default function Home2() {
           ) : (
             <div className="w-full py-20 text-center flex flex-col items-center gap-4">
                <div className="text-[#394158]/40 font-bold italic tracking-widest uppercase">Nenhum produto encontrado.</div>
-               <button 
-                onClick={() => { setBusca(''); setTermoPesquisado(''); }}
-                className="text-[10px] font-black uppercase text-[#55833d] border-b border-[#55833d]"
-               >
-                Limpar filtros
-               </button>
+               <button onClick={() => { setBusca(''); setTermoPesquisado(''); }} className="text-[10px] font-black uppercase text-[#55833d] border-b border-[#55833d]">Limpar filtros</button>
             </div>
           )}
         </section>
@@ -236,15 +253,15 @@ export default function Home2() {
                 <div>
                   <h3 className="font-bold text-sm text-[#394158]">{prod.nome}</h3>
                   <p className="text-sm font-black text-[#f9943b] mt-1">R$ {prod.preco.toFixed(2)}</p>
-                  <button onClick={adicionarRapido} className="mt-2 text-[9px] font-black uppercase text-[#55833d] hover:text-[#f9943b] transition-colors">Adicionar</button>
+                  <button onClick={(e) => adicionarRapido(e, prod.id)} className="mt-2 text-[9px] font-black uppercase text-[#55833d] hover:text-[#f9943b] transition-colors">Adicionar</button>
                 </div>
               </div>
             ))}
           </div>
         </section>
       </main>
-      <footer className="w-full text-center p-10 bg-gray-50 text-[#394158]/20">
-        <span className="text-[9px] font-black uppercase tracking-[0.3em]">© 2026 Rede Nordeste</span>
+      <footer className="w-full text-center p-30 bg-gray-50 text-[#394158]/60">
+        <span className="text-[9px] font-black uppercase tracking-[0.3em]">© 2026 Rede Nordeste - Todos os direitos reservados.</span>
       </footer>
     </div>
   );

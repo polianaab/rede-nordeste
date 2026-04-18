@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   ShoppingCart, User, UtensilsCrossed, Clock, 
-  ChevronLeft, X, Flame, ChefHat, ScrollText, ShoppingBag 
+  ChevronLeft, X, Flame, ChefHat, ScrollText, ShoppingBag, MessageCircle
 } from 'lucide-react';
 
 const RECEITAS_DATA = [
@@ -42,6 +42,21 @@ export default function Receitas() {
   const [receitaAberta, setReceitaAberta] = useState<any>(null);
   const navigate = useNavigate();
 
+  // --- LÓGICA DO CARRINHO PERSISTENTE ---
+  const [carrinhoCount, setCarrinhoCount] = useState(() => {
+    const salvo = localStorage.getItem('carrinho_count');
+    return salvo ? parseInt(salvo) : 0;
+  });
+
+  useEffect(() => {
+    const atualizarCarrinho = () => {
+      const salvo = localStorage.getItem('carrinho_count');
+      setCarrinhoCount(salvo ? parseInt(salvo) : 0);
+    };
+    window.addEventListener('storage', atualizarCarrinho);
+    return () => window.removeEventListener('storage', atualizarCarrinho);
+  }, []);
+
   const extrairTermoBusca = (ingrediente: string) => {
     return ingrediente
       .replace(/^\d+(g|kg| xícara| fatias)?\s*(de\s*)?/i, '')
@@ -74,9 +89,24 @@ export default function Receitas() {
               <Link to="/noticias" className="hover:text-[#f9943b]">Notícias</Link>
             </nav>
           </div>
+
           <div className="flex items-center gap-6">
-            <ShoppingCart size={22} className="cursor-pointer" />
-            <User size={22} className="cursor-pointer" />
+            {/* ÍCONE DE CHAT */}
+            <Link to="/chat" className="text-[#394158] hover:text-[#55833d] transition-all">
+              <MessageCircle size={22} />
+            </Link>
+
+            {/* ÍCONE DE CARRINHO COM CONTADOR */}
+            <Link to="/carrinho" className="relative cursor-pointer group">
+              <ShoppingCart size={22} className="group-hover:text-[#55833d] transition-colors" />
+              {carrinhoCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-[#f9943b] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center border-2 border-white">
+                  {carrinhoCount}
+                </span>
+              )}
+            </Link>
+
+            <User size={22} className="cursor-pointer hover:text-[#55833d] transition-colors" />
           </div>
         </div>
       </header>
@@ -101,7 +131,11 @@ export default function Receitas() {
           {RECEITAS_DATA.map(rec => (
             <div key={rec.id} className="bg-white rounded-[3rem] overflow-hidden shadow-xl shadow-gray-200/50 group hover:-translate-y-2 transition-all duration-500 border border-transparent hover:border-[#55833d]/20">
               <div className="relative h-64 overflow-hidden bg-gray-200">
-                <img src={rec.img} alt={rec.titulo} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                <img 
+                  src={rec.img} 
+                  alt={rec.titulo} 
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                />
                 <div className="absolute top-6 left-6 bg-white/90 backdrop-blur px-4 py-2 rounded-full flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#394158]">
                   <Clock size={14} className="text-[#f9943b]" /> {rec.tempo}
                 </div>
@@ -132,8 +166,7 @@ export default function Receitas() {
             </button>
 
             <div className="overflow-y-auto no-scrollbar">
-              {/* IMAGEM COM ALTURA FIXA E PRIORIDADE */}
-              <div className="w-full h-[300px] md:h-[400px] relative overflow-hidden bg-gray-300">
+              <div className="w-full h-[300px] md:h-[400px] relative overflow-hidden bg-gray-200">
                 <img 
                   src={receitaAberta.img} 
                   className="w-full h-full object-cover block absolute inset-0" 
@@ -183,7 +216,7 @@ export default function Receitas() {
                 </div>
 
                 <button onClick={() => setReceitaAberta(null)} className="w-full mt-12 py-6 bg-[#394158] text-white text-xs font-black uppercase tracking-[0.3em] rounded-[2rem] hover:bg-[#55833d] transition-all shadow-xl">
-                  Voltar para o cardápio
+                  Voltar para as receitas
                 </button>
               </div>
             </div>
@@ -191,8 +224,8 @@ export default function Receitas() {
         </div>
       )}
 
-      <footer className="w-full text-center p-10 bg-gray-50 text-[#394158]/20 mt-20">
-        <span className="text-[9px] font-black uppercase tracking-[0.3em]">© 2026 Rede Nordeste</span>
+      <footer className="w-full text-center p-20 bg-gray-50 text-[#394158]/60">
+        <span className="text-[9px] font-black uppercase tracking-[0.3em]">© 2026 Rede Nordeste - Todos os direitos reservados.</span>
       </footer>
     </div>
   );

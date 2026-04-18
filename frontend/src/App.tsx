@@ -3,12 +3,15 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 
 // Importação das suas páginas
 import Home from './pages/Home/Home';
-import Home2 from './pages/Home2/Home2';
+import Home2 from './pages/Comprador/HomeComprador';
 import Login from './pages/Auth/Login';
 import Register from './pages/Auth/Register';
-import Receitas from './pages/Home2/Receitas';
-// 1. ADICIONADO: Import do componente de detalhes
-import ProdutoDetalhes from './pages/Home2/ProdutoDetalhes'; 
+import Receitas from './pages/Comprador/Receitas';
+import ProdutoDetalhes from './pages/Comprador/ProdutoDetalhes'; 
+import Carrinho from './pages/Comprador/Carrinho';
+import Chat from './pages/Comprador/Chat'; // Importe o componente de Chat aqui
+import Blog from './pages/Blog/Blog';
+import Post from './pages/Blog/Post';
 
 function App() {
   return (
@@ -20,11 +23,12 @@ function App() {
           <Route path="/cadastro" element={<Register />} />
           <Route path="/home2" element={<Home2 />} />
           <Route path="/receitas" element={<Receitas />} />
-
-          {/* 2. ADICIONADO: Rota dinâmica para detalhes do produto */}
           <Route path="/produto/:id" element={<ProdutoDetalhes />} />
-
-          {/* Redirecionamento de segurança: sempre por último */}
+          <Route path="/carrinho" element={<Carrinho />} />
+          {/* NOVA ROTA DO CHAT */}
+          <Route path="/chat" element={<Chat />} />
+          <Route path="/blog" element={<Blog />} />
+          <Route path="/blog/:id" element={<Post />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </div>
