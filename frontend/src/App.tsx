@@ -12,6 +12,7 @@ import Carrinho from './pages/Comprador/Carrinho';
 import Chat from './pages/Comprador/Chat'; // Importe o componente de Chat aqui
 import Blog from './pages/Blog/Blog';
 import Post from './pages/Blog/Post';
+import Perfil from './pages/Comprador/Perfil';
 
 function App() {
   return (
@@ -25,11 +26,11 @@ function App() {
           <Route path="/receitas" element={<Receitas />} />
           <Route path="/produto/:id" element={<ProdutoDetalhes />} />
           <Route path="/carrinho" element={<Carrinho />} />
-          {/* NOVA ROTA DO CHAT */}
           <Route path="/chat" element={<Chat />} />
           <Route path="/blog" element={<Blog />} />
           <Route path="/blog/:id" element={<Post />} />
           <Route path="*" element={<Navigate to="/" />} />
+          <Route path="/perfil" element={<Perfil />} />
         </Routes>
       </div>
     </Router>
