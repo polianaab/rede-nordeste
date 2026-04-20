@@ -131,10 +131,17 @@ export default function Home2() {
             {/* ÍCONE DE CARRINHO */}
             <Link to="/carrinho" className="relative cursor-pointer group">
               <ShoppingCart size={22} className="group-hover:text-[#55833d] transition-colors" />
-              {carrinhoCount > 0 && <span className="absolute -top-2 -right-2 bg-[#f9943b] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center border-2 border-white">{carrinhoCount}</span>}
+              {carrinhoCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-[#f9943b] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center border-2 border-white">
+                  {carrinhoCount}
+                </span>
+              )}
             </Link>
 
-            <User size={22} className="cursor-pointer hover:text-[#55833d] transition-colors" />
+            {/* ÍCONE DE PERFIL - AGORA COM LINK */}
+            <Link to="/perfil" className="cursor-pointer text-[#394158] hover:text-[#55833d] transition-colors">
+              <User size={22} />
+           </Link>
           </div>
         </div>
       </header>
