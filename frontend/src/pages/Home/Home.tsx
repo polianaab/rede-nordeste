@@ -1,39 +1,37 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-
-
-import {
-  Store, ShoppingBag, ArrowRight, MousePointerClick,
-  Truck, PackageCheck, Leaf, Target
+import { 
+  Store, ShoppingBag, ArrowRight, MousePointerClick, 
+  Truck, PackageCheck, Leaf, Target 
 } from 'lucide-react';
 
 const SLIDES_DESTAQUE = [
-  {
-    id: 1,
+  { 
+    id: 1, 
     tipo: "SAFRA DO MÊS",
     titulo: "A melhor época para comprar manga",
     subtitulo: "Produtos frescos e com preços especiais direto do produtor.",
-    img: "https://images.unsplash.com/photo-1591073113125-e46713c829ed?q=80&w=2000",
+    img: "https://images.unsplash.com/photo-1591073113125-e46713c829ed?q=80&w=2000", 
     corDestaque: "text-[#f9943b]",
-    blogId: 3
+    blogId: 3 
   },
-  {
-    id: 2,
+  { 
+    id: 2, 
     tipo: "HISTÓRIA DE SUCESSO",
     titulo: "Como o seu João dobrou a renda com os morangos",
     subtitulo: "Conheça a trajetória do agricultor que apostou na venda direta.",
-    img: "https://images.unsplash.com/photo-1500651230702-0e2d8a49d4ad?q=80&w=2000&auto=format&fit=crop",
+    img: "https://images.unsplash.com/photo-1500651230702-0e2d8a49d4ad?q=80&w=2000&auto=format&fit=crop", 
     corDestaque: "text-[#55833d]",
-    blogId: 5
+    blogId: 5 
   },
-  {
-    id: 3,
+  { 
+    id: 3, 
     tipo: "TECNOLOGIA NO CAMPO",
     titulo: "A revolução digital chegou ao roçado",
     subtitulo: "Drones e dados auxiliam na precisão da colheita familiar.",
-    img: "https://images.pexels.com/photos/34182385/pexels-photo-34182385.jpeg?auto=compress&cs=tinysrgb&w=1260",
+    img: "https://images.pexels.com/photos/34182385/pexels-photo-34182385.jpeg?auto=compress&cs=tinysrgb&w=1260", 
     corDestaque: "text-[#C4D663]",
-    blogId: 0
+    blogId: 0 
   }
 ];
 
@@ -45,38 +43,9 @@ const TRAJETO_DB = [
 ];
 
 const HISTORIAS_DB = [
-  {
-    id: 1,
-    nome: "Seu João",
-    local: "Aracaju, SE",
-    perfil: "Produtor",
-    foto: "https://images.pexels.com/photos/2132227/pexels-photo-2132227.jpeg?auto=compress&cs=tinysrgb&w=600",
-    texto: "Desde que comecei a anunciar no site, minhas vendas dobraram. O suporte logístico me permitiu focar no que amo: cuidar da terra, sem me preocupar com atravessadores."
-  },
-  {
-    id: 2,
-    nome: "Dona Maria",
-    local: "Olinda, PE",
-    perfil: "Artesã",
-    foto: "https://images.pexels.com/photos/2162938/pexels-photo-2162938.jpeg?auto=compress&cs=tinysrgb&w=600",
-    texto: "O site deu visibilidade ao meu artesanato para além da minha cidade. Hoje recebo pedidos de todo o Brasil e consigo um valor justo por cada peça produzida."
-  },
-  {
-    id: 3,
-    nome: "Seu Cícero",
-    local: "Crato, CE",
-    perfil: "Apicultor",
-    foto: "https://images.pexels.com/photos/2583847/pexels-photo-2583847.jpeg?auto=compress&cs=tinysrgb&w=600",
-    texto: "Vender mel direto pela plataforma mudou nossa cooperativa. O pagamento cai direto e seguro, e os clientes elogiam a facilidade de encontrar nossos produtos."
-  },
-  {
-    id: 4,
-    nome: "Dona Lindinalva",
-    local: "Ilha do Ferro, AL",
-    perfil: "Bordadeira",
-    foto: "https://images.pexels.com/photos/17392741/pexels-photo-17392741.jpeg?auto=compress&cs=tinysrgb&w=600",
-    texto: "O que antes era apenas uma venda local, agora é um negócio profissional. O site me ajudou a organizar as encomendas e a valorizar a arte do bordado nordestino."
-  }
+  { id: 1, nome: "Seu João", local: "Aracaju, SE", perfil: "Produtor", foto: "https://images.pexels.com/photos/2132227/pexels-photo-2132227.jpeg?auto=compress&cs=tinysrgb&w=600", texto: "Desde que comecei a anunciar no site, minhas vendas dobraram. O suporte logístico me permitiu focar no que amo." },
+  { id: 2, nome: "Dona Maria", local: "Olinda, PE", perfil: "Artesã", foto: "https://images.pexels.com/photos/2162938/pexels-photo-2162938.jpeg?auto=compress&cs=tinysrgb&w=600", texto: "O site deu visibilidade ao meu artesanato para além da minha cidade. Hoje recebo pedidos de todo o Brasil." },
+  { id: 3, nome: "Seu Cícero", local: "Crato, CE", perfil: "Apicultor", foto: "https://images.pexels.com/photos/2583847/pexels-photo-2583847.jpeg?auto=compress&cs=tinysrgb&w=600", texto: "Vender mel direto pela plataforma mudou nossa cooperativa. O pagamento cai direto e seguro." }
 ];
 
 export default function Home() {
@@ -92,6 +61,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col items-center bg-[#F5F2ED] font-sans overflow-x-hidden">
+      
       {/* NAVBAR */}
       <header className="w-full bg-white flex justify-center py-4 px-6 border-b border-gray-100 shadow-sm z-[100] sticky top-0">
         <div className="w-full max-w-7xl flex justify-between items-center">
@@ -113,7 +83,7 @@ export default function Home() {
                   <h2 className="font-black text-3xl md:text-5xl text-white uppercase italic leading-tight tracking-tight max-w-3xl">{slide.titulo}</h2>
                   <div className="flex flex-col md:flex-row md:items-center gap-4 pt-2 w-full justify-between">
                     <p className="text-sm md:text-base text-white/80 font-medium max-w-xl">{slide.subtitulo}</p>
-                    <button
+                    <button 
                       onClick={() => navigate(`/blog/${slide.blogId}`)}
                       className="cursor-pointer flex items-center gap-2 text-white font-black uppercase text-[10px] tracking-widest bg-white/10 hover:bg-white/30 py-3 px-6 rounded-full border border-white/20 transition-all z-50"
                     >
@@ -153,7 +123,7 @@ export default function Home() {
           </Link>
         </div>
 
-        {/* MISSÃO */}
+        {/* MISSÃO - FUNDO BRANCO CORRIGIDO */}
         <section className="w-full bg-white flex justify-center py-24 border-y border-gray-100">
           <div className="w-full max-w-7xl px-8 grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
             <div className="space-y-6">
@@ -173,7 +143,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* HISTÓRIAS DE SUCESSO */}
+        {/* HISTÓRIAS */}
         <section className="w-full max-w-7xl py-24 px-8">
           <h2 className="font-black uppercase italic tracking-widest text-xs text-[#f9943b] mb-12">Histórias de Sucesso</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
