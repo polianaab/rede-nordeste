@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { 
   Search, ShoppingCart, User, Plus, Filter, MapPin, 
-  Star, LayoutGrid, Palette, Beef, Sprout, Wheat, Carrot, Milk 
+  Star, LayoutGrid, Palette, Beef, Sprout, Wheat, Carrot, Milk,
+  MessageCircle 
 } from 'lucide-react';
 
 // --- BANCO DE DADOS POPULADO ---
@@ -34,7 +35,58 @@ export default function Home2() {
   const [busca, setBusca] = useState('');
   const [termoPesquisado, setTermoPesquisado] = useState('');
   const [ordenacao, setOrdenacao] = useState('recomendados');
-  const [carrinhoCount, setCarrinhoCount] = useState(0);
+  
+  const location = useLocation();
+
+  const [carrinhoCount, setCarrinhoCount] = useState(() => {
+    const salvo = localStorage.getItem('carrinho_count');
+    return salvo ? parseInt(salvo) : 0;
+  });
+
+  useEffect(() => {
+    if (location.state && (location.state as any).buscaReceita) {
+      const termo = (location.state as any).buscaReceita;
+      setBusca(termo);
+      setTermoPesquisado(termo);
+      setCatAtiva('Todos'); 
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
+
+  useEffect(() => {
+    const atualizarCarrinho = () => {
+      const salvo = localStorage.getItem('carrinho_count');
+      setCarrinhoCount(salvo ? parseInt(salvo) : 0);
+    };
+    window.addEventListener('storage', atualizarCarrinho);
+    return () => window.removeEventListener('storage', atualizarCarrinho);
+  }, []);
+
+  const adicionarRapido = (e: React.MouseEvent, id: number) => {
+    e.preventDefault(); 
+    e.stopPropagation(); 
+    
+    const carrinhoSalvo = localStorage.getItem('carrinho_itens');
+    let itensIds = [];
+    
+    if (carrinhoSalvo) {
+      try {
+        itensIds = JSON.parse(carrinhoSalvo);
+        if (!Array.isArray(itensIds)) itensIds = [];
+      } catch (err) {
+        itensIds = [];
+      }
+    }
+    
+    if (!itensIds.includes(id)) {
+      const novosIds = [...itensIds, id];
+      localStorage.setItem('carrinho_itens', JSON.stringify(novosIds));
+      localStorage.setItem('carrinho_count', novosIds.length.toString());
+      
+      setCarrinhoCount(novosIds.length);
+      window.dispatchEvent(new Event('storage'));
+    }
+  };
 
   const handlePesquisa = () => { setTermoPesquisado(busca); setCatAtiva('Todos'); };
   const handleKeyDown = (e: React.KeyboardEvent) => { if (e.key === 'Enter') handlePesquisa(); };
@@ -47,7 +99,6 @@ export default function Home2() {
       return matchCategoria && matchBusca;
     });
 
-    // Lógica de Ordenação Atualizada
     if (ordenacao === 'menor_preco') filtrados.sort((a, b) => a.preco - b.preco);
     if (ordenacao === 'maior_preco') filtrados.sort((a, b) => b.preco - a.preco);
     if (ordenacao === 'localizacao') filtrados.sort((a, b) => a.local.localeCompare(b.local));
@@ -72,11 +123,25 @@ export default function Home2() {
             </nav>
           </div>
           <div className="flex items-center gap-6">
-            <div className="relative cursor-pointer">
-              <ShoppingCart size={22} />
-              {carrinhoCount > 0 && <span className="absolute -top-2 -right-2 bg-[#f9943b] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center border-2 border-white">{carrinhoCount}</span>}
-            </div>
-            <User size={22} className="cursor-pointer hover:text-[#55833d]" />
+            {/* ÍCONE DE CHAT */}
+            <Link to="/chat" className="text-[#394158] hover:text-[#55833d] transition-all">
+              <MessageCircle size={22} />
+            </Link>
+
+            {/* ÍCONE DE CARRINHO */}
+            <Link to="/carrinho" className="relative cursor-pointer group">
+              <ShoppingCart size={22} className="group-hover:text-[#55833d] transition-colors" />
+              {carrinhoCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-[#f9943b] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center border-2 border-white">
+                  {carrinhoCount}
+                </span>
+              )}
+            </Link>
+
+            {/* ÍCONE DE PERFIL - AGORA COM LINK */}
+            <Link to="/perfil" className="cursor-pointer text-[#394158] hover:text-[#55833d] transition-colors">
+              <User size={22} />
+           </Link>
           </div>
         </div>
       </header>
@@ -85,7 +150,14 @@ export default function Home2() {
         
         {/* BUSCA */}
         <div className="relative w-full max-w-5xl mb-16 group">
-          <input type="text" value={busca} onChange={(e) => setBusca(e.target.value)} onKeyDown={handleKeyDown} placeholder="O que você está procurando hoje?" className="w-full bg-white py-4 pl-8 pr-16 rounded-full border border-gray-100 shadow-sm outline-none text-base font-medium text-[#394158]" />
+          <input 
+            type="text" 
+            value={busca} 
+            onChange={(e) => setBusca(e.target.value)} 
+            onKeyDown={handleKeyDown} 
+            placeholder="O que você está procurando hoje?" 
+            className="w-full bg-white py-4 pl-8 pr-16 rounded-full border border-gray-100 shadow-sm outline-none text-base font-medium text-[#394158]" 
+          />
           <button onClick={handlePesquisa} className="absolute right-2 top-1/2 -translate-y-1/2 bg-[#55833d] text-white p-3 rounded-full active:scale-95 transition-all"><Search size={18} strokeWidth={2.5} /></button>
         </div>
 
@@ -141,22 +213,40 @@ export default function Home2() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
               {produtosExibidos.map(prod => (
                 <div key={prod.id} className="bg-white p-5 rounded-[2.5rem] shadow-xl shadow-gray-200/30 flex flex-col group border border-transparent hover:border-[#55833d]/10 transition-all hover:-translate-y-1">
+                  
                   <div className="relative overflow-hidden rounded-[2rem] mb-4 aspect-square">
-                    <img src={prod.img} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt={prod.nome} />
-                    <button onClick={() => setCarrinhoCount(prev => prev + 1)} className="absolute bottom-4 right-4 bg-[#f9943b] text-white p-2.5 rounded-full shadow-xl"><Plus size={18} /></button>
+                    <Link to={`/produto/${prod.id}`}>
+                        <img src={prod.img} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt={prod.nome} />
+                    </Link>
+                    <button 
+                      onClick={(e) => adicionarRapido(e, prod.id)} 
+                      className="absolute bottom-4 right-4 bg-[#f9943b] text-white p-2.5 rounded-full shadow-xl z-10 active:scale-90 transition-transform"
+                    >
+                      <Plus size={18} />
+                    </button>
                   </div>
+
                   <span className="text-[9px] font-black uppercase text-[#55833d] mb-1">{prod.categoria}</span>
                   <h3 className="font-bold text-[#394158] text-sm leading-tight mb-1">{prod.nome}</h3>
                   <div className="flex items-center gap-1 text-[#394158]/50 mb-4 uppercase font-bold text-[9px]"><MapPin size={10} /> {prod.local}</div>
+                  
                   <div className="mt-auto pt-4 border-t border-gray-50 flex justify-between items-center">
                     <span className="text-lg font-black text-[#394158]">R$ {prod.preco.toFixed(2)}</span>
-                    <button className="text-[9px] font-black uppercase bg-[#394158] text-white px-5 py-2 rounded-xl">Detalhes</button>
+                    <Link 
+                      to={`/produto/${prod.id}`} 
+                      className="text-[9px] font-black uppercase bg-[#394158] text-white px-5 py-2 rounded-xl hover:bg-[#55833d] transition-colors"
+                    >
+                      Detalhes
+                    </Link>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="w-full py-20 text-center text-[#394158]/40 font-bold italic tracking-widest uppercase">Nenhum produto encontrado.</div>
+            <div className="w-full py-20 text-center flex flex-col items-center gap-4">
+               <div className="text-[#394158]/40 font-bold italic tracking-widest uppercase">Nenhum produto encontrado.</div>
+               <button onClick={() => { setBusca(''); setTermoPesquisado(''); }} className="text-[10px] font-black uppercase text-[#55833d] border-b border-[#55833d]">Limpar filtros</button>
+            </div>
           )}
         </section>
 
@@ -166,32 +256,19 @@ export default function Home2() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {PRODUTOS_DATA.slice(0, 3).map(prod => (
               <div key={prod.id} className="bg-white p-4 rounded-[2rem] shadow-md border border-gray-100 flex items-center gap-4 group hover:shadow-lg transition-all">
-                <img src={prod.img} className="w-24 h-24 rounded-2xl object-cover" alt={prod.nome} />
+                <Link to={`/produto/${prod.id}`}><img src={prod.img} className="w-24 h-24 rounded-2xl object-cover" alt={prod.nome} /></Link>
                 <div>
                   <h3 className="font-bold text-sm text-[#394158]">{prod.nome}</h3>
                   <p className="text-sm font-black text-[#f9943b] mt-1">R$ {prod.preco.toFixed(2)}</p>
-                  <button onClick={() => setCarrinhoCount(prev => prev + 1)} className="mt-2 text-[9px] font-black uppercase text-[#55833d]">Adicionar</button>
+                  <button onClick={(e) => adicionarRapido(e, prod.id)} className="mt-2 text-[9px] font-black uppercase text-[#55833d] hover:text-[#f9943b] transition-colors">Adicionar</button>
                 </div>
               </div>
             ))}
           </div>
         </section>
-
-        {/* HISTÓRICO */}
-        <section className="w-full mb-16">
-          <h2 className="text-xl font-black italic uppercase tracking-widest mb-8 text-[#394158]">Seu Histórico de Navegação</h2>
-          <div className="flex gap-6 overflow-x-auto pb-6 no-scrollbar">
-            {PRODUTOS_DATA.slice(6, 10).map(prod => (
-              <div key={prod.id} className="min-w-[180px] bg-white p-4 rounded-[2.5rem] border border-gray-100 text-center shadow-sm group">
-                <div className="overflow-hidden rounded-[2rem] mb-3"><img src={prod.img} className="w-full h-28 object-cover group-hover:scale-110 transition-transform duration-500" alt={prod.nome} /></div>
-                <h3 className="font-bold text-[10px] text-[#394158] uppercase truncate px-2 tracking-widest">{prod.nome}</h3>
-              </div>
-            ))}
-          </div>
-        </section>
       </main>
-      <footer className="w-full text-center p-10 bg-gray-50 text-[#394158]/20">
-        <span className="text-[9px] font-black uppercase tracking-[0.3em]">© 2026 Rede Nordeste</span>
+      <footer className="w-full text-center p-30 bg-gray-50 text-[#394158]/60">
+        <span className="text-[9px] font-black uppercase tracking-[0.3em]">© 2026 Rede Nordeste - Todos os direitos reservados.</span>
       </footer>
     </div>
   );
