@@ -1,14 +1,14 @@
 CREATE TABLE usuarios (
     id SERIAL PRIMARY KEY,
     nome_completo VARCHAR(150) NOT NULL,
-    cpf_cnpj VARCHAR(14) UNIQUE NOT NULL,
+    cpf_cnpj VARCHAR(18) UNIQUE NOT NULL,
     telefone VARCHAR(15) UNIQUE NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
     senha_hash TEXT NOT NULL,
-    tipo_perfil VARCHAR(20) CHECK (tipo_perfil IN ('PRODUTOR', 'COMPRADOR', 'ADMIN')),
+    tipo_perfil VARCHAR(20) NOT NULL CHECK (tipo_perfil IN ('PRODUTOR', 'COMPRADOR', 'ADMIN')),
     foto_perfil_url TEXT,
-    conta_ativa BOOLEAN DEFAULT FALSE,
-    data_criacao TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    conta_ativa BOOLEAN NOT NULL DEFAULT FALSE,
+    data_criacao TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE lojas (

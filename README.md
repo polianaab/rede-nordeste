@@ -1,6 +1,6 @@
-#  Semeia Nordeste
+#  Rede Nordeste
 
-**Semeia Nordeste** é uma plataforma digital que conecta produtores rurais e empreendedores locais a consumidores e pequenos comerciantes, promovendo a venda direta de produtos regionais e fortalecendo a economia local.
+**Rede Nordeste** é uma plataforma digital que conecta produtores rurais e empreendedores locais a consumidores e pequenos comerciantes, promovendo a venda direta de produtos regionais e fortalecendo a economia local.
 
 A aplicação busca reduzir a dependência de intermediários (atravessadores), melhorar a renda dos produtores e facilitar o acesso da população a produtos frescos, artesanais e de origem conhecida.
 
@@ -22,7 +22,7 @@ Ao mesmo tempo, consumidores têm dificuldade em encontrar **produtos locais fre
 
 # 💡 Solução
 
-O **Semeia Nordeste** oferece um marketplace digital simples e acessível que permite:
+O **Rede Nordeste** oferece um marketplace digital simples e acessível que permite:
 
 * produtores cadastrarem seus produtos rapidamente
 * consumidores encontrarem alimentos e produtos locais
