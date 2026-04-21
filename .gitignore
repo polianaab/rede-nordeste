@@ -24,9 +24,9 @@
 hs_err_pid*
 replay_pid*
 
-#pastas de instalacao Node
+# Node / Web
 node_modules/
 dist/
 .vite/
 
-
+#
