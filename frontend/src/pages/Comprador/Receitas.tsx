@@ -114,7 +114,7 @@ export default function Receitas() {
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-4 md:gap-10">
             <Link to="/home2">
-              <img src="/assets/logo-home.png" alt="Logo" className="h-10 md:h-14 w-auto object-contain" />
+              <img src="/assets/logo-home.png" alt="Logo" className="h-10 md:h-12 w-auto object-contain" />
             </Link>
             <nav className="hidden lg:flex gap-6 text-[10px] font-black uppercase tracking-widest">
               <Link to="/home2" className="hover:text-[#55833d] transition-colors">Início</Link>
@@ -181,8 +181,8 @@ export default function Receitas() {
                 <ChevronLeft size={16} />
               </Link>
               <div className="flex items-center gap-2 text-[#55833d]">
-                <UtensilsCrossed size={20} />
-                <h1 className="text-lg md:text-xl font-black italic uppercase tracking-tighter">Sabores do Sertão</h1>
+                <UtensilsCrossed size={24} />
+                <h1 className="text-lg md:text-2xl font-black italic uppercase tracking-tighter">Sabores do Sertão</h1>
               </div>
             </div>
             <p className="text-[10px] font-bold text-gray-400 ml-10">
@@ -218,39 +218,39 @@ export default function Receitas() {
           ))}
         </div>
 
-        <div className="columns-3 sm:columns-2 lg:columns-3 gap-2 sm:gap-6 space-y-2 sm:space-y-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
           {receitasFiltradas.length > 0 ? (
             receitasFiltradas.map(rec => (
               <div 
                 key={rec.id} 
                 onClick={() => setReceitaAberta(rec)}
-                className="break-inside-avoid bg-white rounded-xl sm:rounded-[2.5rem] overflow-hidden shadow-xl shadow-gray-200/50 group cursor-pointer hover:scale-[1.01] transition-all duration-300 border border-white"
+                className="bg-white rounded-xl sm:rounded-[2rem] overflow-hidden shadow-lg shadow-gray-200/50 group cursor-pointer hover:scale-[1.02] transition-all duration-300 border border-white h-full flex flex-col"
               >
-                <div className="relative overflow-hidden bg-gray-100 aspect-video">
+                <div className="relative overflow-hidden bg-gray-100 aspect-[4/3]">
                   <img 
                     src={rec.img} 
                     alt={rec.titulo} 
                     className="w-full h-full object-cover block group-hover:scale-110 transition-transform duration-700" 
                     loading="lazy"
                   />
-                  <div className="absolute top-2 left-2 sm:top-4 sm:left-4 bg-white/90 backdrop-blur px-2 py-1 sm:px-3 sm:py-1.5 rounded-full flex items-center gap-1 sm:gap-2 text-[6px] sm:text-[9px] font-black uppercase tracking-widest text-[#394158] shadow-sm">
-                    <Clock size={10} className="text-[#f9943b]" /> {rec.tempo}
+                  <div className="absolute top-2 left-2 bg-white/90 backdrop-blur px-2 py-1 rounded-full flex items-center gap-1 text-[7px] sm:text-[8px] font-black uppercase tracking-widest text-[#394158] shadow-sm">
+                    <Clock size={8} className="text-[#f9943b]" /> {rec.tempo}
                   </div>
                 </div>
                 
-                <div className="p-2 sm:p-8">
-                  <span className="text-[#55833d] text-[6px] sm:text-[9px] font-black uppercase tracking-widest italic mb-1 sm:mb-2 block">{rec.dificuldade}</span>
-                  <h3 className="text-[8px] sm:text-xl font-black text-[#394158] mb-1 sm:mb-3 uppercase italic leading-tight group-hover:text-[#802D44] transition-colors line-clamp-1 sm:line-clamp-none">
+                <div className="p-3 sm:p-5 flex flex-col flex-1">
+                  <span className="text-[#55833d] text-[7px] sm:text-[8px] font-black uppercase tracking-widest italic mb-1 block">{rec.dificuldade}</span>
+                  <h3 className="text-[10px] sm:text-sm font-black text-[#394158] mb-1 uppercase italic leading-tight group-hover:text-[#802D44] transition-colors line-clamp-2">
                     {rec.titulo}
                   </h3>
-                  <p className="hidden sm:block text-xs text-[#394158]/50 leading-relaxed line-clamp-3 mb-6 font-medium">
+                  <p className="hidden sm:line-clamp-2 text-[10px] text-[#394158]/50 leading-tight mt-1 mb-3 font-medium">
                     {rec.descricao}
                   </p>
                   
-                  <div className="pt-1 sm:pt-4 border-t border-gray-50 flex items-center justify-between">
-                     <span className="text-[6px] sm:text-[9px] font-black uppercase text-gray-400 tracking-widest">Ver</span>
-                     <div className="p-1 sm:p-2 bg-[#F5F2ED] rounded-full text-[#394158] group-hover:bg-[#802D44] group-hover:text-white transition-all">
-                        <ChevronRight size={10} className="sm:w-3.5 sm:h-3.5" />
+                  <div className="mt-auto pt-2 border-t border-gray-50 flex items-center justify-between">
+                     <span className="text-[7px] sm:text-[8px] font-black uppercase text-gray-400 tracking-widest">Ver Receita</span>
+                     <div className="p-1 bg-[#F5F2ED] rounded-full text-[#394158] group-hover:bg-[#802D44] group-hover:text-white transition-all">
+                        <ChevronRight size={12} />
                      </div>
                   </div>
                 </div>
