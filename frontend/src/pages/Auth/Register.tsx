@@ -4,33 +4,39 @@ import {
   User, Mail, Lock, FileText, Phone, 
   ArrowRight, ChevronLeft 
 } from 'lucide-react';
-// Importando corretamente o que criamos no api.ts
-import { apiService, registrarUsuario } from '../../services/api';
+// Importando as funções do seu api.ts configurado para a porta 8080
+import { registrarUsuario } from '../../services/api';
 
 export default function Register() {
   const navigate = useNavigate();
+  
+  // Estado inicial ajustado para bater com a Model Usuario.java
   const [formData, setFormData] = useState({
     nomeCompleto: '',
     cpfCnpj: '',
     telefone: '',
     email: '',
     senhaHash: '',
+    tipoPerfil: 'COMPRADOR', // Campo obrigatório no seu Java (Enum TipoPerfil)
+    contaAtiva: true
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleFinalize = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // Usando a função correta que foi importada
-      const response = await registrarUsuario(formData);
+      // Envia os dados para http://localhost:8080/api/usuarios/registrar
+      await registrarUsuario(formData);
       
       alert("🎉 Cadastro realizado com sucesso!");
       navigate('/login');
-    } catch (error) {
-      alert("⚠️ Erro ao cadastrar. Verifique se o Backend está rodando.");
+    } catch (error: any) {
+      // Exibe a mensagem real (ex: "E-mail já cadastrado") em vez da mensagem genérica
+      alert(`⚠️ ${error.message}`);
+      console.error("Erro detalhado:", error);
     }
   };
 
@@ -111,6 +117,20 @@ export default function Register() {
             />
           </div>
 
+          {/* Campo de seleção de perfil - Essencial para o seu Backend Java */}
+          <div className="relative">
+            <select 
+              name="tipoPerfil"
+              className="w-full bg-[#F5F2ED]/50 py-4 px-4 rounded-2xl outline-none appearance-none font-bold text-[#394158]/60"
+              onChange={handleChange}
+              value={formData.tipoPerfil}
+              required
+            >
+              <option value="COMPRADOR">SOU COMPRADOR</option>
+              <option value="PRODUTOR">SOU PRODUTOR</option>
+            </select>
+          </div>
+
           <button 
             type="submit"
             className="w-full bg-[#55833d] text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest flex items-center justify-center gap-3 hover:bg-[#394158] transition-all active:scale-95 shadow-lg shadow-green-900/10 mt-6"
@@ -124,9 +144,8 @@ export default function Register() {
         </p>
       </div>
       
-      {/* Texto de apoio abaixo do card */}
       <p className="mt-8 text-[10px] font-black uppercase tracking-[0.3em] text-[#394158]/20">
-        © 2026 Rede Nordeste · Segurança e Transparência
+        ©️ 2026 Rede Nordeste · Segurança e Transparência
       </p>
     </div>
   );
