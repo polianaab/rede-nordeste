@@ -1,19 +1,38 @@
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom'; // Adicionado useNavigate
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, ArrowRight } from 'lucide-react';
+// Importamos a função de login que está no seu api.ts
+import { login } from '../../services/api';
 
 export default function Login() {
-  // Inicializa o hook de navegação
   const navigate = useNavigate();
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Aqui no futuro vocês colocarão a lógica de validação do banco de dados
-    console.log("Login realizado com sucesso!");
+  // Estados para capturar o que o usuário digita
+  const [email, setEmail] = useState('');
+  const [senha, setSenha] = useState('');
+  const [carregando, setCarregando] = useState(false);
 
-    // Redireciona para a Home2
-    navigate('/home2');
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCarregando(true);
+
+    try {
+  
+      const dadosUsuario = await login(email, senha);
+
+
+      localStorage.setItem('usuarioLogado', JSON.stringify(dadosUsuario));
+
+      console.log("Login realizado com sucesso!");
+      
+
+      navigate('/home2');
+      
+    } catch (error: any) {
+      alert("❌ " + error.message);
+    } finally {
+      setCarregando(false);
+    }
   };
 
   return (
@@ -34,6 +53,8 @@ export default function Login() {
               type="email" 
               placeholder="Seu e-mail" 
               required 
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="w-full pl-12 pr-4 py-4 bg-gray-50 border-transparent rounded-2xl focus:bg-white focus:border-[#394158] transition-all outline-none text-sm font-medium" 
             />
           </div>
@@ -44,15 +65,22 @@ export default function Login() {
               type="password" 
               placeholder="Sua senha" 
               required 
+              value={senha}
+              onChange={(e) => setSenha(e.target.value)}
               className="w-full pl-12 pr-4 py-4 bg-gray-50 border-transparent rounded-2xl focus:bg-white focus:border-[#394158] transition-all outline-none text-sm font-medium" 
             />
           </div>
 
           <button
             type="submit"
-            className="w-full bg-[#55833d] text-white py-4 rounded-2xl font-black uppercase text-xs tracking-[0.2em] shadow-lg shadow-[#55833d]/30 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
+            disabled={carregando}
+            className={`w-full ${carregando ? 'bg-gray-400' : 'bg-[#55833d]'} text-white py-4 rounded-2xl font-black uppercase text-xs tracking-[0.2em] shadow-lg shadow-[#55833d]/30 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2`}
           >
-            Entrar na Rede <ArrowRight size={16} />
+            {carregando ? 'Verificando...' : (
+              <>
+                Entrar na Rede <ArrowRight size={16} />
+              </>
+            )}
           </button>
         </form>
 

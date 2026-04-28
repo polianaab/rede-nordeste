@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Search, ShoppingCart, User, Plus, Filter, MapPin, 
   Star, LayoutGrid, Palette, Beef, Sprout, Wheat, Carrot, Milk,
-  MessageCircle, Heart, ChevronRight, Menu, X, BookOpen, Store
+  MessageCircle, Heart, ChevronRight, Menu, X, BookOpen, Store, Globe, Award, Bell
 } from 'lucide-react';
 
 // --- BANCO DE DADOS POPULADO ---
@@ -90,34 +90,24 @@ export default function Home2() {
   };
 
   const adicionarRapido = (e: React.MouseEvent, id: number) => {
-    e.preventDefault(); 
-    e.stopPropagation(); 
-    
+    e.preventDefault(); e.stopPropagation(); 
     const carrinhoSalvo = localStorage.getItem('carrinho_itens');
     let itens: { id: number, quantidade: number }[] = [];
-    
     if (carrinhoSalvo) {
       try {
         itens = JSON.parse(carrinhoSalvo);
         if (!Array.isArray(itens)) itens = [];
-      } catch (err) {
-        itens = [];
-      }
+      } catch (err) { itens = []; }
     }
-    
     const indexExistente = itens.findIndex(item => item.id === id);
-
     if (indexExistente !== -1) {
       itens[indexExistente].quantidade += 1;
     } else {
       itens.push({ id, quantidade: 1 });
     }
-
     const totalQuantidades = itens.reduce((acc, curr) => acc + curr.quantidade, 0);
-
     localStorage.setItem('carrinho_itens', JSON.stringify(itens));
     localStorage.setItem('carrinho_count', totalQuantidades.toString());
-    
     setCarrinhoCount(totalQuantidades);
     window.dispatchEvent(new Event('storage'));
   };
@@ -126,20 +116,17 @@ export default function Home2() {
   const handleKeyDown = (e: React.KeyboardEvent) => { if (e.key === 'Enter') handlePesquisa(); };
   const handleCategoriaClick = (nome: string) => { setCatAtiva(nome); setTermoPesquisado(''); setBusca(''); };
 
-  // --- FILTRO DE PREÇO CORRIGIDO ---
   const getProdutosProcessados = () => {
     let filtrados = PRODUTOS_DATA.filter(p => {
       const matchCategoria = catAtiva === 'Todos' || p.categoria === catAtiva;
       const matchBusca = p.nome.toLowerCase().includes(termoPesquisado.toLowerCase());
       return matchCategoria && matchBusca;
     });
-
     if (ordenacao === 'menor_preco') {
       filtrados.sort((a, b) => a.preco - b.preco);
     } else if (ordenacao === 'maior_preco') {
       filtrados.sort((a, b) => b.preco - a.preco);
     }
-
     return filtrados;
   };
 
@@ -147,8 +134,6 @@ export default function Home2() {
 
   return (
     <div className="min-h-screen bg-white text-[#394158] antialiased pb-20 font-sans">
-      
-      {/* NAVBAR */}
       <header className="w-full bg-white py-4 px-4 md:px-8 border-b border-gray-100 sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto flex justify-between items-center gap-4 md:gap-8">
           <div className="flex items-center gap-4 md:gap-10 flex-shrink-0">
@@ -165,6 +150,7 @@ export default function Home2() {
           </div>
           <div className="flex items-center gap-3 md:gap-6 flex-shrink-0">
             <div className="hidden md:flex items-center gap-6">
+              <Link to="/notificacoes"><Bell size={22} className="hover:text-[#55833d] transition-colors"/></Link>
               <Link to="/chat"><MessageCircle size={22}/></Link>
               <Link to="/carrinho" className="relative group">
                 <ShoppingCart size={22} className="group-hover:text-[#55833d] transition-colors" />
@@ -177,36 +163,26 @@ export default function Home2() {
         </div>
       </header>
 
-      {/* DRAWER MOBILE */}
       {menuAberto && (
         <div className="fixed inset-0 z-[110] md:hidden">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMenuAberto(false)}></div>
           <div className="absolute right-0 top-0 h-full w-72 bg-white shadow-2xl p-8 flex flex-col gap-8 animate-in slide-in-from-right duration-300">
             <button onClick={() => setMenuAberto(false)} className="self-end p-2 bg-[#F5F2ED] rounded-full text-[#394158] hover:text-red-500 transition-all"><X size={24} /></button>
-            <div className="flex flex-col gap-6">
-              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-300 border-b pb-2">Navegação</p>
-              <nav className="flex flex-col gap-5 text-sm font-black uppercase tracking-widest text-[#394158]">
-                  <Link to="/home2" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d]"><ChevronRight size={14}/> Início</Link>
-                  <Link to="/receitas" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 text-[#55833d]"><ChevronRight size={14}/> Receitas</Link>
-                  <Link to="/noticias" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#f9943b]"><ChevronRight size={14}/> Notícias</Link>
-                  <hr className="border-gray-50 my-2" />
-                  <Link to="/chat" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d]"><MessageCircle size={20}/> Chat</Link>
-                  <Link to="/carrinho" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d] relative">
-                      <ShoppingCart size={20}/> Carrinho 
-                      {carrinhoCount > 0 && <span className="bg-[#f9943b] text-white text-[10px] px-2 py-0.5 rounded-full ml-auto">{carrinhoCount}</span>}
-                  </Link>
-                  <Link to="/perfil" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d]"><User size={20}/> Meu Perfil</Link>
-              </nav>
-            </div>
+            <nav className="flex flex-col gap-5 text-sm font-black uppercase tracking-widest text-[#394158]">
+              <Link to="/home2" onClick={() => setMenuAberto(false)}>Início</Link>
+              <Link to="/receitas" onClick={() => setMenuAberto(false)}>Receitas</Link>
+              <Link to="/notificacoes" onClick={() => setMenuAberto(false)}>Notificações</Link>
+              <Link to="/carrinho" onClick={() => setMenuAberto(false)}>Carrinho ({carrinhoCount})</Link>
+              <Link to="/perfil" onClick={() => setMenuAberto(false)}>Meu Perfil</Link>
+            </nav>
           </div>
         </div>
       )}
 
-      {/* MODAL EMPREENDEDORA */}
       {mulherSelecionada && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => setMulherSelecionada(null)}></div>
-          <div className="relative bg-white w-full max-w-2xl rounded-[3rem] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
+          <div className="relative bg-white w-full max-w-2xl rounded-[1rem] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
             <button onClick={() => setMulherSelecionada(null)} className="absolute top-6 right-6 z-10 bg-white/80 p-2 rounded-full hover:bg-white transition-colors"><X size={20} /></button>
             <div className="flex flex-col md:flex-row h-full">
               <div className="w-full md:w-1/2 h-64 md:h-auto relative">
@@ -229,28 +205,26 @@ export default function Home2() {
       )}
 
       <main className="max-w-7xl mx-auto px-4 md:px-8 pt-6 md:pt-10">
-        
-        {/* BUSCA MOBILE */}
         <div className="relative w-full mb-8 md:hidden group">
           <input type="text" value={busca} onChange={(e) => setBusca(e.target.value)} onKeyDown={handleKeyDown} placeholder="O que procura?" className="w-full bg-white py-3 pl-6 pr-12 rounded-full border border-gray-100 shadow-sm outline-none text-sm font-medium text-[#394158]" />
           <button onClick={handlePesquisa} className="absolute right-2 top-1/2 -translate-y-1/2 bg-[#55833d] text-white p-2 rounded-full active:scale-95 transition-all"><Search size={16}/></button>
         </div>
 
-        {/* SEÇÃO EMPREENDEDORAS */}
-        <section className="w-full max-w-6xl mb-12 md:mb-16 bg-[#55833d] p-4 md:p-8 rounded-[2rem] md:rounded-[3.5rem] border border-[#55833d] mx-auto shadow-xl">
+        {/* SEÇÃO EMPREENDEDORAS - COM SUAS CORES E BORDAS ORIGINAIS */}
+        <section className="w-full max-w-6xl mb-12 md:mb-16 bg-[#fededf] p-4 md:p-8 rounded-[2rem] md:rounded-[1rem] border border-[#fededf] mx-auto shadow-xl">
             <div className="flex items-center justify-between mb-6 md:mb-8 px-2 md:px-4">
                 <div className="flex items-center gap-2 md:gap-3 text-[#394158]">
                     <div className="p-1.5 md:p-2 bg-white/20 rounded-xl"><Star size={18} className="fill-[#FFCD0D] text-[#FFCD0D]" /></div>
                     <div>
-                        <h2 className="text-sm md:text-xl font-black italic uppercase tracking-widest text-white">Empreendedoras de Sergipe</h2>
-                        <p className="hidden md:block text-[10px] font-bold text-white/80 uppercase tracking-widest italic">Apoie negócios liderados por mulheres locais</p>
+                        <h2 className="text-sm md:text-xl font-black italic uppercase tracking-widest text-[#394158]">Empreendedoras de Sergipe</h2>
+                        <p className="hidden md:block text-[10px] font-bold text-[#394158]/80 uppercase tracking-widest italic">Apoie negócios liderados por mulheres locais</p>
                     </div>
                 </div>
-                <button className="flex items-center gap-1 md:gap-2 text-[8px] md:text-[10px] font-black uppercase text-white hover:underline transition-all">Ver todas <ChevronRight size={12}/></button>
+                <button className="flex items-center gap-1 md:gap-2 text-[8px] md:text-[10px] font-black uppercase text-[#394158] hover:underline transition-all">Ver todas <ChevronRight size={12}/></button>
             </div>
             <div className="flex gap-4 md:gap-6 overflow-x-auto pb-2 no-scrollbar px-2 md:px-4">
                 {EMPREENDEDORAS.map(mulher => (
-                    <div key={mulher.id} onClick={() => setMulherSelecionada(mulher)} className="min-w-[240px] md:min-w-[280px] bg-white rounded-[1.5rem] md:rounded-[2.5rem] p-3 md:p-5 shadow-lg flex items-center gap-3 md:gap-5 group cursor-pointer hover:bg-[#F29D52] transition-all duration-500 border border-white">
+                    <div key={mulher.id} onClick={() => setMulherSelecionada(mulher)} className="min-w-[240px] md:min-w-[280px] bg-white rounded-[1rem] md:rounded-[1rem] p-3 md:p-5 shadow-lg flex items-center gap-3 md:gap-5 group cursor-pointer hover:bg-[#aab2c1] transition-all duration-500 border border-white">
                         <div className="w-12 h-12 md:w-16 md:h-16 rounded-full overflow-hidden border-2 border-[#394158]/20 group-hover:border-white shadow-inner transition-colors">
                             <img src={mulher.img} className="w-full h-full object-cover" alt={mulher.nome} />
                         </div>
@@ -263,10 +237,9 @@ export default function Home2() {
             </div>
         </section>
 
-        {/* CARD GRANDE (CATEGORIAS + PRODUTOS) */}
-        <section className="w-full max-w-7xl mx-auto bg-gray-100/50 p-4 md:p-10 rounded-[2.5rem] border border-gray-200 shadow-inner mb-12">
+        <section className="w-full max-w-7xl mx-auto bg-gray-100/50 p-4 md:p-10 rounded-[1rem] border border-gray-200 shadow-inner mb-12">
           <div className="mb-12">
-            <h2 className="text-xs md:text-xl font-black uppercase tracking-widest italic mb-10 text-[#394158] text-center md:text-left">Categorias</h2>
+            <h2 className="text-xs md:text-xl font-black uppercase tracking-widest italic mb-10 text-[#394158]">Categorias</h2>
             <div className="flex flex-wrap justify-center md:justify-between gap-4">
               {CATEGORIAS.map(cat => (
                 <button key={cat.nome} onClick={() => handleCategoriaClick(cat.nome)} className="flex flex-col items-center gap-2 w-[70px] md:w-[100px] group">
@@ -294,23 +267,15 @@ export default function Home2() {
 
             <div className="grid grid-cols-3 md:grid-cols-4 gap-3 md:gap-8">
               {produtosExibidos.map(prod => (
-                <div key={prod.id} className="relative bg-white p-2 md:p-5 rounded-[1.5rem] md:rounded-[2.5rem] shadow-xl flex flex-col group border border-transparent hover:border-[#55833d]/20 transition-all">
-                  <button onClick={(e) => toggleFavorito(e, prod.id)} className="absolute top-3 left-3 md:top-8 md:left-8 z-20 p-1.5 bg-white/80 backdrop-blur-md rounded-full shadow-sm hover:scale-110 transition-transform">
-                    <Heart size={14} className={favoritos.includes(prod.id) ? "fill-[#802D44] text-[#802D44]" : "text-gray-400"} />
-                  </button>
-                  <div className="relative overflow-hidden rounded-[1rem] md:rounded-[2rem] mb-3 md:mb-4 aspect-square">
-                    <Link to={`/produto/${prod.id}`}>
-                      <img src={prod.img} className="w-full h-full object-cover group-hover:scale-105 transition-all duration-700" alt={prod.nome} />
-                    </Link>
+                <div key={prod.id} className="relative bg-white p-2 md:p-5 rounded-[1rem] md:rounded-[1rem] shadow-xl flex flex-col group border border-transparent hover:border-[#55833d]/20 transition-all">
+                  <button onClick={(e) => toggleFavorito(e, prod.id)} className="absolute top-3 left-3 md:top-8 md:left-8 z-20 p-1.5 bg-white/80 backdrop-blur-md rounded-full shadow-sm hover:scale-110 transition-transform"><Heart size={14} className={favoritos.includes(prod.id) ? "fill-[#802D44] text-[#802D44]" : "text-gray-400"} /></button>
+                  <div className="relative overflow-hidden rounded-[1rem] md:rounded-[1rem] mb-3 md:mb-4 aspect-square">
+                    <Link to={`/produto/${prod.id}`}><img src={prod.img} className="w-full h-full object-cover group-hover:scale-105 transition-all duration-700" alt={prod.nome} /></Link>
                     <button onClick={(e) => adicionarRapido(e, prod.id)} className="absolute bottom-2 right-2 md:bottom-4 md:right-4 bg-[#f9943b] text-white p-1.5 md:p-2.5 rounded-full shadow-xl z-10 active:scale-90"><Plus size={14} /></button>
                   </div>
                   <span className="text-[6px] md:text-[9px] font-black uppercase text-[#55833d] mb-1">{prod.categoria}</span>
-                  <Link to={`/produto/${prod.id}`}>
-                    <h3 className="font-bold text-[#394158] text-[8px] md:text-sm leading-tight mb-1 line-clamp-1 hover:text-[#55833d] transition-colors">{prod.nome}</h3>
-                  </Link>
-                  <div className="flex items-center gap-1 text-[#394158]/50 mb-2 uppercase font-bold text-[6px] md:text-[9px]">
-                    <MapPin size={8} /> {prod.local}
-                  </div>
+                  <Link to={`/produto/${prod.id}`}><h3 className="font-bold text-[#394158] text-[8px] md:text-sm leading-tight mb-1 line-clamp-1 hover:text-[#55833d] transition-colors">{prod.nome}</h3></Link>
+                  <div className="flex items-center gap-1 text-[#394158]/50 mb-2 uppercase font-bold text-[6px] md:text-[9px]"><MapPin size={8} /> {prod.local}</div>
                   <div className="mt-auto pt-2 border-t border-gray-50 flex justify-between items-center">
                     <span className="text-[10px] md:text-lg font-black text-[#394158]">R$ {prod.preco.toFixed(2)}<span className="text-[7px] md:text-[10px] opacity-40 ml-1">/{prod.un}</span></span>
                     <Link to={`/produto/${prod.id}`} className="hidden md:block text-[9px] font-black uppercase bg-[#394158] text-white px-4 py-1.5 rounded-xl hover:bg-[#55833d]">Detalhes</Link>
@@ -321,12 +286,11 @@ export default function Home2() {
           </div>
         </section>
 
-        {/* ÚLTIMOS VISUALIZADOS */}
-        <section className="w-full max-w-7xl mx-auto border-t border-gray-50 pt-16 bg-gray-100/50 p-4 md:p-10 rounded-[2.5rem] border border-gray-200 shadow-inner mb-16">
+        <section className="w-full max-w-7xl mx-auto border-t border-gray-50 pt-16 bg-gray-100/50 p-4 md:p-10 rounded-[1rem] border border-gray-200 shadow-inner mb-16">
           <h2 className="text-xl font-black italic uppercase text-[#394158] mb-10 tracking-widest">Continue Comprando</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 px-2">
             {PRODUTOS_DATA.slice(0, 3).map(prod => (
-              <div key={prod.id} className="bg-white p-4 rounded-[2rem] shadow-sm flex items-center gap-4 group border border-gray-100 hover:border-[#55833d]/20 transition-all">
+              <div key={prod.id} className="bg-white p-4 rounded-[1rem] shadow-sm flex items-center gap-4 group border border-gray-100 hover:border-[#55833d]/20 transition-all">
                 <Link to={`/produto/${prod.id}`}><img src={prod.img} className="w-16 h-16 md:w-24 md:h-24 rounded-xl object-cover" alt={prod.nome} /></Link>
                 <div>
                   <h3 className="font-bold text-xs text-[#394158] leading-tight line-clamp-1">{prod.nome}</h3>
