@@ -98,7 +98,10 @@ export default function Receitas() {
   });
 
   const extrairTermoBusca = (ingrediente: string) => {
-    return ingrediente.replace(/^\d+(g|kg| xícara| fatias)?\s*(de\s*)?/i, '').replace(/a gosto/i, '').trim();
+    return ingrediente
+      .replace(/^[\d\/\se]+(g|kg|l|ml|xícaras?|fatias?|latas?|pacotes?|litros?)?\s*(grossas\s*)?(de\s*)?/i, '')
+      .replace(/ para acompanhar| a gosto|\(já lavado\)/gi, '')
+      .trim();
   };
 
   const comprarIngrediente = (ingrediente: string) => {

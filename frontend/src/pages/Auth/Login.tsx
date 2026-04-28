@@ -70,6 +70,11 @@ export default function Login() {
               className="w-full pl-12 pr-4 py-4 bg-gray-50 border-transparent rounded-2xl focus:bg-white focus:border-[#394158] transition-all outline-none text-sm font-medium" 
             />
           </div>
+          <div className="flex justify-center -mt-2">
+            <button type="button" onClick={() => alert("Um link de recuperação será enviado para o seu e-mail em breve!")} className="text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-[#55833d] transition-colors">
+              Esqueci minha senha
+            </button>
+          </div>
 
           <button
             type="submit"

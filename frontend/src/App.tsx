@@ -13,6 +13,7 @@ import Chat from './pages/Comprador/Chat'; // Importe o componente de Chat aqui
 import Blog from './pages/Blog/Blog';
 import Post from './pages/Blog/Post';
 import Perfil from './pages/Comprador/Perfil';
+import Notificacao from './pages/Comprador/Notificacao';
 
 function App() {
   return (
@@ -29,8 +30,9 @@ function App() {
           <Route path="/chat" element={<Chat />} />
           <Route path="/blog" element={<Blog />} />
           <Route path="/blog/:id" element={<Post />} />
-          <Route path="*" element={<Navigate to="/" />} />
+          <Route path="/notificacoes" element={<Notificacao />} />
           <Route path="/perfil" element={<Perfil />} />
+          <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </div>
     </Router>

@@ -21,7 +21,20 @@ export default function Perfil() {
   
   // Estados para Endereços
   const [exibirFormEndereco, setExibirFormEndereco] = useState(false);
-  const [meusEnderecos, setMeusEnderecos] = useState<any[]>([]); 
+  const [meusEnderecos, setMeusEnderecos] = useState<any[]>(() => {
+    const saved = localStorage.getItem('meus_enderecos');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) { return []; }
+    }
+    return [
+      { destinatario: 'Maria Silva', rua: 'Rua das Palmeiras', numero: '450', bairro: 'Atalaia', estadoCidade: 'Sergipe - Aracaju', cep: '49000-000', principal: true },
+      { destinatario: 'Maria Silva', rua: 'Av. Hermes Fontes', numero: '120', bairro: 'Suissa', estadoCidade: 'Sergipe - Aracaju', cep: '49000-100', principal: false }
+    ];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('meus_enderecos', JSON.stringify(meusEnderecos));
+  }, [meusEnderecos]);
   const [novoEndereco, setNovoEndereco] = useState({
     destinatario: '',
     telefone: '',
@@ -52,13 +65,38 @@ export default function Perfil() {
     telefone: "(79) 99999-0000",
   });
 
+  const PRODUTOS_DATA = [
+    { id: 1, nome: 'Tomate Cereja Orgânico', preco: 8.90, img: 'https://cdn.shoppub.io/cdn-cgi/image/w=1000,h=1000,q=80,f=auto/beirario/media/uploads/produtos/foto/b3fd841dfd2c3file.png' },
+    { id: 2, nome: 'Ovos Caipira (Dúzia)', preco: 14.50, img: 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?auto=format&fit=crop&w=400&q=80' },
+    { id: 3, nome: 'Café Especial 500g', preco: 28.90, img: 'https://images.unsplash.com/photo-1559056199-641a0ac8b55e?auto=format&fit=crop&w=400&q=80' },
+    { id: 4, nome: 'Cesto de Palha', preco: 120.00, img: 'https://img.elo7.com.br/product/zoom/3996150/cesto-de-palha-com-alca-40cm-cesto-de-palha.jpg' },
+    { id: 5, nome: 'Queijo Coalho Tradicional', preco: 38.00, img: 'https://api.ootimista.com.br/wp-content/uploads/2023/02/queijo-coalho-embrapa.jpg' },
+    { id: 6, nome: 'Carne Seca', preco: 38.00, img: 'https://revistamaiscarne.com.br/wp-content/uploads/2024/05/Brasileirissima-a-Carne-Seca-segue-conquistando-novos-publicos-2.jpg' },
+    { id: 7, nome: 'Feijão Verde', preco: 15.00, img: 'https://receitadaboa.com.br/wp-content/uploads/2024/09/Feijao-verde-nordestino.jpg' },
+    { id: 8, nome: 'Kit: 1 Cobre-leito Bouti de Microfibra Ultrassonic + Porta-Travesseiros ', preco: 179.80, img: 'https://adaptive-images.uooucdn.com.br/ik-seo/tr:w-1100,h-1594,c-at_max,pr-true,q-80/a22573-ogxytxlxwt0/pv/82/84/48/813d10430e46dbd0c2bc48f2a5/kit-1-cobre-leito-bouti-de-microfibra-ultrassonic-porta-travesseiros-lais-verde-large-1.png' },
+    { id: 9, nome: 'Coxinha Fit de Batata Doce com Frango e Requeijão ', preco: 13, img: 'https://s2-receitas.glbimg.com/7HHi1Zrz6Dxt_G7N09l-NapN8X4=/0x0:1366x768/984x0/smart/filters:strip_icc()/i.s3.glbimg.com/v1/AUTH_1f540e0b94d8437dbbc39d567a1dee68/internal_photos/bs/2025/v/t/ceFth3Tnu97KDRgekajg/coxinha-de-galinha-com-massa-de-batata.jpg' },
+    { id: 10, nome: 'Conjunto Infantil Menino', preco: 65.90, img: 'https://somoscorujas.cdn.magazord.com.br/img/2025/01/produto/45394/sc19758-1.png?ims=fit-in/400x533/filters:fill(white)' },
+  ];
+
   // Estados para Favoritos
   const [filtroFavoritos, setFiltroFavoritos] = useState<'recentes' | 'barato' | 'caro'>('recentes');
-  const [meusFavoritos, setMeusFavoritos] = useState([
-    { id: 1, nome: "Tomate Cereja Orgânico", preco: 17.80, img: "https://images.unsplash.com/photo-1591073113125-e46713c829ed?w=400" },
-    { id: 2, nome: "Mel Silvestre Puro", preco: 45.00, img: "https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=400" },
-    { id: 3, nome: "Queijo Coalho Tradicional", preco: 38.00, img: "https://images.unsplash.com/photo-1486297678162-eb2a19b0a32d?w=400" }
-  ]);
+  const [meusFavoritos, setMeusFavoritos] = useState<any[]>(() => {
+    const salvos = localStorage.getItem('favoritos_itens');
+    if (salvos) {
+      try {
+        const ids = JSON.parse(salvos);
+        return ids.map((id: number) => PRODUTOS_DATA.find(p => p.id === id)).filter((p: any) => p !== undefined);
+      } catch (e) {
+        return [];
+      }
+    }
+    return [];
+  });
+
+  useEffect(() => {
+    const ids = meusFavoritos.map(f => f.id);
+    localStorage.setItem('favoritos_itens', JSON.stringify(ids));
+  }, [meusFavoritos]);
 
   // Estado para Visto Recentemente
   const [vistoRecently, setVistoRecently] = useState([
@@ -159,7 +197,20 @@ export default function Perfil() {
                 <p className="text-[11px] font-black text-[#394158] leading-tight mb-auto group-hover:text-[#802D44] transition-colors">{prod.nome}</p>
                 <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-50">
                   <span className="text-xs font-black text-[#55833d]">R$ {prod.preco.toFixed(2).replace('.', ',')}</span>
-                  <button onClick={(e) => { e.stopPropagation(); alert('Adicionado!'); }} className="p-2.5 bg-[#F5F2ED] text-[#802D44] rounded-xl active:scale-90 hover:bg-[#802D44] hover:text-white transition-all shadow-sm">
+                  <button onClick={(e) => { 
+                    e.stopPropagation(); 
+                    const carrinhoSalvo = localStorage.getItem('carrinho_itens');
+                    let itens = carrinhoSalvo ? JSON.parse(carrinhoSalvo) : [];
+                    if (!Array.isArray(itens)) itens = [];
+                    const index = itens.findIndex((i: any) => i.id === prod.id);
+                    if (index !== -1) itens[index].quantidade += 1;
+                    else itens.push({ id: prod.id, quantidade: 1, selecionado: true });
+                    const totalCount = itens.reduce((acc: number, curr: any) => acc + curr.quantidade, 0);
+                    localStorage.setItem('carrinho_itens', JSON.stringify(itens));
+                    localStorage.setItem('carrinho_count', totalCount.toString());
+                    window.dispatchEvent(new Event('storage'));
+                    alert('Adicionado!'); 
+                  }} className="p-2.5 bg-[#F5F2ED] text-[#802D44] rounded-xl active:scale-90 hover:bg-[#802D44] hover:text-white transition-all shadow-sm">
                     <ShoppingCart size={14} />
                   </button>
                 </div>
@@ -354,13 +405,39 @@ export default function Perfil() {
             {pedidoSelecionado.produtos.map((p: any) => (
               <div key={p.id} className="flex items-center justify-between bg-white p-2 rounded-3xl border border-gray-50 group">
                 <div className="flex items-center gap-4"><img src={p.img} className="w-14 h-14 rounded-2xl object-cover shadow-sm" /><div><p className="text-sm font-black text-[#394158]">{p.nome}</p><p className="text-[10px] font-bold text-[#802D44]">R$ {p.preco}</p></div></div>
-                <button onClick={() => alert(`${p.nome} adicionado!`)} className="p-4 bg-[#F5F2ED] text-[#802D44] rounded-2xl active:scale-90 hover:bg-[#802D44] hover:text-white transition-all"><ShoppingCart size={18} /></button>
+                <button onClick={() => {
+                  const carrinhoSalvo = localStorage.getItem('carrinho_itens');
+                  let itens = carrinhoSalvo ? JSON.parse(carrinhoSalvo) : [];
+                  if (!Array.isArray(itens)) itens = [];
+                  const index = itens.findIndex((i: any) => i.id === p.id);
+                  if (index !== -1) itens[index].quantidade += 1;
+                  else itens.push({ id: p.id, quantidade: 1, selecionado: true });
+                  const totalCount = itens.reduce((acc: number, curr: any) => acc + curr.quantidade, 0);
+                  localStorage.setItem('carrinho_itens', JSON.stringify(itens));
+                  localStorage.setItem('carrinho_count', totalCount.toString());
+                  window.dispatchEvent(new Event('storage'));
+                  alert(`${p.nome} adicionado!`);
+                }} className="p-4 bg-[#F5F2ED] text-[#802D44] rounded-2xl active:scale-90 hover:bg-[#802D44] hover:text-white transition-all"><ShoppingCart size={18} /></button>
               </div>
             ))}
           </div>
           <div className="pt-6 border-t border-dashed flex flex-col gap-4">
              <div className="flex justify-between items-baseline px-2"><span className="font-black uppercase text-[10px] opacity-30">Total Pago</span><span className="text-2xl font-black text-[#55833d]">R$ {pedidoSelecionado.total}</span></div>
-             <button onClick={() => { alert("Pedido recomprado!"); navigate('/carrinho'); }} className="w-full bg-[#802D44] text-white py-5 rounded-[2rem] font-black uppercase text-[10px] shadow-lg active:scale-95 transition-all flex items-center justify-center gap-3"><RotateCcw size={16}/> Comprar pedido completo</button>
+             <button onClick={() => { 
+                const carrinhoSalvo = localStorage.getItem('carrinho_itens');
+                let itens = carrinhoSalvo ? JSON.parse(carrinhoSalvo) : [];
+                if (!Array.isArray(itens)) itens = [];
+                pedidoSelecionado.produtos.forEach((p: any) => {
+                  const index = itens.findIndex((i: any) => i.id === p.id);
+                  if (index !== -1) itens[index].quantidade += 1;
+                  else itens.push({ id: p.id, quantidade: 1, selecionado: true });
+                });
+                const totalCount = itens.reduce((acc: number, curr: any) => acc + curr.quantidade, 0);
+                localStorage.setItem('carrinho_itens', JSON.stringify(itens));
+                localStorage.setItem('carrinho_count', totalCount.toString());
+                window.dispatchEvent(new Event('storage'));
+                navigate('/carrinho'); 
+             }} className="w-full bg-[#802D44] text-white py-5 rounded-[2rem] font-black uppercase text-[10px] shadow-lg active:scale-95 transition-all flex items-center justify-center gap-3"><RotateCcw size={16}/> Comprar pedido completo</button>
           </div>
         </div>
       </div>
