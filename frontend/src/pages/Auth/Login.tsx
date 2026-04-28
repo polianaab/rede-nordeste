@@ -8,7 +8,7 @@ export default function Login() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Aqui no futuro vocês colocarão a lógica de validação do banco de dados
     console.log("Login realizado com sucesso!");
 
@@ -30,21 +30,21 @@ export default function Login() {
         <form onSubmit={handleLogin} className="space-y-5">
           <div className="relative">
             <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-            <input 
-              type="email" 
-              placeholder="Seu e-mail" 
-              required 
-              className="w-full pl-12 pr-4 py-4 bg-gray-50 border-transparent rounded-2xl focus:bg-white focus:border-[#394158] transition-all outline-none text-sm font-medium" 
+            <input
+              type="email"
+              placeholder="Seu e-mail"
+              required
+              className="w-full pl-12 pr-4 py-4 bg-gray-50 border-transparent rounded-2xl focus:bg-white focus:border-[#394158] transition-all outline-none text-sm font-medium"
             />
           </div>
 
           <div className="relative">
             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-            <input 
-              type="password" 
-              placeholder="Sua senha" 
-              required 
-              className="w-full pl-12 pr-4 py-4 bg-gray-50 border-transparent rounded-2xl focus:bg-white focus:border-[#394158] transition-all outline-none text-sm font-medium" 
+            <input
+              type="password"
+              placeholder="Sua senha"
+              required
+              className="w-full pl-12 pr-4 py-4 bg-gray-50 border-transparent rounded-2xl focus:bg-white focus:border-[#394158] transition-all outline-none text-sm font-medium"
             />
           </div>
 
