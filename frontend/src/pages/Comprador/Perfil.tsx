@@ -14,7 +14,7 @@ export default function Perfil() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Estados de navegação interna
-  const [telaAtual, setTelaAtual] = useState<'perfil' | 'configuracoes' | 'compras' | 'detalhe-pedido' | 'favoritos' | 'recentes'>('perfil');
+  const [telaAtual, setTelaAtual] = useState<'perfil' | 'configuracoes' | 'compras' | 'detalhe-pedido' | 'rastreio-pedido' | 'favoritos' | 'recentes'>('perfil');
   const [abaAtiva, setAbaAtiva] = useState<'pagar' | 'preparando' | 'caminho' | 'finalizados'>('finalizados');
   const [secaoConfig, setSecaoConfig] = useState<'menu' | 'conta' | 'enderecos' | 'cartoes'>('menu');
   const [pedidoSelecionado, setPedidoSelecionado] = useState<any>(null);
@@ -143,14 +143,14 @@ export default function Perfil() {
   // --- TELA VISTO RECENTEMENTE ---
   const renderVistoRecentemente = () => (
     <div className="space-y-6 animate-in slide-in-from-right duration-300 max-w-5xl mx-auto">
-      <button onClick={() => setTelaAtual('perfil')} className="flex items-center gap-2 text-[10px] font-black uppercase text-[#802D44] bg-white px-4 py-2 rounded-full shadow-sm active:scale-95 transition-all">
+      <button onClick={() => setTelaAtual('perfil')} className="flex items-center gap-2 text-[10px] font-black uppercase text-[#394158] bg-white px-4 py-2 rounded-full shadow-sm active:scale-95 transition-all">
         <ArrowLeft size={14}/> Voltar
       </button>
       <h3 className="text-xl font-black uppercase italic text-[#394158] px-2 tracking-tighter">Visto Recentemente</h3>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 pb-10 px-2">
         {vistoRecently.map((prod) => (
-          <div key={prod.id} onClick={() => navigate(`/produto/${prod.id}`)} className="bg-white rounded-[2rem] p-3 shadow-xl border border-white flex flex-col h-full cursor-pointer active:scale-95 transition-all group">
-            <div className="w-full aspect-square rounded-[1.5rem] overflow-hidden bg-[#F5F2ED] mb-3">
+          <div key={prod.id} onClick={() => navigate(`/produto/${prod.id}`)} className="bg-white rounded-[1rem] p-3 shadow-xl border border-white flex flex-col h-full cursor-pointer active:scale-95 transition-all group">
+            <div className="w-full aspect-square rounded-[0.8rem] overflow-hidden bg-[#F5F2ED] mb-3">
               <img src={prod.img} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={prod.nome} />
             </div>
             <div className="flex flex-col flex-1 px-1">
@@ -170,7 +170,7 @@ export default function Perfil() {
   const renderFavoritos = () => (
     <div className="space-y-6 animate-in slide-in-from-right duration-300 max-w-5xl mx-auto">
       <div className="flex items-center justify-between px-2">
-        <button onClick={() => setTelaAtual('perfil')} className="flex items-center gap-2 text-[10px] font-black uppercase text-[#802D44] bg-white px-4 py-2 rounded-full shadow-sm active:scale-95 transition-all">
+        <button onClick={() => setTelaAtual('perfil')} className="flex items-center gap-2 text-[10px] font-black uppercase text-[#394158] bg-white px-4 py-2 rounded-full shadow-sm active:scale-95 transition-all">
           <ArrowLeft size={14}/> Voltar
         </button>
         <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full shadow-sm border border-gray-50">
@@ -185,12 +185,12 @@ export default function Perfil() {
       <h3 className="text-xl font-black uppercase italic text-[#394158] px-2 tracking-tighter">Meus Favoritos</h3>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 pb-10 px-2">
         {favoritosOrdenados.map((prod) => (
-          <div key={prod.id} className="bg-white rounded-[2rem] p-3 shadow-xl shadow-[#394158]/5 border border-white flex flex-col h-full relative animate-in fade-in duration-500">
+          <div key={prod.id} className="bg-white rounded-[1rem] p-3 shadow-xl shadow-[#394158]/5 border border-white flex flex-col h-full relative animate-in fade-in duration-500">
             <button onClick={(e) => { e.stopPropagation(); setMeusFavoritos(meusFavoritos.filter(f => f.id !== prod.id)); }} className="absolute top-4 right-4 z-10 p-2 bg-white/90 shadow-md rounded-full text-red-400 hover:text-red-600 active:scale-90 transition-all border border-gray-50" title="Remover dos favoritos">
               <HeartOff size={14} />
             </button>
             <div onClick={() => navigate(`/produto/${prod.id}`)} className="cursor-pointer group flex flex-col flex-1">
-              <div className="w-full aspect-square rounded-[1.5rem] overflow-hidden bg-[#F5F2ED] mb-3">
+              <div className="w-full aspect-square rounded-[0.8rem] overflow-hidden bg-[#F5F2ED] mb-3">
                 <img src={prod.img} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={prod.nome} />
               </div>
               <div className="flex flex-col flex-1 px-1">
@@ -210,7 +210,7 @@ export default function Perfil() {
                     localStorage.setItem('carrinho_count', totalCount.toString());
                     window.dispatchEvent(new Event('storage'));
                     alert('Adicionado!'); 
-                  }} className="p-2.5 bg-[#F5F2ED] text-[#802D44] rounded-xl active:scale-90 hover:bg-[#802D44] hover:text-white transition-all shadow-sm">
+                  }} className="p-2.5 bg-[#F5F2ED] text-[#f9943b] rounded-xl active:scale-90 hover:bg-[#f9943b] hover:text-white transition-all shadow-sm">
                     <ShoppingCart size={14} />
                   </button>
                 </div>
@@ -228,14 +228,14 @@ export default function Perfil() {
       case 'conta':
         return (
           <div className="space-y-6 animate-in slide-in-from-right duration-300 max-w-2xl mx-auto">
-            <button onClick={() => setSecaoConfig('menu')} className="flex items-center gap-2 text-[10px] font-black uppercase text-[#802D44] mb-4 bg-white px-4 py-2 rounded-full shadow-sm active:scale-95 transition-all">
+            <button onClick={() => setSecaoConfig('menu')} className="flex items-center gap-2 text-[10px] font-black uppercase text-[#394158] mb-4 bg-white px-4 py-2 rounded-full shadow-sm active:scale-95 transition-all">
               <ArrowLeft size={14}/> Voltar
             </button>
             <div className="px-2">
               <h3 className="text-xl font-black uppercase italic text-[#394158]">Conta e Segurança</h3>
               <p className="text-[10px] text-gray-400 uppercase font-bold tracking-widest mt-1">Atualize seus dados de acesso</p>
             </div>
-            <form className="bg-white rounded-[3rem] p-8 shadow-xl border border-white space-y-5" onSubmit={(e) => e.preventDefault()}>
+            <form className="bg-white rounded-[1rem] p-8 shadow-xl border border-white space-y-5" onSubmit={(e) => e.preventDefault()}>
               <div className="space-y-1.5">
                 <label className="text-[9px] font-black uppercase text-gray-400 ml-4 tracking-widest">Nome Completo</label>
                 <input type="text" value={dadosUsuario.nome} onChange={(e) => setDadosUsuario({...dadosUsuario, nome: e.target.value})} className="w-full bg-[#F5F2ED]/50 border-2 border-transparent focus:border-[#55833d]/20 focus:bg-white p-4 rounded-2xl outline-none text-sm font-bold text-[#394158] transition-all" />
@@ -260,7 +260,7 @@ export default function Perfil() {
         return (
           <div className="space-y-6 animate-in slide-in-from-right duration-300 max-w-2xl mx-auto">
             <div className="flex items-center justify-between">
-              <button onClick={() => exibirFormEndereco ? setExibirFormEndereco(false) : setSecaoConfig('menu')} className="flex items-center gap-2 text-[10px] font-black uppercase text-[#802D44] bg-white px-4 py-2 rounded-full shadow-sm active:scale-95 transition-all"><ArrowLeft size={14}/> Voltar</button>
+              <button onClick={() => exibirFormEndereco ? setExibirFormEndereco(false) : setSecaoConfig('menu')} className="flex items-center gap-2 text-[10px] font-black uppercase text-[#394158] bg-white px-4 py-2 rounded-full shadow-sm active:scale-95 transition-all"><ArrowLeft size={14}/> Voltar</button>
               {!exibirFormEndereco && meusEnderecos.length > 0 && (
                 <button onClick={() => setExibirFormEndereco(true)} className="text-[10px] font-black uppercase text-[#55833d] bg-white px-4 py-2 rounded-full shadow-sm border border-gray-50">+ Adicionar Outro</button>
               )}
@@ -269,7 +269,7 @@ export default function Perfil() {
               <h3 className="text-xl font-black uppercase italic text-[#394158]">{exibirFormEndereco ? 'Novo Endereço' : 'Meus Endereços'}</h3>
             </div>
             {exibirFormEndereco ? (
-              <form className="bg-white rounded-[3rem] p-8 shadow-xl border border-white space-y-4" onSubmit={(e) => e.preventDefault()}>
+              <form className="bg-white rounded-[1rem] p-8 shadow-xl border border-white space-y-4" onSubmit={(e) => e.preventDefault()}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1.5 md:col-span-2">
                     <label className="text-[9px] font-black uppercase text-gray-400 ml-4">Nome completo do Destinatário</label>
@@ -283,15 +283,15 @@ export default function Perfil() {
                   <div className="space-y-1.5"><label className="text-[9px] font-black uppercase text-gray-400 ml-4">Número</label><input type="text" value={novoEndereco.numero} onChange={(e) => setNovoEndereco({...novoEndereco, numero: e.target.value})} className="w-full bg-[#F5F2ED]/50 border-2 border-transparent focus:border-[#55833d]/20 focus:bg-white p-4 rounded-2xl outline-none text-sm font-bold text-[#394158]" placeholder="123" /></div>
                   <div className="space-y-1.5"><label className="text-[9px] font-black uppercase text-gray-400 ml-4">Complemento</label><input type="text" value={novoEndereco.complemento} onChange={(e) => setNovoEndereco({...novoEndereco, complemento: e.target.value})} className="w-full bg-[#F5F2ED]/50 border-2 border-transparent focus:border-[#55833d]/20 focus:bg-white p-4 rounded-2xl outline-none text-sm font-bold text-[#394158]" placeholder="Apt, Bloco..." /></div>
                 </div>
-                <div className="pt-4"><button type="button" onClick={() => { setMeusEnderecos([...meusEnderecos, novoEndereco]); setExibirFormEndereco(false); alert('Endereço salvo!'); }} className="w-full bg-[#802D44] text-white py-5 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] shadow-lg active:scale-95 transition-all">Salvar Endereço</button></div>
+                <div className="pt-4"><button type="button" onClick={() => { setMeusEnderecos([...meusEnderecos, novoEndereco]); setExibirFormEndereco(false); alert('Endereço salvo!'); }} className="w-full bg-[#55833d] text-white py-5 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] shadow-lg active:scale-95 transition-all">Salvar Endereço</button></div>
               </form>
             ) : (
               <div className="space-y-4">
                 {meusEnderecos.length > 0 ? (
                   meusEnderecos.map((end, idx) => (
-                    <div key={idx} className="bg-white p-6 rounded-[2.5rem] border border-white shadow-sm flex justify-between items-start animate-in fade-in duration-300">
+                    <div key={idx} className="bg-white p-6 rounded-[1rem] border border-white shadow-sm flex justify-between items-start animate-in fade-in duration-300">
                       <div className="space-y-1">
-                        <p className="text-[10px] font-black uppercase text-[#802D44]">{end.destinatario}</p>
+                        <p className="text-[10px] font-black uppercase text-[#f9943b]">{end.destinatario}</p>
                         <p className="text-xs font-bold text-[#394158]">{end.rua}, {end.numero}</p>
                         <p className="text-[10px] text-gray-400 font-bold">{end.bairro} • {end.estadoCidade}</p>
                         <p className="text-[10px] text-gray-400 font-bold">CEP: {end.cep}</p>
@@ -300,7 +300,7 @@ export default function Perfil() {
                     </div>
                   ))
                 ) : (
-                  <div className="bg-white p-12 rounded-[3rem] border-2 border-dashed border-[#802D44]/20 text-center">
+                  <div className="bg-white p-12 rounded-[1rem] border-2 border-dashed border-[#802D44]/20 text-center">
                     <div className="bg-[#F5F2ED] w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"><MapPin size={32} className="text-[#802D44] opacity-40" /></div>
                     <p className="text-xs font-black uppercase text-gray-400 mb-6 tracking-widest">Nenhum endereço cadastrado</p>
                     <button onClick={() => setExibirFormEndereco(true)} className="bg-[#802D44] text-white px-10 py-5 rounded-full font-black text-[10px] uppercase shadow-lg active:scale-95 transition-all">+ Adicionar Novo</button>
@@ -316,7 +316,7 @@ export default function Perfil() {
             <div className="flex items-center justify-between">
               <button 
                 onClick={() => exibirFormCartao ? setExibirFormCartao(false) : setSecaoConfig('menu')} 
-                className="flex items-center gap-2 text-[10px] font-black uppercase text-[#802D44] bg-white px-4 py-2 rounded-full shadow-sm active:scale-95 transition-all"
+                className="flex items-center gap-2 text-[10px] font-black uppercase text-[#394158] bg-white px-4 py-2 rounded-full shadow-sm active:scale-95 transition-all"
               >
                 <ArrowLeft size={14}/> Voltar
               </button>
@@ -327,7 +327,7 @@ export default function Perfil() {
               </h3>
             </div>
             {exibirFormCartao ? (
-              <form className="bg-white rounded-[3rem] p-8 shadow-xl border border-white space-y-5" onSubmit={(e) => e.preventDefault()}>
+              <form className="bg-white rounded-[1rem] p-8 shadow-xl border border-white space-y-5" onSubmit={(e) => e.preventDefault()}>
                 <div className="space-y-1.5">
                   <label className="text-[9px] font-black uppercase text-gray-400 ml-4 tracking-widest">Número do Cartão</label>
                   <div className="relative">
@@ -348,7 +348,7 @@ export default function Perfil() {
             ) : (
               <div className="space-y-6">
                 {meusCartoes.map((cartao) => (
-                  <div key={cartao.id} className="bg-gradient-to-br from-[#394158] to-[#1a1f2c] p-8 rounded-[2.5rem] text-white relative overflow-hidden shadow-2xl group animate-in fade-in duration-500">
+                  <div key={cartao.id} className="bg-gradient-to-br from-[#394158] to-[#1a1f2c] p-8 rounded-[1rem] text-white relative overflow-hidden shadow-2xl group animate-in fade-in duration-500">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16"></div>
                     <div className="flex justify-between items-start mb-12 relative z-10">
                       <CardIcon size={32} className="text-[#f9943b]" />
@@ -367,7 +367,7 @@ export default function Perfil() {
                     </div>
                   </div>
                 ))}
-                <button onClick={() => setExibirFormCartao(true)} className="w-full py-6 bg-white border-2 border-dashed border-gray-200 rounded-[2.5rem] text-[10px] font-black uppercase text-gray-400 hover:border-[#f9943b] hover:text-[#f9943b] active:scale-95 transition-all flex items-center justify-center gap-3"><CardIcon size={18} /> + Adicionar Novo Cartão</button>
+                <button onClick={() => setExibirFormCartao(true)} className="w-full py-6 bg-white border-2 border-dashed border-gray-200 rounded-[1rem] text-[10px] font-black uppercase text-gray-400 hover:border-[#f9943b] hover:text-[#f9943b] active:scale-95 transition-all flex items-center justify-center gap-3"><CardIcon size={18} /> + Adicionar Novo Cartão</button>
               </div>
             )}
           </div>
@@ -376,10 +376,10 @@ export default function Perfil() {
         return (
           <div className="space-y-3 animate-in fade-in duration-300">
             <h3 className="text-xl font-black uppercase italic text-[#394158] mb-6 px-4">CONFIGURAÇÕES</h3>
-            {[{id:'conta',icon:Lock,label:'Conta e Segurança'},{id:'enderecos',icon:MapPin,label:'Meus Endereços'},{id:'cartoes',icon:CreditCard,label:'Pagamentos'}].map((item)=>(
-              <button key={item.id} onClick={()=>setSecaoConfig(item.id as any)} className="w-full flex items-center justify-between p-5 bg-white rounded-[2rem] border border-white shadow-sm active:scale-[0.98] transition-all group">
+            {[{id:'conta',icon:Lock,label:'Conta e Segurança'},{id:'enderecos',icon:MapPin,label:'Meus Endereços'},{id:'cartoes',icon:CreditCard,label:'Métodos de Pagamento'}].map((item)=>(
+              <button key={item.id} onClick={()=>setSecaoConfig(item.id as any)} className="w-full flex items-center justify-between p-5 bg-white rounded-[1rem] border border-white shadow-sm active:scale-[0.98] transition-all group">
                 <div className="flex items-center gap-4">
-                  <div className="p-3 bg-[#F5F2ED] text-[#802D44] rounded-2xl group-hover:bg-[#802D44] group-hover:text-white transition-all"><item.icon size={20}/></div>
+                  <div className="p-3 bg-[#F5F2ED] text-[#f9943b] rounded-2xl group-hover:bg-[#f9943b] group-hover:text-white transition-all"><item.icon size={20}/></div>
                   <span className="font-black uppercase text-[11px] text-[#394158] tracking-widest">{item.label}</span>
                 </div>
                 <ChevronRight size={18} className="text-gray-300" />
@@ -393,13 +393,13 @@ export default function Perfil() {
   // --- TELAS DE COMPRAS ---
   const renderDetalhePedido = () => (
     <div className="space-y-6 animate-in slide-in-from-right duration-300">
-      <button onClick={() => setTelaAtual('compras')} className="flex items-center gap-2 text-[10px] font-black uppercase text-[#802D44] bg-white px-4 py-2 rounded-full shadow-sm active:scale-95 transition-all"><ArrowLeft size={14}/> Voltar</button>
-      <div className="bg-white rounded-[3rem] overflow-hidden shadow-xl border border-white">
+      <button onClick={() => setTelaAtual('compras')} className="flex items-center gap-2 text-[10px] font-black uppercase text-[#394158] bg-white px-4 py-2 rounded-full shadow-sm active:scale-95 transition-all"><ArrowLeft size={14}/> Voltar</button>
+      <div className="bg-white rounded-[1rem] overflow-hidden shadow-xl border border-white">
         <div className="bg-[#394158] p-8 text-white"><p className="text-[10px] font-black uppercase opacity-60 mb-1">Recibo Digital</p><h3 className="text-2xl font-black italic uppercase tracking-tighter">{pedidoSelecionado.id}</h3></div>
         <div className="p-8 space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-[#F5F2ED] p-4 rounded-3xl flex items-center gap-4 border border-gray-100"><Calendar size={20} className="text-[#802D44]" /><div><p className="text-[8px] font-black uppercase opacity-40">Data</p><p className="text-xs font-bold">{pedidoSelecionado.data}</p></div></div>
-            <div className="bg-[#F5F2ED] p-4 rounded-3xl flex items-center gap-4 border border-gray-100"><CardIcon size={20} className="text-[#802D44]" /><div><p className="text-[8px] font-black uppercase opacity-40">Pagamento</p><p className="text-xs font-bold">{pedidoSelecionado.metodoPagamento}</p></div></div>
+            <div className="bg-[#F5F2ED] p-4 rounded-[2rem] flex items-center gap-4 border border-gray-100"><Calendar size={20} className="text-[#f9943b]" /><div><p className="text-[8px] font-black uppercase opacity-40">Data</p><p className="text-xs font-bold">{pedidoSelecionado.data}</p></div></div>
+            <div className="bg-[#F5F2ED] p-4 rounded-[2rem] flex items-center gap-4 border border-gray-100"><CardIcon size={20} className="text-[#f9943b]" /><div><p className="text-[8px] font-black uppercase opacity-40">Pagamento</p><p className="text-xs font-bold">{pedidoSelecionado.metodoPagamento}</p></div></div>
           </div>
           <div className="space-y-4">
             {pedidoSelecionado.produtos.map((p: any) => (
@@ -417,7 +417,7 @@ export default function Perfil() {
                   localStorage.setItem('carrinho_count', totalCount.toString());
                   window.dispatchEvent(new Event('storage'));
                   alert(`${p.nome} adicionado!`);
-                }} className="p-4 bg-[#F5F2ED] text-[#802D44] rounded-2xl active:scale-90 hover:bg-[#802D44] hover:text-white transition-all"><ShoppingCart size={18} /></button>
+                }} className="p-4 bg-[#F5F2ED] text-[#f9943b] rounded-2xl active:scale-90 hover:bg-[#f9943b] hover:text-white transition-all"><ShoppingCart size={18} /></button>
               </div>
             ))}
           </div>
@@ -427,17 +427,113 @@ export default function Perfil() {
                 const carrinhoSalvo = localStorage.getItem('carrinho_itens');
                 let itens = carrinhoSalvo ? JSON.parse(carrinhoSalvo) : [];
                 if (!Array.isArray(itens)) itens = [];
+                
+                // Desmarca itens que já estavam no carrinho
+                itens = itens.map((i: any) => ({ ...i, selecionado: false }));
+
                 pedidoSelecionado.produtos.forEach((p: any) => {
                   const index = itens.findIndex((i: any) => i.id === p.id);
-                  if (index !== -1) itens[index].quantidade += 1;
-                  else itens.push({ id: p.id, quantidade: 1, selecionado: true });
+                  if (index !== -1) {
+                    itens[index].quantidade += 1;
+                    itens[index].selecionado = true; // Marca os do pedido atual
+                  } else {
+                    itens.push({ id: p.id, quantidade: 1, selecionado: true });
+                  }
                 });
                 const totalCount = itens.reduce((acc: number, curr: any) => acc + curr.quantidade, 0);
                 localStorage.setItem('carrinho_itens', JSON.stringify(itens));
                 localStorage.setItem('carrinho_count', totalCount.toString());
                 window.dispatchEvent(new Event('storage'));
                 navigate('/carrinho'); 
-             }} className="w-full bg-[#802D44] text-white py-5 rounded-[2rem] font-black uppercase text-[10px] shadow-lg active:scale-95 transition-all flex items-center justify-center gap-3"><RotateCcw size={16}/> Comprar pedido completo</button>
+             }} className="w-full bg-[#55833d] text-white py-5 rounded-[1rem] font-black uppercase text-[10px] shadow-lg active:scale-95 transition-all flex items-center justify-center gap-3"><RotateCcw size={16}/> Comprar pedido completo</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderRastreioPedido = () => (
+    <div className="space-y-6 animate-in slide-in-from-right duration-300">
+      <button onClick={() => setTelaAtual('compras')} className="flex items-center gap-2 text-[10px] font-black uppercase text-[#394158] bg-white px-4 py-2 rounded-full shadow-sm active:scale-95 transition-all"><ArrowLeft size={14}/> Voltar</button>
+      <div className="bg-white rounded-[2rem] p-6 md:p-8 shadow-xl border border-gray-50 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-[#f9943b]/10 rounded-full -mr-16 -mt-16"></div>
+        <div className="flex justify-between items-center mb-10 relative z-10">
+          <div>
+            <p className="text-[10px] font-black uppercase text-[#f9943b] tracking-widest mb-1">Pedido {pedidoSelecionado?.id}</p>
+            <h3 className="text-xl font-black italic text-[#394158] uppercase">Acompanhe seu pedido</h3>
+          </div>
+        </div>
+        
+        <div className="relative pt-4 pb-8 mb-4">
+          <div className="absolute top-8 left-[12.5%] right-[12.5%] h-1.5 bg-gray-100 rounded-full"></div>
+          <div className="absolute top-8 left-[12.5%] w-[50%] h-1.5 bg-gradient-to-r from-[#f9943b] to-[#fbac66] rounded-full transition-all duration-1000 ease-out shadow-sm"></div>
+          
+          <div className="flex justify-between relative z-10">
+            <div className="flex flex-col items-center gap-3 group w-1/4">
+              <div className="w-10 h-10 rounded-full bg-[#f9943b] text-white flex items-center justify-center shadow-md border-4 border-white transition-transform group-hover:scale-110">
+                <CheckCircle size={16} />
+              </div>
+              <div className="text-center">
+                <p className="text-[9px] font-black uppercase text-[#394158]">Confirmado</p>
+                <p className="text-[8px] font-bold text-gray-400">09:41</p>
+              </div>
+            </div>
+            <div className="flex flex-col items-center gap-3 group w-1/4">
+              <div className="w-10 h-10 rounded-full bg-[#f9943b] text-white flex items-center justify-center shadow-md border-4 border-white transition-transform group-hover:scale-110">
+                <Package size={16} />
+              </div>
+              <div className="text-center">
+                <p className="text-[9px] font-black uppercase text-[#394158]">Preparando</p>
+                <p className="text-[8px] font-bold text-gray-400">10:15</p>
+              </div>
+            </div>
+            <div className="flex flex-col items-center gap-3 group w-1/4">
+              <div className="w-14 h-14 -mt-2 rounded-full bg-white text-[#f9943b] flex items-center justify-center shadow-xl border-4 border-[#f9943b] transition-transform group-hover:scale-110 relative">
+                <Truck size={22} />
+              </div>
+              <div className="text-center mt-1">
+                <p className="text-[10px] font-black uppercase text-[#f9943b] tracking-widest">A Caminho</p>
+                <p className="text-[9px] font-bold text-gray-500">Previsão: 12:30</p>
+              </div>
+            </div>
+            <div className="flex flex-col items-center gap-3 group w-1/4">
+              <div className="w-10 h-10 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center border-4 border-white transition-transform group-hover:scale-110">
+                <MapPin size={16} />
+              </div>
+              <div className="text-center">
+                <p className="text-[9px] font-black uppercase text-gray-400">Entregue</p>
+                <p className="text-[8px] font-bold text-gray-400">--:--</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-[#F5F2ED] rounded-2xl p-5 border border-gray-100 mb-4">
+          <h4 className="text-[10px] font-black uppercase text-[#394158] tracking-widest mb-4">Histórico de Rastreio</h4>
+          <div className="flex flex-col gap-4 relative">
+            <div className="absolute left-[9px] top-2 bottom-2 w-0.5 bg-gray-200"></div>
+            <div className="relative flex items-start gap-4">
+              <div className="w-5 h-5 rounded-full bg-[#f9943b] text-white flex items-center justify-center shrink-0 mt-0.5 relative z-10"><MapPin size={10} /></div>
+              <div><p className="text-xs font-bold text-[#394158]">Chegou em Aracaju, SE</p><p className="text-[9px] font-black uppercase text-gray-400">Hoje, 10:30</p></div>
+            </div>
+            <div className="relative flex items-start gap-4">
+              <div className="w-5 h-5 rounded-full bg-gray-300 text-white flex items-center justify-center shrink-0 mt-0.5 relative z-10"><Truck size={10} /></div>
+              <div><p className="text-xs font-bold text-gray-500">Em trânsito para Sergipe</p><p className="text-[9px] font-black uppercase text-gray-400">Ontem, 18:45</p></div>
+            </div>
+            <div className="relative flex items-start gap-4">
+              <div className="w-5 h-5 rounded-full bg-gray-300 text-white flex items-center justify-center shrink-0 mt-0.5 relative z-10"><Package size={10} /></div>
+              <div><p className="text-xs font-bold text-gray-500">Saiu de Recife, PE</p><p className="text-[9px] font-black uppercase text-gray-400">Ontem, 14:20</p></div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl p-5 flex items-center gap-5 border border-gray-100 shadow-sm">
+          <div className="bg-[#f9943b]/10 p-4 rounded-full text-[#f9943b]">
+            <MapPin size={20} />
+          </div>
+          <div>
+            <p className="text-[9px] font-black uppercase text-gray-400 tracking-widest">Endereço de Entrega</p>
+            <p className="text-sm font-bold text-[#394158]">Rua das Palmeiras, 450 - Atalaia</p>
           </div>
         </div>
       </div>
@@ -446,11 +542,11 @@ export default function Perfil() {
 
   const renderTelaCompras = () => (
     <div className="space-y-6 animate-in slide-in-from-right duration-300">
-      <button onClick={() => setTelaAtual('perfil')} className="flex items-center gap-2 text-[10px] font-black uppercase text-[#802D44] bg-white px-4 py-2 rounded-full shadow-sm active:scale-95 transition-all"><ArrowLeft size={14}/> Voltar ao Perfil</button>
-      <section className="bg-white rounded-[3rem] shadow-xl border border-white overflow-hidden">
+      <button onClick={() => setTelaAtual('perfil')} className="flex items-center gap-2 text-[10px] font-black uppercase text-[#394158] bg-white px-4 py-2 rounded-full shadow-sm active:scale-95 transition-all"><ArrowLeft size={14}/> Voltar ao Perfil</button>
+      <section className="bg-white rounded-[2rem] shadow-xl border border-white overflow-hidden">
         <div className="flex border-b border-gray-50 overflow-x-auto scrollbar-hide bg-white">
           {[{id:'pagar',l:'A Pagar',i:Wallet},{id:'preparando',l:'Preparando',i:Package},{id:'caminho',l:'A Caminho',i:Truck},{id:'finalizados',l:'Finalizados',i:ShoppingBag}].map((tab)=>(
-            <button key={tab.id} onClick={() => setAbaAtiva(tab.id as any)} className={`flex-1 min-w-[80px] py-6 flex flex-col items-center gap-2 relative ${abaAtiva === tab.id ? 'text-[#802D44]' : 'text-gray-300'}`}><tab.i size={18} /><span className="text-[8px] font-black uppercase tracking-tighter">{tab.l}</span>{abaAtiva === tab.id && <div className="absolute bottom-0 w-8 h-1 bg-[#802D44] rounded-t-full" />}</button>
+            <button key={tab.id} onClick={() => setAbaAtiva(tab.id as any)} className={`flex-1 min-w-[80px] py-6 flex flex-col items-center gap-2 relative ${abaAtiva === tab.id ? 'text-[#55833d]' : 'text-gray-300'}`}><tab.i size={18} /><span className="text-[8px] font-black uppercase tracking-tighter">{tab.l}</span>{abaAtiva === tab.id && <div className="absolute bottom-0 w-8 h-1 bg-[#55833d] rounded-t-full" />}</button>
           ))}
         </div>
         <div className="p-8 min-h-[400px] bg-[#FDFCFB]">
@@ -466,6 +562,18 @@ export default function Perfil() {
                 </div>
               ))}
             </div>
+          ) : abaAtiva === 'caminho' ? (
+            <div className="space-y-4">
+              {COMPRAS_FINALIZADAS.map((pedido) => (
+                <div key={pedido.id} className="bg-gradient-to-r from-[#f9943b]/10 to-[#f9943b]/5 rounded-[2.5rem] p-6 border border-[#f9943b]/10 flex flex-col md:flex-row items-center justify-between gap-4 transition-all hover:shadow-md group">
+                  <div className="flex items-center gap-5 w-full md:w-auto">
+                    <div className="flex -space-x-4">{pedido.produtos.map((p: any, idx: number) => <img key={idx} src={p.img} className="w-14 h-14 rounded-2xl border-4 border-white object-cover" />)}</div>
+                    <div><p className="text-[10px] font-black text-[#f9943b] uppercase">Pedido {pedido.id}</p><h4 className="text-lg font-black text-[#394158] italic">R$ {pedido.total}</h4><p className="text-[9px] font-black uppercase text-[#f9943b] flex items-center gap-1"><Truck size={10} /> A Caminho</p></div>
+                  </div>
+                  <button onClick={() => { setPedidoSelecionado(pedido); setTelaAtual('rastreio-pedido'); }} className="w-full md:w-auto bg-[#f9943b] text-white px-6 py-4 md:py-3 rounded-[1.5rem] md:rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg active:scale-95 transition-all text-center">Rastrear Pedido</button>
+                </div>
+              ))}
+            </div>
           ) : (<div className="flex flex-col items-center justify-center py-10 opacity-20"><ShoppingBag size={48} className="mb-4" /><p className="text-[10px] font-black uppercase tracking-widest">Vazio</p></div>)}
         </div>
       </section>
@@ -473,12 +581,12 @@ export default function Perfil() {
   );
 
   return (
-    <div className="min-h-screen bg-[#F5F2ED] text-[#394158] font-sans pb-24 md:pb-10">
+    <div className="min-h-screen bg-[#F5F2ED] text-[#394158] font-open-sans pb-24 md:pb-10">
       <input type="file" ref={fileInputRef} onChange={handleTrocarFoto} accept="image/*" className="hidden" />
       <header className="w-full bg-white/80 backdrop-blur-md py-6 px-6 border-b border-gray-100 sticky top-0 z-50">
         <div className="max-w-4xl mx-auto flex justify-between items-center">
           <button onClick={() => telaAtual === 'perfil' ? navigate('/home2') : setTelaAtual('perfil')} className="p-3 active:scale-90 transition-all"><ArrowLeft size={20} className="text-[#802D44]" /></button>
-          <h2 className="text-sm font-black uppercase tracking-[0.3em] text-[#394158]">PERFIL</h2>
+          <h2 className="text-sm font-black font-roboto uppercase tracking-[0.3em] text-[#394158]">PERFIL</h2>
           <div className="flex items-center gap-2">
             {telaAtual === 'perfil' && <button onClick={() => setTelaAtual('configuracoes')} className="p-3 active:scale-90 transition-all"><Settings size={20} /></button>}
             <button onClick={() => navigate('/')} className="p-3 text-red-500 active:scale-90 transition-all"><LogOut size={20} /></button>
@@ -487,21 +595,21 @@ export default function Perfil() {
       </header>
 
       <main className="max-w-4xl mx-auto px-6 pt-8">
-        {telaAtual === 'configuracoes' ? renderConfiguracoes() : telaAtual === 'compras' ? renderTelaCompras() : telaAtual === 'detalhe-pedido' ? renderDetalhePedido() : telaAtual === 'favoritos' ? renderFavoritos() : telaAtual === 'recentes' ? renderVistoRecentemente() : (
+        {telaAtual === 'configuracoes' ? renderConfiguracoes() : telaAtual === 'compras' ? renderTelaCompras() : telaAtual === 'detalhe-pedido' ? renderDetalhePedido() : telaAtual === 'rastreio-pedido' ? renderRastreioPedido() : telaAtual === 'favoritos' ? renderFavoritos() : telaAtual === 'recentes' ? renderVistoRecentemente() : (
           <div className="space-y-6 animate-in fade-in duration-500">
-            <div className="bg-gradient-to-r from-[#802D44] to-[#a33b56] rounded-[3rem] p-8 shadow-2xl flex flex-col md:flex-row items-center gap-6 text-white relative overflow-hidden">
+            <div className="bg-gradient-to-r from-[#f9943b] to-[#fbac66] rounded-[1rem] p-8 shadow-2xl flex flex-col md:flex-row items-center gap-6 text-white relative overflow-hidden">
               <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -mr-20 -mt-20"></div>
               <div className="relative">
-                <div className="w-24 h-24 rounded-full border-4 border-white/40 overflow-hidden shadow-inner bg-white/20"><img src={fotoPerfil} className="w-full h-full object-cover" alt="User"/></div>
-                <button onClick={() => fileInputRef.current?.click()} className="absolute bottom-0 right-0 bg-[#f9943b] p-2.5 rounded-full border-2 border-[#802D44] shadow-lg active:scale-90 transition-all"><Camera size={14} className="text-white" /></button>
+                <div className="w-24 h-24 rounded-full border-4 border-[#f9943b] overflow-hidden shadow-inner bg-white/20"><img src={fotoPerfil} className="w-full h-full object-cover" alt="User"/></div>
+                <button onClick={() => fileInputRef.current?.click()} className="absolute bottom-0 right-0 bg-[#55833d] p-2.5 rounded-full border-2 border-[#f9943b] shadow-lg active:scale-90 transition-all"><Camera size={14} className="text-white" /></button>
               </div>
-              <div className="text-center md:text-left z-10"><h3 className="text-2xl font-black italic uppercase leading-none mb-2 tracking-tight">{dadosUsuario.nome}</h3><span className="text-[10px] font-black uppercase bg-white px-4 py-1.5 rounded-full flex items-center gap-1.5 text-[#802D44] shadow-sm"><CheckCircle size={12} className="text-[#4ade80]" /> Comprador Verificado</span></div>
+              <div className="text-center md:text-left z-10"><h3 className="text-2xl font-black font-roboto italic uppercase leading-none mb-2 tracking-tight">{dadosUsuario.nome}</h3><span className="text-[10px] font-black uppercase bg-white px-4 py-1.5 rounded-full flex items-center gap-1.5 text-[#55833d] shadow-sm"><CheckCircle size={12} className="text-[#4ade80]" /> Comprador Verificado</span></div>
             </div>
 
-            <section className="bg-white rounded-[3rem] p-8 shadow-xl border border-white">
+            <section className="bg-white rounded-[1rem] p-8 shadow-xl border border-white">
               <div className="flex justify-between items-center mb-8 px-2">
-                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Minhas Compras</h4>
-                <button onClick={() => { setAbaAtiva('finalizados'); setTelaAtual('compras'); }} className="text-[9px] font-black uppercase text-[#802D44] bg-[#802D44]/5 px-4 py-2 rounded-full active:scale-95 transition-all">Histórico</button>
+                <h4 className="text-[10px] font-black font-roboto uppercase tracking-[0.2em] text-gray-400">Minhas Compras</h4>
+                <button onClick={() => { setAbaAtiva('finalizados'); setTelaAtual('compras'); }} className="text-[9px] font-black uppercase text-[#394158] bg-[#802D44]/5 px-4 py-2 rounded-full active:scale-95 transition-all">Histórico</button>
               </div>
               <div className="grid grid-cols-4 gap-4">
                 {[
@@ -509,28 +617,34 @@ export default function Perfil() {
                   {i: Truck, t: 'A Caminho', id: 'caminho'}, {i: ShoppingBag, t: 'Finalizados', id: 'finalizados'}
                 ].map((item) => (
                   <div key={item.t} onClick={() => { setAbaAtiva(item.id as any); setTelaAtual('compras'); }} className="flex flex-col items-center gap-3 group cursor-pointer active:scale-90 transition-all">
-                    <div className="w-14 h-14 bg-[#F5F2ED] rounded-2xl flex items-center justify-center text-[#394158] group-hover:bg-[#802D44] group-hover:text-white transition-all duration-300 shadow-sm"><item.i size={22} /></div>
+                    <div className="w-14 h-14 bg-[#F5F2ED] rounded-2xl flex items-center justify-center text-[#394158] group-hover:bg-[#55833d] group-hover:text-white transition-all duration-300 shadow-sm"><item.i size={22} /></div>
                     <span className="text-[9px] font-black uppercase text-center tracking-tighter opacity-60">{item.t}</span>
                   </div>
                 ))}
               </div>
             </section>
 
-            <section className="bg-white rounded-[3rem] p-4 shadow-xl border border-white">
-              <div className="px-6 py-4"><h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Atividades</h4></div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                <button onClick={() => setTelaAtual('favoritos')} className="flex items-center justify-between p-5 hover:bg-[#F5F2ED] rounded-[2rem] active:scale-[0.98] group transition-all">
-                  <div className="flex items-center gap-4"><div className="text-[#55833d] group-hover:scale-110 transition-transform"><Heart size={20} /></div><span className="text-xs font-black uppercase tracking-widest">Favoritos</span></div>
-                  <ChevronRight size={16} className="text-gray-200 group-hover:text-[#55833d]" />
-                </button>
-                <button onClick={() => setTelaAtual('recentes')} className="flex items-center justify-between p-5 hover:bg-[#F5F2ED] rounded-[2rem] active:scale-[0.98] group transition-all">
-                  <div className="flex items-center gap-4"><div className="text-[#802D44] group-hover:scale-110 transition-transform"><History size={20} /></div><span className="text-xs font-black uppercase tracking-widest">Visto Recentemente</span></div>
-                  <ChevronRight size={16} className="text-gray-200 group-hover:text-[#802D44]" />
-                </button>
-                <button className="flex items-center justify-between p-5 hover:bg-[#F5F2ED] rounded-[2rem] active:scale-[0.98] group transition-all">
-                  <div className="flex items-center gap-4"><div className="text-[#f9943b] group-hover:scale-110 transition-transform"><HelpCircle size={20} /></div><span className="text-xs font-black uppercase tracking-widest">Ajuda e Suporte</span></div>
-                  <ChevronRight size={16} className="text-gray-200 group-hover:text-[#f9943b]" />
-                </button>
+            <section className="bg-white rounded-[1rem] p-4 md:p-8 shadow-xl border border-white">
+              <div className="flex justify-center items-center mb-4 md:mb-8 px-2"><h4 className="text-[10px] font-black font-roboto uppercase tracking-[0.2em] text-gray-400">Atividades</h4></div>
+              <div className="grid grid-cols-1 md:grid-cols-3 w-full divide-y divide-gray-100 md:divide-y-0">
+                <div className="flex justify-center w-full py-4 md:py-0">
+                  <button onClick={() => setTelaAtual('favoritos')} className="flex flex-col items-center justify-center p-4 hover:bg-[#F5F2ED] rounded-[1rem] active:scale-[0.98] group transition-all w-full md:w-32 gap-3 text-center">
+                    <div className="text-[#55833d] group-hover:scale-110 transition-transform"><Heart size={24} /></div>
+                    <span className="text-[10px] font-black uppercase tracking-widest leading-tight">Favoritos</span>
+                  </button>
+                </div>
+                <div className="flex justify-center w-full py-4 md:py-0">
+                  <button onClick={() => setTelaAtual('recentes')} className="flex flex-col items-center justify-center p-4 hover:bg-[#F5F2ED] rounded-[1rem] active:scale-[0.98] group transition-all w-full md:w-32 gap-3 text-center">
+                    <div className="text-[#802D44] group-hover:scale-110 transition-transform"><History size={24} /></div>
+                    <span className="text-[10px] font-black uppercase tracking-widest leading-tight">Visto<br className="hidden md:block"/>Recentemente</span>
+                  </button>
+                </div>
+                <div className="flex justify-center w-full py-4 md:py-0">
+                  <button className="flex flex-col items-center justify-center p-4 hover:bg-[#F5F2ED] rounded-[1rem] active:scale-[0.98] group transition-all w-full md:w-32 gap-3 text-center">
+                    <div className="text-[#f9943b] group-hover:scale-110 transition-transform"><HelpCircle size={24} /></div>
+                    <span className="text-[10px] font-black uppercase tracking-widest leading-tight">Ajuda e<br className="hidden md:block"/>Suporte</span>
+                  </button>
+                </div>
               </div>
             </section>
           </div>

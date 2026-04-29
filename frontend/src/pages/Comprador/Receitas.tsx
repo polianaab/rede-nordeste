@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   ShoppingCart, User, UtensilsCrossed, Clock, 
-  ChevronLeft, X, Flame, ChefHat, ScrollText, ShoppingBag, MessageCircle, Search, ChevronRight, Menu
+  ChevronLeft, X, Flame, ChefHat, ScrollText, ShoppingBag, MessageCircle, Search, ChevronRight, Menu, Bell
 } from 'lucide-react';
 
 const RECEITAS_DATA = [
@@ -128,6 +128,7 @@ export default function Receitas() {
 
           <div className="flex items-center gap-4 md:gap-6">
             <div className="hidden md:flex items-center gap-6">
+                <Link to="/notificacoes"><Bell size={22} className="hover:text-[#55833d] transition-colors"/></Link>
                 <Link to="/chat"><MessageCircle size={22} className="hover:text-[#55833d] transition-all" /></Link>
                 <Link to="/carrinho" className="relative">
                   <ShoppingCart size={22} />
@@ -163,6 +164,7 @@ export default function Receitas() {
                     <Link to="/receitas" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 text-[#55833d]"><ChevronRight size={14}/> Receitas</Link>
                     <Link to="/noticias" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#f9943b]"><ChevronRight size={14}/> Notícias</Link>
                     <hr className="border-gray-50 my-2" />
+                    <Link to="/notificacoes" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d]"><Bell size={20}/> Notificações</Link>
                     <Link to="/chat" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d]"><MessageCircle size={20}/> Chat</Link>
                     <Link to="/carrinho" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d] relative">
                         <ShoppingCart size={20}/> Carrinho 

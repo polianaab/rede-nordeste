@@ -1,10 +1,15 @@
 @import "tailwindcss";
 
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap');
+
 @theme {
   --color-primary-earth: #394158; /* Azul Acinzentado */
   --color-accent-clay: #f9943b;   /* Laranja */
   --color-accent-red: #55833d;    /* Verde Musgo */
   --color-bg-sand: #F5F2ED;      /* Bege Areia */
   
+  --font-roboto: "Roboto", sans-serif;
+  --font-open-sans: "Open Sans", sans-serif;
+
   --shadow-brutal: 8px 8px 0px 0px rgba(45, 58, 39, 1);
 }
