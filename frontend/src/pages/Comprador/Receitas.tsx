@@ -114,31 +114,31 @@ export default function Receitas() {
       
       {/* NAVBAR */}
       <header className="w-full bg-white py-4 px-4 md:px-8 border-b border-gray-100 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-4 md:gap-10">
+        <div className="max-w-6xl mx-auto flex justify-between items-center">
+          <div className="flex items-center gap-4 md:gap-10 flex-shrink-0 -ml-2 md:-ml-6">
             <Link to="/home2">
               <img src="/assets/logo-home.png" alt="Logo" className="h-10 md:h-12 w-auto object-contain" />
             </Link>
-            <nav className="hidden lg:flex gap-6 text-[10px] font-black uppercase tracking-widest">
+            <nav className="hidden lg:flex gap-6 text-[10px] font-black uppercase tracking-widest text-[#394158]">
               <Link to="/home2" className="hover:text-[#55833d] transition-colors">Início</Link>
               <Link to="/receitas" className="text-[#55833d] border-b-2 border-[#55833d] pb-1">Receitas</Link>
               <Link to="/noticias" className="hover:text-[#f9943b]">Notícias</Link>
             </nav>
           </div>
 
-          <div className="flex items-center gap-4 md:gap-6">
-            <div className="hidden md:flex items-center gap-6">
-                <Link to="/notificacoes"><Bell size={22} className="hover:text-[#55833d] transition-colors"/></Link>
-                <Link to="/chat"><MessageCircle size={22} className="hover:text-[#55833d] transition-all" /></Link>
-                <Link to="/carrinho" className="relative">
-                  <ShoppingCart size={22} />
-                  {carrinhoCount > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-[#f9943b] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center border-2 border-white">
-                      {carrinhoCount}
-                    </span>
-                  )}
-                </Link>
-                <Link to="/perfil"><User size={22} className="cursor-pointer hover:text-[#55833d]" /></Link>
+          <div className="flex items-center gap-3 md:gap-6 flex-shrink-0">
+            <div className="hidden md:flex items-center gap-1">
+              <Link to="/notificacoes" className="p-2.5 rounded-full hover:bg-[#f9943b] hover:text-white transition-all duration-300 text-[#394158]"><Bell size={22} /></Link>
+              <Link to="/chat" className="p-2.5 rounded-full hover:bg-[#f9943b] hover:text-white transition-all duration-300 text-[#394158]"><MessageCircle size={22} /></Link>
+              <Link to="/carrinho" className="p-2.5 rounded-full hover:bg-[#f9943b] hover:text-white transition-all duration-300 text-[#394158] relative group">
+                <ShoppingCart size={22} />
+                {carrinhoCount > 0 && (
+                  <span className="absolute top-0 right-0 bg-white text-[#f9943b] text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center border-2 border-white group-hover:bg-white group-hover:text-[#f9943b] shadow-sm">
+                    {carrinhoCount}
+                  </span>
+                )}
+              </Link>
+              <Link to="/perfil" className="p-2.5 rounded-full hover:bg-[#f9943b] hover:text-white transition-all duration-300 text-[#394158]"><User size={22} /></Link>
             </div>
 
             {/* Menu Hambúrguer visível apenas no Mobile */}

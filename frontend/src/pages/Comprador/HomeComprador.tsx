@@ -18,19 +18,18 @@ const PRODUTOS_DATA = [
   { id: 8, categoria: 'Cama Mesa e Banho', nome: 'Kit: 1 Cobre-leito Bouti de Microfibra Ultrassonic + Porta-Travesseiros ', local: 'Aracaju, SE', preco: 179.80, un: 'un', img: 'https://adaptive-images.uooucdn.com.br/ik-seo/tr:w-1100,h-1594,c-at_max,pr-true,q-80/a22573-ogxytxlxwt0/pv/82/84/48/813d10430e46dbd0c2bc48f2a5/kit-1-cobre-leito-bouti-de-microfibra-ultrassonic-porta-travesseiros-lais-verde-large-1.png' },
   { id: 9, categoria: 'Gastronomia', nome: 'Coxinha Fit de Batata Doce com Frango e Requeijão ', local: 'Aracaju, SE', preco: 13, un: 'un', img: 'https://s2-receitas.glbimg.com/7HHi1Zrz6Dxt_G7N09l-NapN8X4=/0x0:1366x768/984x0/smart/filters:strip_icc()/i.s3.glbimg.com/v1/AUTH_1f540e0b94d8437dbbc39d567a1dee68/internal_photos/bs/2025/v/t/ceFth3Tnu97KDRgekajg/coxinha-de-galinha-com-massa-de-batata.jpg' },
   { id: 10, categoria: 'Têxtil', nome: 'Conjunto Infantil Menino', local: 'Aracaju, SE', preco: 65.90, un: 'un', img: 'https://somoscorujas.cdn.magazord.com.br/img/2025/01/produto/45394/sc19758-1.png?ims=fit-in/400x533/filters:fill(white)' },
-
 ];
 
 const CATEGORIAS = [
   { nome: 'Todos', Icone: LayoutGrid },
   { nome: 'Artesanato', Icone: Palette },
+  { nome: 'Cama Mesa e Banho', Icone: Bed },
   { nome: 'Carnes', Icone: Beef },
   { nome: 'Colheita', Icone: Sprout },
+  { nome: 'Gastronomia', Icone: Utensils },
   { nome: 'Grãos', Icone: Wheat },
   { nome: 'Hortifruti', Icone: Carrot },
   { nome: 'Laticínios', Icone: Milk },
-  { nome: 'Cama Mesa e Banho', Icone: Bed },
-  { nome: 'Gastronomia', Icone: Utensils },
   { nome: 'Têxtil', Icone: Shirt },
 ];
 
@@ -50,9 +49,8 @@ export default function Home2() {
   const [menuAberto, setMenuAberto] = useState(false);
   const [mulherSelecionada, setMulherSelecionada] = useState<typeof EMPREENDEDORAS[0] | null>(null);
   
-  // PAGINAÇÃO
   const [paginaAtual, setPaginaAtual] = useState(1);
-  const produtosPorPagina = 8; // Ajuste conforme necessário
+  const produtosPorPagina = 8;
 
   const [carrinhoCount, setCarrinhoCount] = useState(() => {
     const salvo = localStorage.getItem('carrinho_count');
@@ -134,7 +132,6 @@ export default function Home2() {
         const busca = termoPesquisado.toLowerCase();
         const nome = p.nome.toLowerCase();
         if (nome.includes(busca) || busca.includes(nome)) return true;
-        
         const termos = busca.split(/ e | ou |,/).map(t => t.trim()).filter(t => t.length > 2);
         if (termos.length > 1) {
           return termos.some(termo => nome.includes(termo) || termo.includes(nome));
@@ -152,8 +149,6 @@ export default function Home2() {
   };
 
   const todosFiltrados = getProdutosFiltrados();
-  
-  // LÓGICA DE PAGINAÇÃO
   const totalPaginas = Math.ceil(todosFiltrados.length / produtosPorPagina);
   const inicio = (paginaAtual - 1) * produtosPorPagina;
   const fim = inicio + produtosPorPagina;
@@ -162,8 +157,8 @@ export default function Home2() {
   return (
     <div className="min-h-screen bg-white text-[#394158] antialiased pb-20 font-sans">
       <header className="w-full bg-white py-4 px-4 md:px-8 border-b border-gray-100 sticky top-0 z-50 shadow-sm">
-        <div className="max-w-7xl mx-auto flex justify-between items-center gap-4 md:gap-8">
-          <div className="flex items-center gap-4 md:gap-10 flex-shrink-0">
+        <div className="max-w-6xl mx-auto flex justify-between items-center gap-4 md:gap-8">
+          <div className="flex items-center gap-4 md:gap-10 flex-shrink-0 -ml-2 md:-ml-6">
             <Link to="/home2"><img src="/assets/logo-home.png" alt="Logo" className="h-10 md:h-12" /></Link>
             <nav className="hidden lg:flex gap-6 text-[10px] font-black uppercase tracking-widest text-[#394158]">
               <Link to="/home2" className="text-[#55833d] border-b-2 border-[#55833d] pb-1">Início</Link>
@@ -176,14 +171,14 @@ export default function Home2() {
             <button onClick={handlePesquisa} className="absolute right-1.5 top-1/2 -translate-y-1/2 bg-[#55833d] text-white p-2 rounded-full"><Search size={16} /></button>
           </div>
           <div className="flex items-center gap-3 md:gap-6 flex-shrink-0">
-            <div className="hidden md:flex items-center gap-6">
-              <Link to="/notificacoes"><Bell size={22} className="hover:text-[#55833d] transition-colors"/></Link>
-              <Link to="/chat"><MessageCircle size={22} className="hover:text-[#55833d] transition-colors" /></Link>
-              <Link to="/carrinho" className="relative group">
-                <ShoppingCart size={22} className="group-hover:text-[#55833d] transition-colors" />
-                {carrinhoCount > 0 && <span className="absolute -top-2 -right-2 bg-[#f9943b] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center border-2 border-white">{carrinhoCount}</span>}
+            <div className="hidden md:flex items-center gap-1">
+              <Link to="/notificacoes" className="p-2.5 rounded-full hover:bg-[#f9943b] hover:text-white transition-all duration-300 text-[#394158]"><Bell size={22} /></Link>
+              <Link to="/chat" className="p-2.5 rounded-full hover:bg-[#f9943b] hover:text-white transition-all duration-300 text-[#394158]"><MessageCircle size={22} /></Link>
+              <Link to="/carrinho" className="p-2.5 rounded-full hover:bg-[#f9943b] hover:text-white transition-all duration-300 text-[#394158] relative group">
+                <ShoppingCart size={22} />
+                {carrinhoCount > 0 && <span className="absolute top-0 right-0 bg-white text-[#f9943b] text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center border-2 border-white group-hover:bg-white group-hover:text-[#f9943b] shadow-sm">{carrinhoCount}</span>}
               </Link>
-              <Link to="/perfil"><User size={22} className="hover:text-[#55833d] transition-colors" /></Link>
+              <Link to="/perfil" className="p-2.5 rounded-full hover:bg-[#f9943b] hover:text-white transition-all duration-300 text-[#394158]"><User size={22} /></Link>
             </div>
             <button onClick={() => setMenuAberto(true)} className="md:hidden p-2"><Menu size={28} /></button>
           </div>
@@ -270,13 +265,18 @@ export default function Home2() {
         <section className="w-full max-w-7xl mx-auto bg-gray-100/50 p-4 md:p-10 rounded-[1rem] border border-gray-200 shadow-inner mb-12">
           <div className="mb-12">
             <h2 className="text-xs md:text-xl font-black uppercase tracking-widest italic mb-10 text-[#394158]">Categorias</h2>
-            <div className="flex flex-wrap justify-center md:justify-between gap-4">
+            {/* GRID DE CATEGORIAS ATUALIZADO */}
+            <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-10 gap-4">
               {CATEGORIAS.map(cat => (
-                <button key={cat.nome} onClick={() => handleCategoriaClick(cat.nome)} className="flex flex-col items-center gap-2 w-[70px] md:w-[100px] group">
-                  <div className={`w-14 h-10 md:w-20 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center border transition-all shadow-sm ${catAtiva === cat.nome ? 'bg-[#f9943b] border-[#f9943b] text-white scale-110' : 'bg-white border-gray-200 group-hover:border-[#394158]'}`}>
+                <button 
+                  key={cat.nome} 
+                  onClick={() => handleCategoriaClick(cat.nome)} 
+                  className="flex flex-col items-center gap-2 group w-full"
+                >
+                  <div className={`w-full aspect-[4/3] md:aspect-square max-w-[80px] rounded-xl md:rounded-2xl flex items-center justify-center border transition-all shadow-sm ${catAtiva === cat.nome ? 'bg-[#f9943b] border-[#f9943b] text-white scale-110' : 'bg-white border-gray-200 group-hover:border-[#394158]'}`}>
                     <cat.Icone size={20} />
                   </div>
-                  <span className={`text-[8px] md:text-[9px] font-black uppercase text-center ${catAtiva === cat.nome ? 'text-[#394158]' : 'text-[#394158]/40'}`}>{cat.nome}</span>
+                  <span className={`text-[8px] md:text-[9px] font-black uppercase text-center leading-tight ${catAtiva === cat.nome ? 'text-[#394158]' : 'text-[#394158]/40'}`}>{cat.nome}</span>
                 </button>
               ))}
             </div>
@@ -314,7 +314,6 @@ export default function Home2() {
               ))}
             </div>
 
-            {/* --- PAGINAÇÃO (ACRESCENTADO) --- */}
             {totalPaginas > 1 && (
               <div className="flex justify-center items-center gap-2 mt-12 pt-8 border-t border-gray-100">
                 <button 

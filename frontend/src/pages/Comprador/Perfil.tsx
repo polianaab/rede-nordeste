@@ -146,7 +146,7 @@ export default function Perfil() {
       <button onClick={() => setTelaAtual('perfil')} className="flex items-center gap-2 text-[10px] font-black uppercase text-[#394158] bg-white px-4 py-2 rounded-full shadow-sm active:scale-95 transition-all">
         <ArrowLeft size={14}/> Voltar
       </button>
-      <h3 className="text-xl font-black uppercase italic text-[#394158] px-2 tracking-tighter">Visto Recentemente</h3>
+      <h3 className="text-xl font-black font-poppins uppercase italic text-[#394158] px-2 tracking-tighter">Visto Recentemente</h3>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 pb-10 px-2">
         {vistoRecently.map((prod) => (
           <div key={prod.id} onClick={() => navigate(`/produto/${prod.id}`)} className="bg-white rounded-[1rem] p-3 shadow-xl border border-white flex flex-col h-full cursor-pointer active:scale-95 transition-all group">
@@ -182,7 +182,7 @@ export default function Perfil() {
           </select>
         </div>
       </div>
-      <h3 className="text-xl font-black uppercase italic text-[#394158] px-2 tracking-tighter">Meus Favoritos</h3>
+      <h3 className="text-xl font-black font-poppins uppercase italic text-[#394158] px-2 tracking-tighter">Meus Favoritos</h3>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 pb-10 px-2">
         {favoritosOrdenados.map((prod) => (
           <div key={prod.id} className="bg-white rounded-[1rem] p-3 shadow-xl shadow-[#394158]/5 border border-white flex flex-col h-full relative animate-in fade-in duration-500">
@@ -232,7 +232,7 @@ export default function Perfil() {
               <ArrowLeft size={14}/> Voltar
             </button>
             <div className="px-2">
-              <h3 className="text-xl font-black uppercase italic text-[#394158]">Conta e Segurança</h3>
+              <h3 className="text-xl font-black font-poppins uppercase italic text-[#394158]">Conta e Segurança</h3>
               <p className="text-[10px] text-gray-400 uppercase font-bold tracking-widest mt-1">Atualize seus dados de acesso</p>
             </div>
             <form className="bg-white rounded-[1rem] p-8 shadow-xl border border-white space-y-5" onSubmit={(e) => e.preventDefault()}>
@@ -266,7 +266,7 @@ export default function Perfil() {
               )}
             </div>
             <div className="px-2">
-              <h3 className="text-xl font-black uppercase italic text-[#394158]">{exibirFormEndereco ? 'Novo Endereço' : 'Meus Endereços'}</h3>
+              <h3 className="text-xl font-black font-poppins uppercase italic text-[#394158]">{exibirFormEndereco ? 'Novo Endereço' : 'Meus Endereços'}</h3>
             </div>
             {exibirFormEndereco ? (
               <form className="bg-white rounded-[1rem] p-8 shadow-xl border border-white space-y-4" onSubmit={(e) => e.preventDefault()}>
@@ -322,7 +322,7 @@ export default function Perfil() {
               </button>
             </div>
             <div className="px-2">
-              <h3 className="text-xl font-black uppercase italic text-[#394158]">
+              <h3 className="text-xl font-black font-poppins uppercase italic text-[#394158]">
                 {exibirFormCartao ? 'Adicionar Cartão' : 'Pagamentos'}
               </h3>
             </div>
@@ -375,7 +375,7 @@ export default function Perfil() {
       default:
         return (
           <div className="space-y-3 animate-in fade-in duration-300">
-            <h3 className="text-xl font-black uppercase italic text-[#394158] mb-6 px-4">CONFIGURAÇÕES</h3>
+            <h3 className="text-xl font-black font-poppins uppercase italic text-[#394158] mb-6 px-4">CONFIGURAÇÕES</h3>
             {[{id:'conta',icon:Lock,label:'Conta e Segurança'},{id:'enderecos',icon:MapPin,label:'Meus Endereços'},{id:'cartoes',icon:CreditCard,label:'Métodos de Pagamento'}].map((item)=>(
               <button key={item.id} onClick={()=>setSecaoConfig(item.id as any)} className="w-full flex items-center justify-between p-5 bg-white rounded-[1rem] border border-white shadow-sm active:scale-[0.98] transition-all group">
                 <div className="flex items-center gap-4">
@@ -395,7 +395,7 @@ export default function Perfil() {
     <div className="space-y-6 animate-in slide-in-from-right duration-300">
       <button onClick={() => setTelaAtual('compras')} className="flex items-center gap-2 text-[10px] font-black uppercase text-[#394158] bg-white px-4 py-2 rounded-full shadow-sm active:scale-95 transition-all"><ArrowLeft size={14}/> Voltar</button>
       <div className="bg-white rounded-[1rem] overflow-hidden shadow-xl border border-white">
-        <div className="bg-[#394158] p-8 text-white"><p className="text-[10px] font-black uppercase opacity-60 mb-1">Recibo Digital</p><h3 className="text-2xl font-black italic uppercase tracking-tighter">{pedidoSelecionado.id}</h3></div>
+        <div className="bg-[#394158] p-8 text-white"><p className="text-[10px] font-black uppercase opacity-60 mb-1">Recibo Digital</p><h3 className="text-2xl font-black font-poppins italic uppercase tracking-tighter">{pedidoSelecionado.id}</h3></div>
         <div className="p-8 space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-[#F5F2ED] p-4 rounded-[2rem] flex items-center gap-4 border border-gray-100"><Calendar size={20} className="text-[#f9943b]" /><div><p className="text-[8px] font-black uppercase opacity-40">Data</p><p className="text-xs font-bold">{pedidoSelecionado.data}</p></div></div>
@@ -460,7 +460,7 @@ export default function Perfil() {
         <div className="flex justify-between items-center mb-10 relative z-10">
           <div>
             <p className="text-[10px] font-black uppercase text-[#f9943b] tracking-widest mb-1">Pedido {pedidoSelecionado?.id}</p>
-            <h3 className="text-xl font-black italic text-[#394158] uppercase">Acompanhe seu pedido</h3>
+            <h3 className="text-xl font-black font-poppins italic text-[#394158] uppercase">Acompanhe seu pedido</h3>
           </div>
         </div>
         
@@ -509,7 +509,7 @@ export default function Perfil() {
         </div>
 
         <div className="bg-[#F5F2ED] rounded-2xl p-5 border border-gray-100 mb-4">
-          <h4 className="text-[10px] font-black uppercase text-[#394158] tracking-widest mb-4">Histórico de Rastreio</h4>
+          <h4 className="text-[10px] font-black font-montserrat uppercase text-[#394158] tracking-widest mb-4">Histórico de Rastreio</h4>
           <div className="flex flex-col gap-4 relative">
             <div className="absolute left-[9px] top-2 bottom-2 w-0.5 bg-gray-200"></div>
             <div className="relative flex items-start gap-4">
@@ -543,7 +543,7 @@ export default function Perfil() {
   const renderTelaCompras = () => (
     <div className="space-y-6 animate-in slide-in-from-right duration-300">
       <button onClick={() => setTelaAtual('perfil')} className="flex items-center gap-2 text-[10px] font-black uppercase text-[#394158] bg-white px-4 py-2 rounded-full shadow-sm active:scale-95 transition-all"><ArrowLeft size={14}/> Voltar ao Perfil</button>
-      <section className="bg-white rounded-[2rem] shadow-xl border border-white overflow-hidden">
+      <section className="bg-white rounded-[1rem] shadow-xl border border-white overflow-hidden">
         <div className="flex border-b border-gray-50 overflow-x-auto scrollbar-hide bg-white">
           {[{id:'pagar',l:'A Pagar',i:Wallet},{id:'preparando',l:'Preparando',i:Package},{id:'caminho',l:'A Caminho',i:Truck},{id:'finalizados',l:'Finalizados',i:ShoppingBag}].map((tab)=>(
             <button key={tab.id} onClick={() => setAbaAtiva(tab.id as any)} className={`flex-1 min-w-[80px] py-6 flex flex-col items-center gap-2 relative ${abaAtiva === tab.id ? 'text-[#55833d]' : 'text-gray-300'}`}><tab.i size={18} /><span className="text-[8px] font-black uppercase tracking-tighter">{tab.l}</span>{abaAtiva === tab.id && <div className="absolute bottom-0 w-8 h-1 bg-[#55833d] rounded-t-full" />}</button>
@@ -553,10 +553,10 @@ export default function Perfil() {
           {abaAtiva === 'finalizados' ? (
             <div className="space-y-4">
               {COMPRAS_FINALIZADAS.map((pedido) => (
-                <div key={pedido.id} onClick={() => { setPedidoSelecionado(pedido); setTelaAtual('detalhe-pedido'); }} className="bg-gradient-to-r from-[#55833d]/10 to-[#55833d]/5 rounded-[2.5rem] p-6 border border-[#55833d]/10 flex items-center justify-between cursor-pointer active:scale-[0.98] transition-all hover:shadow-md group">
+                <div key={pedido.id} onClick={() => { setPedidoSelecionado(pedido); setTelaAtual('detalhe-pedido'); }} className="bg-gradient-to-r from-[#55833d]/10 to-[#55833d]/5 rounded-[1rem] p-6 border border-[#55833d]/10 flex items-center justify-between cursor-pointer active:scale-[0.98] transition-all hover:shadow-md group">
                   <div className="flex items-center gap-5">
                     <div className="flex -space-x-4">{pedido.produtos.map((p, idx) => <img key={idx} src={p.img} className="w-14 h-14 rounded-2xl border-4 border-white object-cover" />)}</div>
-                    <div><p className="text-[10px] font-black text-[#55833d] uppercase">Pedido {pedido.id}</p><h4 className="text-lg font-black text-[#394158] italic">R$ {pedido.total}</h4><p className="text-[9px] font-black uppercase text-[#55833d] flex items-center gap-1"><CheckCircle size={10} /> Finalizada</p></div>
+                    <div><p className="text-[10px] font-black text-[#55833d] uppercase">Pedido {pedido.id}</p><h4 className="text-lg font-black font-montserrat text-[#394158] italic">R$ {pedido.total}</h4><p className="text-[9px] font-black uppercase text-[#55833d] flex items-center gap-1"><CheckCircle size={10} /> Finalizada</p></div>
                   </div>
                   <div className="bg-white p-3 rounded-full text-[#55833d] shadow-sm transition-all"><ChevronRight size={20} /></div>
                 </div>
@@ -565,10 +565,10 @@ export default function Perfil() {
           ) : abaAtiva === 'caminho' ? (
             <div className="space-y-4">
               {COMPRAS_FINALIZADAS.map((pedido) => (
-                <div key={pedido.id} className="bg-gradient-to-r from-[#f9943b]/10 to-[#f9943b]/5 rounded-[2.5rem] p-6 border border-[#f9943b]/10 flex flex-col md:flex-row items-center justify-between gap-4 transition-all hover:shadow-md group">
+                <div key={pedido.id} className="bg-gradient-to-r from-[#f9943b]/10 to-[#f9943b]/5 rounded-[1rem] p-6 border border-[#f9943b]/10 flex flex-col md:flex-row items-center justify-between gap-4 transition-all hover:shadow-md group">
                   <div className="flex items-center gap-5 w-full md:w-auto">
                     <div className="flex -space-x-4">{pedido.produtos.map((p: any, idx: number) => <img key={idx} src={p.img} className="w-14 h-14 rounded-2xl border-4 border-white object-cover" />)}</div>
-                    <div><p className="text-[10px] font-black text-[#f9943b] uppercase">Pedido {pedido.id}</p><h4 className="text-lg font-black text-[#394158] italic">R$ {pedido.total}</h4><p className="text-[9px] font-black uppercase text-[#f9943b] flex items-center gap-1"><Truck size={10} /> A Caminho</p></div>
+                    <div><p className="text-[10px] font-black text-[#f9943b] uppercase">Pedido {pedido.id}</p><h4 className="text-lg font-black font-montserrat text-[#394158] italic">R$ {pedido.total}</h4><p className="text-[9px] font-black uppercase text-[#f9943b] flex items-center gap-1"><Truck size={10} /> A Caminho</p></div>
                   </div>
                   <button onClick={() => { setPedidoSelecionado(pedido); setTelaAtual('rastreio-pedido'); }} className="w-full md:w-auto bg-[#f9943b] text-white px-6 py-4 md:py-3 rounded-[1.5rem] md:rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg active:scale-95 transition-all text-center">Rastrear Pedido</button>
                 </div>
@@ -581,13 +581,15 @@ export default function Perfil() {
   );
 
   return (
-    <div className="min-h-screen bg-[#F5F2ED] text-[#394158] font-open-sans pb-24 md:pb-10">
+    <div className="min-h-screen bg-[#F5F2ED] text-[#394158] font-inter pb-24 md:pb-10">
       <input type="file" ref={fileInputRef} onChange={handleTrocarFoto} accept="image/*" className="hidden" />
       <header className="w-full bg-white/80 backdrop-blur-md py-6 px-6 border-b border-gray-100 sticky top-0 z-50">
-        <div className="max-w-4xl mx-auto flex justify-between items-center">
-          <button onClick={() => telaAtual === 'perfil' ? navigate('/home2') : setTelaAtual('perfil')} className="p-3 active:scale-90 transition-all"><ArrowLeft size={20} className="text-[#802D44]" /></button>
-          <h2 className="text-sm font-black font-roboto uppercase tracking-[0.3em] text-[#394158]">PERFIL</h2>
-          <div className="flex items-center gap-2">
+        <div className="max-w-4xl mx-auto flex justify-between items-center relative">
+          <div className="flex-1 flex justify-start">
+            <button onClick={() => telaAtual === 'perfil' ? navigate('/home2') : setTelaAtual('perfil')} className="p-3 active:scale-90 transition-all"><ArrowLeft size={20} className="text-[#802D44]" /></button>
+          </div>
+          <h2 className="absolute left-1/2 -translate-x-1/2 text-xl font-black font-poppins uppercase italic text-[#394158]">PERFIL</h2>
+          <div className="flex-1 flex items-center justify-end gap-2">
             {telaAtual === 'perfil' && <button onClick={() => setTelaAtual('configuracoes')} className="p-3 active:scale-90 transition-all"><Settings size={20} /></button>}
             <button onClick={() => navigate('/')} className="p-3 text-red-500 active:scale-90 transition-all"><LogOut size={20} /></button>
           </div>
@@ -603,12 +605,12 @@ export default function Perfil() {
                 <div className="w-24 h-24 rounded-full border-4 border-[#f9943b] overflow-hidden shadow-inner bg-white/20"><img src={fotoPerfil} className="w-full h-full object-cover" alt="User"/></div>
                 <button onClick={() => fileInputRef.current?.click()} className="absolute bottom-0 right-0 bg-[#55833d] p-2.5 rounded-full border-2 border-[#f9943b] shadow-lg active:scale-90 transition-all"><Camera size={14} className="text-white" /></button>
               </div>
-              <div className="text-center md:text-left z-10"><h3 className="text-2xl font-black font-roboto italic uppercase leading-none mb-2 tracking-tight">{dadosUsuario.nome}</h3><span className="text-[10px] font-black uppercase bg-white px-4 py-1.5 rounded-full flex items-center gap-1.5 text-[#55833d] shadow-sm"><CheckCircle size={12} className="text-[#4ade80]" /> Comprador Verificado</span></div>
+              <div className="text-center md:text-left z-10"><h3 className="text-2xl font-black font-poppins italic uppercase leading-none mb-2 tracking-tight">{dadosUsuario.nome}</h3><span className="text-[10px] font-black uppercase bg-white px-4 py-1.5 rounded-full flex items-center gap-1.5 text-[#55833d] shadow-sm"><CheckCircle size={12} className="text-[#4ade80]" /> Comprador Verificado</span></div>
             </div>
 
             <section className="bg-white rounded-[1rem] p-8 shadow-xl border border-white">
               <div className="flex justify-between items-center mb-8 px-2">
-                <h4 className="text-[10px] font-black font-roboto uppercase tracking-[0.2em] text-gray-400">Minhas Compras</h4>
+                <h4 className="text-[10px] font-black font-montserrat uppercase tracking-[0.2em] text-gray-400">Minhas Compras</h4>
                 <button onClick={() => { setAbaAtiva('finalizados'); setTelaAtual('compras'); }} className="text-[9px] font-black uppercase text-[#394158] bg-[#802D44]/5 px-4 py-2 rounded-full active:scale-95 transition-all">Histórico</button>
               </div>
               <div className="grid grid-cols-4 gap-4">
@@ -625,7 +627,7 @@ export default function Perfil() {
             </section>
 
             <section className="bg-white rounded-[1rem] p-4 md:p-8 shadow-xl border border-white">
-              <div className="flex justify-center items-center mb-4 md:mb-8 px-2"><h4 className="text-[10px] font-black font-roboto uppercase tracking-[0.2em] text-gray-400">Atividades</h4></div>
+              <div className="flex justify-center items-center mb-4 md:mb-8 px-2"><h4 className="text-[10px] font-black font-montserrat uppercase tracking-[0.2em] text-gray-400">Atividades</h4></div>
               <div className="grid grid-cols-1 md:grid-cols-3 w-full divide-y divide-gray-100 md:divide-y-0">
                 <div className="flex justify-center w-full py-4 md:py-0">
                   <button onClick={() => setTelaAtual('favoritos')} className="flex flex-col items-center justify-center p-4 hover:bg-[#F5F2ED] rounded-[1rem] active:scale-[0.98] group transition-all w-full md:w-32 gap-3 text-center">
