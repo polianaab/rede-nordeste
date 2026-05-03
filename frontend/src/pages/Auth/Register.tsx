@@ -45,7 +45,7 @@ export default function Register() {
       
       <div className="mb-8">
         <Link to="/">
-          <img src="/assets/logo-rede-nordeste.png" alt="Rede Nordeste" className="h-32" />
+          <img src="/assets/logo-login.png" alt="Rede Nordeste" className="h-32" />
         </Link>
       </div>
 

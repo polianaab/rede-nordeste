@@ -41,6 +41,7 @@ const EMPREENDEDORAS = [
 
 export default function Home2() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [catAtiva, setCatAtiva] = useState('Todos');
   const [busca, setBusca] = useState('');
   const [termoPesquisado, setTermoPesquisado] = useState('');
@@ -91,7 +92,7 @@ export default function Home2() {
   const adicionarRapido = (e: React.MouseEvent, id: number) => {
     e.preventDefault(); e.stopPropagation(); 
     const carrinhoSalvo = localStorage.getItem('carrinho_itens');
-    let itens: { id: number, quantidade: number }[] = [];
+    let itens: { id: number, quantidade: number, selecionado?: boolean }[] = [];
     if (carrinhoSalvo) {
       try {
         itens = JSON.parse(carrinhoSalvo);
@@ -102,7 +103,7 @@ export default function Home2() {
     if (indexExistente !== -1) {
       itens[indexExistente].quantidade += 1;
     } else {
-      itens.push({ id, quantidade: 1 });
+      itens.push({ id, quantidade: 1, selecionado: true });
     }
     const totalQuantidades = itens.reduce((acc, curr) => acc + curr.quantidade, 0);
     localStorage.setItem('carrinho_itens', JSON.stringify(itens));
@@ -129,10 +130,10 @@ export default function Home2() {
       const matchCategoria = catAtiva === 'Todos' || p.categoria === catAtiva;
       const matchBusca = (() => {
         if (!termoPesquisado) return true;
-        const busca = termoPesquisado.toLowerCase();
+        const buscaTerm = termoPesquisado.toLowerCase();
         const nome = p.nome.toLowerCase();
-        if (nome.includes(busca) || busca.includes(nome)) return true;
-        const termos = busca.split(/ e | ou |,/).map(t => t.trim()).filter(t => t.length > 2);
+        if (nome.includes(buscaTerm) || buscaTerm.includes(nome)) return true;
+        const termos = buscaTerm.split(/ e | ou |,/).map(t => t.trim()).filter(t => t.length > 2);
         if (termos.length > 1) {
           return termos.some(termo => nome.includes(termo) || termo.includes(nome));
         }
@@ -163,7 +164,8 @@ export default function Home2() {
             <nav className="hidden lg:flex gap-6 text-[10px] font-black uppercase tracking-widest text-[#394158]">
               <Link to="/home2" className="text-[#55833d] border-b-2 border-[#55833d] pb-1">Início</Link>
               <Link to="/receitas" className="hover:text-[#f9943b] transition-colors">Receitas</Link>
-              <Link to="/noticias" className="hover:text-[#f9943b]">Notícias</Link>
+              {/* CAMINHO ATUALIZADO: /blog */}
+              <Link to="/blog" className="hover:text-[#f9943b]">Notícias</Link>
             </nav>
           </div>
           <div className="relative flex-1 max-w-xl hidden md:block">
@@ -195,7 +197,8 @@ export default function Home2() {
               <nav className="flex flex-col gap-5 text-sm font-black uppercase tracking-widest text-[#394158]">
                 <Link to="/home2" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d]"><ChevronRight size={14}/> Início</Link>
                 <Link to="/receitas" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d]"><ChevronRight size={14}/> Receitas</Link>
-                <Link to="/noticias" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#f9943b]"><ChevronRight size={14}/> Notícias</Link>
+                {/* CAMINHO ATUALIZADO: /blog */}
+                <Link to="/blog" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#f9943b]"><ChevronRight size={14}/> Notícias</Link>
                 <hr className="border-gray-50 my-2" />
                 <Link to="/notificacoes" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d]"><Bell size={20}/> Notificações</Link>
                 <Link to="/chat" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d]"><MessageCircle size={20}/> Chat</Link>
@@ -241,7 +244,7 @@ export default function Home2() {
           <button onClick={handlePesquisa} className="absolute right-2 top-1/2 -translate-y-1/2 bg-[#55833d] text-white p-2 rounded-full active:scale-95 transition-all"><Search size={16}/></button>
         </div>
 
-        <section className="w-full max-w-6xl mb-12 md:mb-16 bg-[#fededf] p-4 md:p-8 rounded-[2rem] md:rounded-[1rem] border border-[#fededf] mx-auto shadow-xl">
+        <section className="w-full max-w-6xl mb-12 md:mb-16 bg-[#fededf] p-4 md:p-8 rounded-[1rem] border border-[#fededf] mx-auto shadow-xl">
             <div className="flex items-center justify-between mb-6 md:mb-8 px-2 md:px-4 text-[#394158]">
                 <div className="flex items-center gap-2 md:gap-3">
                     <div className="p-1.5 md:p-2 bg-white/20 rounded-xl"><Star size={18} className="fill-[#FFCD0D] text-[#FFCD0D]" /></div>
@@ -265,7 +268,6 @@ export default function Home2() {
         <section className="w-full max-w-7xl mx-auto bg-gray-100/50 p-4 md:p-10 rounded-[1rem] border border-gray-200 shadow-inner mb-12">
           <div className="mb-12">
             <h2 className="text-xs md:text-xl font-black uppercase tracking-widest italic mb-10 text-[#394158]">Categorias</h2>
-            {/* GRID DE CATEGORIAS ATUALIZADO */}
             <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-10 gap-4">
               {CATEGORIAS.map(cat => (
                 <button 
