@@ -14,6 +14,8 @@ import Blog from './pages/Blog/Blog';
 import Post from './pages/Blog/Post';
 import Perfil from './pages/Comprador/Perfil';
 import Notificacao from './pages/Comprador/Notificacao';
+import HomeVendedor from './pages/Vendedor/HomeVendedor';
+import PainelVendedor from './pages/Vendedor/PainelVendedor';
 
 function App() {
   return (
@@ -33,6 +35,8 @@ function App() {
           <Route path="/notificacoes" element={<Notificacao />} />
           <Route path="/perfil" element={<Perfil />} />
           <Route path="*" element={<Navigate to="/" />} />
+          <Route path="/vendedor" element={<HomeVendedor />} />
+          <Route path="/painelvendedor" element={<PainelVendedor />} />
         </Routes>
       </div>
     </Router>

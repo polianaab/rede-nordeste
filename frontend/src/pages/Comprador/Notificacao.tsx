@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  ArrowLeft, Bell, Package, Tag, Truck, Info, Trash2
+  ArrowLeft, Bell, Package, Tag, Truck, Info, Trash2, Search, X, CheckCheck
 } from 'lucide-react';
 
 const NOTIFICACOES_DATA = [
@@ -9,7 +9,7 @@ const NOTIFICACOES_DATA = [
     id: 1,
     tipo: 'pedido',
     titulo: 'Pedido a caminho!',
-    mensagem: 'Seu pedido #4582 saiu para entrega e chega hoje. Prepare-se para receber seus produtos fresquinhos!',
+    mensagem: 'Seu pedido #4582 saiu para entrega e chega hoje.',
     tempo: 'Há 2 horas',
     lida: false,
     icone: Truck,
@@ -20,7 +20,7 @@ const NOTIFICACOES_DATA = [
     id: 2,
     tipo: 'promocao',
     titulo: 'Promoção do Dia 🍎',
-    mensagem: 'Tomate Cereja Orgânico com 20% de desconto. Aproveite antes que o estoque acabe!',
+    mensagem: 'Tomate Cereja Orgânico com 20% de desconto.',
     tempo: 'Há 5 horas',
     lida: false,
     icone: Tag,
@@ -31,29 +31,19 @@ const NOTIFICACOES_DATA = [
     id: 3,
     tipo: 'sistema',
     titulo: 'Bem-vindo(a) à Rede Nordeste',
-    mensagem: 'Explore produtos de pequenos produtores da nossa terra e valorize o comércio local. Estamos felizes em ter você aqui.',
+    mensagem: 'Explore produtos de pequenos produtores da nossa terra.',
     tempo: 'Há 1 dia',
     lida: true,
     icone: Info,
     cor: 'text-blue-500',
     bg: 'bg-blue-500/10'
-  },
-  {
-    id: 4,
-    tipo: 'pedido',
-    titulo: 'Pedido Entregue',
-    mensagem: 'Seu pedido #4510 foi entregue com sucesso. Avalie seus produtos e ajude a fortalecer nossos empreendedores!',
-    tempo: 'Há 3 dias',
-    lida: true,
-    icone: Package,
-    cor: 'text-[#394158]',
-    bg: 'bg-[#394158]/10'
   }
 ];
 
 export default function Notificacao() {
   const navigate = useNavigate();
   const [notificacoes, setNotificacoes] = useState(NOTIFICACOES_DATA);
+  const [busca, setBusca] = useState('');
 
   const marcarComoLida = (id: number) => {
     setNotificacoes(prev => prev.map(n => n.id === id ? { ...n, lida: true } : n));
@@ -68,63 +58,92 @@ export default function Notificacao() {
   const naoLidas = notificacoes.filter(n => !n.lida).length;
 
   return (
-    <div className="min-h-screen bg-[#F5F2ED] text-[#394158] antialiased flex justify-center py-10 px-4 font-sans">
-      <div className="w-full max-w-2xl bg-white rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col border border-gray-100">
+    <div className="min-h-screen bg-[#F5F2ED]/50 flex justify-center items-start pt-20 px-4 font-sans antialiased">
+      {/* Container Estilo Dropdown Shopee */}
+      <div className="w-full max-w-[420px] bg-white rounded-[1rem] shadow-[0_10px_40px_rgba(0,0,0,0.15)] overflow-hidden flex flex-col border border-gray-100 animate-in slide-in-from-top-5 duration-300">
         
-        {/* HEADER */}
-        <header className="p-6 md:p-8 border-b border-gray-50 flex items-center justify-between bg-white relative">
-          <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-100 rounded-full transition-all active:scale-90">
-            <ArrowLeft size={24} />
-          </button>
-          <div className="flex flex-col items-center">
-            <h2 className="text-lg font-black uppercase italic tracking-tighter flex items-center gap-2">
-              <Bell size={20} className="text-[#394158]" /> Notificações
+        {/* HEADER COMPACTO */}
+        <header className="p-4 border-b border-gray-50 bg-white">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-black text-[#394158] uppercase italic tracking-tighter flex items-center gap-2">
+              Notificações {naoLidas > 0 && <span className="text-[#f9943b]">({naoLidas})</span>}
             </h2>
-            {naoLidas > 0 && (
-              <span className="text-[10px] font-bold text-[#f9943b]">{naoLidas} não lidas</span>
-            )}
+            <div className="flex items-center gap-1">
+               <button onClick={limparNotificacoes} className="p-2 text-gray-400 hover:text-red-500 transition-all rounded-full hover:bg-red-50" title="Limpar tudo">
+                 <Trash2 size={18} />
+               </button>
+               <button onClick={() => navigate(-1)} className="p-2 text-gray-400 hover:text-[#394158] transition-all rounded-full hover:bg-gray-50">
+                 <X size={18} />
+               </button>
+            </div>
           </div>
-          <button onClick={limparNotificacoes} className="p-2 text-gray-400 hover:text-red-500 rounded-full transition-all active:scale-90" title="Limpar tudo">
-            <Trash2 size={20} />
-          </button>
+
+          {/* BARRA DE BUSCA IGUAL AO PRINT */}
+          <div className="relative group">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-[#f9943b] transition-colors" size={14} />
+            <input 
+              type="text" 
+              placeholder="Buscar nas notificações..." 
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              className="w-full bg-gray-50 py-2 pl-9 pr-4 rounded-[0.5rem] text-xs font-medium outline-none focus:ring-1 focus:ring-[#f9943b]/30 border border-transparent focus:border-[#f9943b]/20 transition-all"
+            />
+          </div>
         </header>
 
-        {/* LISTA DE NOTIFICAÇÕES */}
-        <div className="p-4 md:p-8 space-y-4 overflow-y-auto min-h-[500px] max-h-[700px] no-scrollbar bg-gray-50/50">
+        {/* TABS SIMULADAS (TODOS / NÃO LIDAS) */}
+        <div className="flex px-4 border-b border-gray-50 text-[10px] font-black uppercase tracking-widest text-gray-400">
+            <button className="py-3 text-[#f9943b] border-b-2 border-[#f9943b]">Todos</button>
+            <button className="py-3 px-6 hover:text-[#394158] transition-colors">Pedidos</button>
+            <button className="py-3 hover:text-[#394158] transition-colors">Promoções</button>
+        </div>
+
+        {/* LISTA DE NOTIFICAÇÕES COMPACTA */}
+        <div className="overflow-y-auto max-h-[450px] no-scrollbar">
           {notificacoes.length > 0 ? (
-            notificacoes.map((notificacao) => (
+            notificacoes.map((n) => (
               <div 
-                key={notificacao.id} 
-                onClick={() => marcarComoLida(notificacao.id)}
-                className={`flex gap-4 p-5 md:p-6 rounded-3xl border-2 transition-all cursor-pointer group ${notificacao.lida ? 'bg-white border-transparent shadow-sm opacity-75' : 'bg-white border-[#55833d]/20 shadow-md'}`}
+                key={n.id} 
+                onClick={() => marcarComoLida(n.id)}
+                className={`flex gap-4 p-4 border-b border-gray-50 transition-all cursor-pointer hover:bg-gray-50 relative ${!n.lida ? 'bg-[#f9943b]/5' : 'bg-white'}`}
               >
-                <div className={`flex-shrink-0 w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center ${notificacao.bg} ${notificacao.cor} group-hover:scale-110 transition-transform`}>
-                  <notificacao.icone size={24} />
+                {/* ÍCONE CIRCULAR */}
+                <div className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center ${n.bg} ${n.cor} shadow-sm`}>
+                  <n.icone size={20} />
                 </div>
                 
-                <div className="flex-1 flex flex-col justify-center">
-                  <div className="flex justify-between items-start mb-1 md:mb-2">
-                    <h3 className={`text-xs md:text-sm font-black uppercase tracking-widest ${notificacao.lida ? 'text-gray-500' : 'text-[#394158]'}`}>
-                      {notificacao.titulo}
+                <div className="flex-1 min-w-0">
+                  <div className="flex justify-between items-baseline mb-0.5">
+                    <h3 className={`text-[11px] font-black uppercase truncate pr-4 ${!n.lida ? 'text-[#394158]' : 'text-gray-500'}`}>
+                      {n.titulo}
                     </h3>
-                    {!notificacao.lida && <span className="w-2.5 h-2.5 bg-[#55833d] rounded-full flex-shrink-0 mt-1"></span>}
+                    <span className="text-[9px] font-bold text-gray-400 whitespace-nowrap">{n.tempo}</span>
                   </div>
-                  <p className="text-[10px] md:text-xs font-bold text-gray-500 leading-relaxed">
-                    {notificacao.mensagem}
+                  <p className="text-[10px] font-bold text-gray-500 line-clamp-2 leading-snug">
+                    {n.mensagem}
                   </p>
-                  <span className="text-[8px] md:text-[9px] font-black uppercase text-gray-400 mt-3 flex items-center gap-1">
-                    {notificacao.tempo}
-                  </span>
                 </div>
+
+                {/* INDICADOR DE NÃO LIDA (BOLINHA) */}
+                {!n.lida && (
+                  <div className="absolute right-4 bottom-4 w-2 h-2 bg-[#f9943b] rounded-full shadow-[0_0_10px_#f9943b]"></div>
+                )}
               </div>
             ))
           ) : (
-            <div className="text-center py-24 flex flex-col items-center gap-4">
-              <Bell size={48} className="text-gray-200" />
-              <div className="text-gray-400 font-black uppercase tracking-widest italic text-xs">Nenhuma notificação por aqui</div>
+            <div className="text-center py-20 flex flex-col items-center gap-3 opacity-30">
+              <Bell size={40} />
+              <p className="font-black uppercase italic text-[10px]">Tudo limpo por aqui</p>
             </div>
           )}
         </div>
+
+        {/* FOOTER VER TUDO */}
+        <footer className="p-3 bg-gray-50/50 text-center border-t border-gray-100">
+            <button className="text-[10px] font-black uppercase tracking-[0.2em] text-[#f9943b] hover:underline transition-all">
+                Ver histórico completo
+            </button>
+        </footer>
       </div>
     </div>
   );
