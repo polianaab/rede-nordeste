@@ -19,9 +19,9 @@ public class UsuarioService {
     }
 
     @Transactional
-    public Usuario cadastrar(Usuario usuario) {
+    public Usuario registrar(Usuario usuario) {
         if (repository.existsByEmail(usuario.getEmail())) {
-            throw new RuntimeException("E-mail já cadastrado no Conecta Nordeste.");
+            throw new RuntimeException("E-mail já cadastrado.");
         }
 
         if (repository.existsByCpfCnpj(usuario.getCpfCnpj())) {
