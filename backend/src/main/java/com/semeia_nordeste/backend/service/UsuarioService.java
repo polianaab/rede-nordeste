@@ -4,6 +4,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.semeia_nordeste.backend.dto.UsuarioRegistroRequest;
 import com.semeia_nordeste.backend.model.Usuario;
 import com.semeia_nordeste.backend.repository.UsuarioRepository;
 
@@ -19,32 +20,34 @@ public class UsuarioService {
     }
 
     @Transactional
-    public Usuario cadastrar(Usuario usuario) {
-        if (repository.existsByEmail(usuario.getEmail())) {
-            throw new RuntimeException("E-mail já cadastrado no Conecta Nordeste.");
-        }
+    public Usuario registrar(UsuarioRegistroRequest request) {
+        if (repository.existsByEmail(request.email()))
+            throw new RuntimeException("E-mail já cadastrado.");
 
-        if (repository.existsByCpfCnpj(usuario.getCpfCnpj())) {
+        if (repository.existsByCpfCnpj(request.cpfCnpj()))
             throw new RuntimeException("CPF/CNPJ já cadastrado.");
-        }
 
-        if (usuario.getSenhaHash() != null && !usuario.getSenhaHash().isEmpty()) {
-            String senhaCriptografada = passwordEncoder.encode(usuario.getSenhaHash());
-            usuario.setSenhaHash(senhaCriptografada);
-        } else {
-            throw new RuntimeException("A senha é obrigatória.");
-        }
+        Usuario usuario = new Usuario();
+        usuario.setNomeCompleto(request.nomeCompleto());
+        usuario.setCpfCnpj(request.cpfCnpj());
+        usuario.setTelefone(request.telefone());
+        usuario.setEmail(request.email());
+        usuario.setSenhaHash(passwordEncoder.encode(request.senha()));
+        usuario.setTipoPerfil(request.tipoPerfil());
+        usuario.setContaAtiva(false); // false em produção, ativar por e-mail futuramente
 
         return repository.save(usuario);
     }
 
     public Usuario autenticar(String email, String senhaPura) {
         Usuario usuario = repository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("E-mail não encontrado."));
+                .orElseThrow(() -> new RuntimeException("E-mail ou senha incorretos."));
 
-        if (!passwordEncoder.matches(senhaPura, usuario.getSenhaHash())) {
-            throw new RuntimeException("Senha incorreta.");
-        }
+        if (!usuario.getContaAtiva())
+            throw new RuntimeException("Conta inativa. Entre em contato com o suporte.");
+
+        if (!passwordEncoder.matches(senhaPura, usuario.getSenhaHash()))
+            throw new RuntimeException("E-mail ou senha incorretos."); // mesma msg p/ não vazar qual campo errou
 
         return usuario;
     }

@@ -49,9 +49,8 @@ public class Usuario {
     private String fotoPerfilUrl;
 
     @Column(name = "conta_ativa", nullable = false)
-    private Boolean contaAtiva = false;
+    private Boolean contaAtiva = true; // está "true" apenas para facilitar os testes iniciais
 
     @Column(name = "data_criacao", updatable = false)
     private OffsetDateTime dataCriacao = OffsetDateTime.now();
-
 }
