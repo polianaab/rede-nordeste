@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -36,18 +37,32 @@ public class SecurityConfig {
                     return config;
                 }))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/usuarios/registrar", "/api/usuarios/login", "/api/usuarios/refresh")
+                        // Auth pública
+                        .requestMatchers(
+                                "/api/usuarios/registrar",
+                                "/api/usuarios/login",
+                                "/api/usuarios/refresh")
                         .permitAll()
 
-                        .requestMatchers("/api/comprador/**").hasAuthority("COMPRADOR")
-                        .requestMatchers("/api/produtor/**").hasAuthority("PRODUTOR")
+                        // Marketplace público (leitura)
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/produtos/**",
+                                "/api/lojas/**",
+                                "/api/categorias")
+                        .permitAll()
 
+                        // Admin - Acesso exclusivo
+                        .requestMatchers("/api/categorias/admin/**").hasAuthority("ADMIN")
+
+                        // Rotas por perfil - ADMIN pode gerenciar ambos
+                        .requestMatchers("/api/produtor/**").hasAnyAuthority("PRODUTOR", "ADMIN")
+                        .requestMatchers("/api/comprador/**").hasAnyAuthority("COMPRADOR", "ADMIN")
+
+                        // Qualquer outra rota exige login
                         .anyRequest().authenticated())
-
                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
-
                 .httpBasic(basic -> basic.disable())
                 .formLogin(form -> form.disable());
 
