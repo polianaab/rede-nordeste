@@ -26,7 +26,7 @@ export default function Login() {
   return (
     <div className="min-h-screen bg-[#F5F2ED] flex flex-col items-center justify-center px-6">
       <Link to="/" className="mb-10">
-        <img src="/assets/logo-rede-nordeste.png" alt="Rede Nordeste" className="h-36" />
+        <img src="/assets/logo-login.png" alt="Rede Nordeste" className="h-36" />
       </Link>
       <div className="w-full max-w-md bg-white p-10 rounded-[2.5rem] shadow-xl border border-gray-100">
         <h1 className="text-2xl font-black uppercase tracking-widest text-[#394158] mb-8 text-center">

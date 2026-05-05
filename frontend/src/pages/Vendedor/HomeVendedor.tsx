@@ -14,7 +14,7 @@ const NOTIFICACOES_DATA = [
   { id: 3, titulo: 'Bem-vindo(a)!', mensagem: 'Explore os produtos da nossa terra.', tempo: 'Há 1 dia', lida: true, icone: Info, cor: 'text-blue-500', bg: 'bg-blue-500/10' },
 ];
 
-// --- BANCO DE DADOS POPULADO ---
+// --- BANCO DE DADOS POPULADO (Usado como base caso o sistema esteja vazio) ---
 const PRODUTOS_DATA = [
   { id: 1, categoria: 'Hortifruti', nome: 'Tomate Cereja Orgânico', local: 'Sítio Alvorada, SE', preco: 8.90, un: 'kg', img: 'https://cdn.shoppub.io/cdn-cgi/image/w=1000,h=1000,q=80,f=auto/beirario/media/uploads/produtos/foto/b3fd841dfd2c3file.png' },
   { id: 2, categoria: 'Laticínios', nome: 'Ovos Caipira (Dúzia)', local: 'Granja Girassol, BA', preco: 14.50, un: 'un', img: 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?auto=format&fit=crop&w=400&q=80' },
@@ -42,12 +42,12 @@ const CATEGORIAS = [
 ];
 
 const EMPREENDEDORAS = [
-  { id: 1, nome: "DONA MARIA", negocio: "CERÂMICAS DO POVO", territorio: "Baixo São Francisco", historia: "Mestra ceramista há 30 anos...", img: "https://cdn.awsli.com.br/2500x2500/1616/1616697/produto/109903915/e2bbd94d12.jpg" },
-  { id: 2, nome: "CHEF ANA NUNES", negocio: "SABOR DE MULHER", territorio: "Grande Aracaju", historia: "Especialista em gastronomia afetiva...", img: "https://www.brasildefato.com.br/wp-content/uploads/2024/09/image_processing20201106-23882-1kiy8l9.jpeg" },
-  { id: 3, nome: "LÚCIA DA PALHA", negocio: "ARTE ILHA DO FERRO", territorio: "Sertão Ocidental", historia: "Lúcia transforma a palha de Ouricuri...", img: "https://agenciasebrae.com.br/wp-content/uploads/2026/02/artesanato-7.jpeg" },
+  { id: 1, nome: "Dona Maria", negocio: "Cerâmicas do Povo", territorio: "Baixo São Francisco", historia: "Mestra ceramista há 30 anos em Santana do São Francisco. Aprendeu a arte com sua avó e hoje lidera uma cooperativa de 12 mulheres que mantém viva a tradição do barro sergipano.", img: "https://cdn.awsli.com.br/2500x2500/1616/1616697/produto/109903915/e2bbd94d12.jpg" },
+  { id: 2, nome: "Chef Ana Nunes", negocio: "Sabor de Mulher", territorio: "Grande Aracaju", historia: "Especialista em gastronomia afetiva, Ana utiliza apenas ingredientes de produtores locais para criar pratos que contam a história de Sergipe. Sua moqueca é famosa em toda a região.", img: "https://www.brasildefato.com.br/wp-content/uploads/2024/09/image_processing20201106-23882-1kiy8l9.jpeg" },
+  { id: 3, nome: "Lúcia da Palha", negocio: "Arte Ilha do Ferro", territorio: "Sertão Ocidental", historia: "Lúcia transforma a palha de Ouricuri em peças de design moderno sem perder a essência do artesanato tradicional. Seu trabalho garante o sustento de várias famílias no sertão.", img: "https://agenciasebrae.com.br/wp-content/uploads/2026/02/artesanato-7.jpeg" },
 ];
 
-export default function Home2() {
+export default function HomeVendedor() {
   const location = useLocation();
   const navigate = useNavigate();
   const [catAtiva, setCatAtiva] = useState('Todos');
@@ -56,35 +56,53 @@ export default function Home2() {
   const [ordenacao, setOrdenacao] = useState('recomendados');
   const [favoritos, setFavoritos] = useState<number[]>([]);
   const [menuAberto, setMenuAberto] = useState(false);
-  const [notifAberta, setNotifAberta] = useState(false); // NOVO: Controle do modal
+  const [notifAberta, setNotifAberta] = useState(false); 
   const [mulherSelecionada, setMulherSelecionada] = useState<any>(null);
   
   const [paginaAtual, setPaginaAtual] = useState(1);
   const produtosPorPagina = 8;
 
-  const [notificacoes, setNotificacoes] = useState(NOTIFICACOES_DATA); // NOVO: Estado de notificações
-  const [carrinhoCount, setCarrinhoCount] = useState(() => {
-    const salvo = localStorage.getItem('carrinho_count');
-    return salvo ? parseInt(salvo) : 0;
-  });
+  // --- ADICIONADO: ESTADO DOS PRODUTOS GLOBAIS ---
+  const [produtosGlobais, setProdutosGlobais] = useState<any[]>(PRODUTOS_DATA);
+  const [carrinhoCount, setCarrinhoCount] = useState(0);
 
+  // --- ADICIONADO: LÓGICA INTEGRADA DO LOCALSTORAGE ---
   useEffect(() => {
-    const salvos = localStorage.getItem('favoritos_itens');
-    if (salvos) setFavoritos(JSON.parse(salvos));
-    
-    const atualizarCarrinhoUI = () => {
-      const salvo = localStorage.getItem('carrinho_count');
-      setCarrinhoCount(salvo ? parseInt(salvo) : 0);
+    localStorage.setItem('user_role', 'vendedor');
+
+    const carregarDadosGlobais = () => {
+      // 1. Carrega os produtos
+      const salvos = localStorage.getItem('produtos_globais');
+      if (salvos) {
+        setProdutosGlobais(JSON.parse(salvos));
+      } else {
+        localStorage.setItem('produtos_globais', JSON.stringify(PRODUTOS_DATA));
+        setProdutosGlobais(PRODUTOS_DATA);
+      }
+
+      // 2. Carrega os favoritos
+      const favsSalvos = localStorage.getItem('favoritos_itens');
+      if (favsSalvos) setFavoritos(JSON.parse(favsSalvos));
+
+      // 3. Carrega o carrinho
+      const cartSalvo = localStorage.getItem('carrinho_count');
+      setCarrinhoCount(cartSalvo ? parseInt(cartSalvo) : 0);
     };
 
-    window.addEventListener('storage', atualizarCarrinhoUI);
-    return () => window.removeEventListener('storage', atualizarCarrinhoUI);
+    carregarDadosGlobais();
+    
+    // Fica escutando qualquer mudança no navegador para atualizar na hora!
+    window.addEventListener('storage', carregarDadosGlobais);
+    return () => window.removeEventListener('storage', carregarDadosGlobais);
   }, []);
 
   useEffect(() => {
     if (location.state && (location.state as any).buscaReceita) {
       const termo = (location.state as any).buscaReceita;
-      setBusca(termo); setTermoPesquisado(termo); setCatAtiva('Todos'); setPaginaAtual(1);
+      setBusca(termo);
+      setTermoPesquisado(termo);
+      setCatAtiva('Todos');
+      setPaginaAtual(1);
     }
   }, [location.state]);
 
@@ -99,40 +117,72 @@ export default function Home2() {
   const adicionarRapido = (e: React.MouseEvent, id: number) => {
     e.preventDefault(); e.stopPropagation(); 
     const carrinhoSalvo = localStorage.getItem('carrinho_itens');
-    let itens: any[] = carrinhoSalvo ? JSON.parse(carrinhoSalvo) : [];
-    const indexExistente = itens.findIndex((item:any) => item.id === id);
-    if (indexExistente !== -1) { itens[indexExistente].quantidade += 1; } 
-    else { itens.push({ id, quantidade: 1, selecionado: true }); }
+    let itens: { id: number, quantidade: number, selecionado?: boolean }[] = [];
+    if (carrinhoSalvo) {
+      try {
+        itens = JSON.parse(carrinhoSalvo);
+        if (!Array.isArray(itens)) itens = [];
+      } catch (err) { itens = []; }
+    }
+    const indexExistente = itens.findIndex(item => item.id === id);
+    if (indexExistente !== -1) {
+      itens[indexExistente].quantidade += 1;
+    } else {
+      itens.push({ id, quantidade: 1, selecionado: true });
+    }
+    const totalQuantidades = itens.reduce((acc, curr) => acc + curr.quantidade, 0);
     localStorage.setItem('carrinho_itens', JSON.stringify(itens));
-    const total = itens.reduce((acc, curr) => acc + curr.quantidade, 0);
-    localStorage.setItem('carrinho_count', total.toString());
-    setCarrinhoCount(total);
+    localStorage.setItem('carrinho_count', totalQuantidades.toString());
+    setCarrinhoCount(totalQuantidades);
     window.dispatchEvent(new Event('storage'));
   };
 
-  const handlePesquisa = () => { setTermoPesquisado(busca); setCatAtiva('Todos'); setPaginaAtual(1); };
+  const handlePesquisa = () => { 
+    setTermoPesquisado(busca); 
+    setCatAtiva('Todos');
+    setPaginaAtual(1); 
+  };
   const handleKeyDown = (e: React.KeyboardEvent) => { if (e.key === 'Enter') handlePesquisa(); };
-  const handleCategoriaClick = (nome: string) => { setCatAtiva(nome); setTermoPesquisado(''); setBusca(''); setPaginaAtual(1); };
+  const handleCategoriaClick = (nome: string) => { 
+    setCatAtiva(nome); 
+    setTermoPesquisado(''); 
+    setBusca(''); 
+    setPaginaAtual(1);
+  };
 
   const getProdutosFiltrados = () => {
-    let filtrados = PRODUTOS_DATA.filter(p => {
+    // --- ALTERADO AQUI: Lendo de produtosGlobais em vez de PRODUTOS_DATA ---
+    let filtrados = produtosGlobais.filter(p => {
       const matchCategoria = catAtiva === 'Todos' || p.categoria === catAtiva;
-      const matchBusca = !termoPesquisado || p.nome.toLowerCase().includes(termoPesquisado.toLowerCase());
+      const matchBusca = (() => {
+        if (!termoPesquisado) return true;
+        const buscaTerm = termoPesquisado.toLowerCase();
+        const nome = p.nome.toLowerCase();
+        if (nome.includes(buscaTerm) || buscaTerm.includes(nome)) return true;
+        const termos = buscaTerm.split(/ e | ou |,/).map(t => t.trim()).filter(t => t.length > 2);
+        if (termos.length > 1) {
+          return termos.some(termo => nome.includes(termo) || termo.includes(nome));
+        }
+        return false;
+      })();
       return matchCategoria && matchBusca;
     });
-    if (ordenacao === 'menor_preco') filtrados.sort((a, b) => a.preco - b.preco);
-    else if (ordenacao === 'maior_preco') filtrados.sort((a, b) => b.preco - a.preco);
+    if (ordenacao === 'menor_preco') {
+      filtrados.sort((a, b) => a.preco - b.preco);
+    } else if (ordenacao === 'maior_preco') {
+      filtrados.sort((a, b) => b.preco - a.preco);
+    }
     return filtrados;
   };
 
   const todosFiltrados = getProdutosFiltrados();
-  const produtosExibidos = todosFiltrados.slice((paginaAtual - 1) * produtosPorPagina, paginaAtual * produtosPorPagina);
   const totalPaginas = Math.ceil(todosFiltrados.length / produtosPorPagina);
+  const inicio = (paginaAtual - 1) * produtosPorPagina;
+  const fim = inicio + produtosPorPagina;
+  const produtosExibidos = todosFiltrados.slice(inicio, fim);
 
   return (
     <div className="min-h-screen bg-white text-[#394158] antialiased pb-20 font-sans">
-      
-      {/* HEADER */}
       <header className="w-full bg-white py-4 px-4 md:px-8 border-b border-gray-100 sticky top-0 z-50 shadow-sm">
         <div className="max-w-6xl mx-auto flex justify-between items-center gap-4 md:gap-8">
           <div className="flex items-center gap-4 md:gap-10 flex-shrink-0 -ml-2 md:-ml-6">
@@ -148,16 +198,13 @@ export default function Home2() {
             <button onClick={handlePesquisa} className="absolute right-1.5 top-1/2 -translate-y-1/2 bg-[#55833d] text-white p-2 rounded-full"><Search size={16} /></button>
           </div>
           <div className="flex items-center gap-3 md:gap-6 flex-shrink-0">
-            <div className="hidden md:flex items-center gap-1 relative">
-              
-              {/* SINO DE NOTIFICAÇÃO COM MODAL INTERNO */}
+            <div className="hidden md:flex items-center gap-1">
               <div className="relative">
                 <button onClick={() => setNotifAberta(!notifAberta)} className={`p-2.5 rounded-full transition-all duration-300 relative ${notifAberta ? 'bg-[#f9943b] text-white shadow-lg' : 'hover:bg-[#f9943b] hover:text-white text-[#394158]'}`}>
                   <Bell size={22} />
-                  {notificacoes.filter(n => !n.lida).length > 0 && <span className="absolute top-1 right-1 bg-red-500 text-white text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center border-2 border-white">{notificacoes.filter(n => !n.lida).length}</span>}
+                  {NOTIFICACOES_DATA.filter(n => !n.lida).length > 0 && <span className="absolute top-1 right-1 bg-red-500 text-white text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center border-2 border-white">{NOTIFICACOES_DATA.filter(n => !n.lida).length}</span>}
                 </button>
 
-                {/* MODAL DAS NOTIFICAÇÕES (POPOVER) */}
                 {notifAberta && (
                   <>
                     <div className="fixed inset-0 z-[60]" onClick={() => setNotifAberta(false)}></div>
@@ -165,13 +212,12 @@ export default function Home2() {
                       <header className="p-4 border-b border-gray-50 flex justify-between items-center bg-white">
                         <h3 className="text-sm font-black uppercase italic text-[#394158]">Notificações</h3>
                         <div className="flex gap-2">
-                           <button onClick={() => setNotificacoes([])} className="text-gray-400 hover:text-red-500 p-1"><Trash2 size={16}/></button>
-                           <button onClick={() => setNotifAberta(false)} className="text-gray-400 hover:text-[#394158] p-1"><X size={16}/></button>
+                           <button className="text-gray-400 hover:text-[#394158] p-1" onClick={() => setNotifAberta(false)}><X size={16}/></button>
                         </div>
                       </header>
                       <div className="max-h-[350px] overflow-y-auto no-scrollbar">
-                        {notificacoes.length > 0 ? notificacoes.map(n => (
-                          <div key={n.id} onClick={() => setNotificacoes(notificacoes.map(not => not.id === n.id ? {...not, lida: true} : not))} className={`flex gap-4 p-4 border-b border-gray-50 transition-all cursor-pointer hover:bg-gray-50 relative ${!n.lida ? 'bg-[#f9943b]/5' : 'opacity-60'}`}>
+                        {NOTIFICACOES_DATA.length > 0 ? NOTIFICACOES_DATA.map(n => (
+                          <div key={n.id} className={`flex gap-4 p-4 border-b border-gray-50 transition-all cursor-pointer hover:bg-gray-50 relative ${!n.lida ? 'bg-[#f9943b]/5' : 'opacity-60'}`}>
                             <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${n.bg} ${n.cor}`}><n.icone size={18}/></div>
                             <div className="flex-1 min-w-0">
                                <h4 className="text-[11px] font-black uppercase truncate text-[#394158]">{n.titulo}</h4>
@@ -185,7 +231,6 @@ export default function Home2() {
                   </>
                 )}
               </div>
-
               <Link to="/chat" className="p-2.5 rounded-full hover:bg-[#f9943b] hover:text-white transition-all duration-300 text-[#394158]"><MessageCircle size={22} /></Link>
               <Link to="/carrinho" className="p-2.5 rounded-full hover:bg-[#f9943b] hover:text-white transition-all duration-300 text-[#394158] relative group">
                 <ShoppingCart size={22} />
@@ -198,24 +243,31 @@ export default function Home2() {
         </div>
       </header>
 
-      {/* MODAL MOBILE */}
       {menuAberto && (
         <div className="fixed inset-0 z-[110] md:hidden">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMenuAberto(false)}></div>
           <div className="absolute right-0 top-0 h-full w-72 bg-white shadow-2xl p-8 flex flex-col gap-8 animate-in slide-in-from-right duration-300">
             <button onClick={() => setMenuAberto(false)} className="self-end p-2 bg-[#F5F2ED] rounded-full text-[#394158] hover:text-red-500 transition-all"><X size={24} /></button>
-            <nav className="flex flex-col gap-5 text-sm font-black uppercase tracking-widest text-[#394158]">
+            <div className="flex flex-col gap-6">
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-300 border-b pb-2">Navegação</p>
+              <nav className="flex flex-col gap-5 text-sm font-black uppercase tracking-widest text-[#394158]">
                 <Link to="/home2" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d]"><ChevronRight size={14}/> Início</Link>
                 <Link to="/receitas" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d]"><ChevronRight size={14}/> Receitas</Link>
                 <Link to="/blog" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#f9943b]"><ChevronRight size={14}/> Notícias</Link>
                 <hr className="border-gray-50 my-2" />
+                <Link to="/notificacoes" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d]"><Bell size={20}/> Notificações</Link>
+                <Link to="/chat" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d]"><MessageCircle size={20}/> Chat</Link>
+                <Link to="/carrinho" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d] relative">
+                  <ShoppingCart size={20}/> Carrinho 
+                  {carrinhoCount > 0 && <span className="bg-[#f9943b] text-white text-[10px] px-2 py-0.5 rounded-full ml-auto">{carrinhoCount}</span>}
+                </Link>
                 <Link to="/perfil" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d]"><User size={20}/> Meu Perfil</Link>
-            </nav>
+              </nav>
+            </div>
           </div>
         </div>
       )}
 
-      {/* MODAL EMPREENDEDORAS */}
       {mulherSelecionada && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => setMulherSelecionada(null)}></div>
@@ -223,7 +275,7 @@ export default function Home2() {
             <button onClick={() => setMulherSelecionada(null)} className="absolute top-6 right-6 z-10 bg-white/80 p-2 rounded-full hover:bg-white transition-colors"><X size={20} /></button>
             <div className="flex flex-col md:flex-row h-full">
               <div className="w-full md:w-1/2 h-64 md:h-auto relative">
-                <img src={mulherSelecionada.img} className="w-full h-full object-cover" />
+                <img src={mulherSelecionada.img} className="w-full h-full object-cover" alt={mulherSelecionada.nome} />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#55833d]/60 to-transparent"></div>
               </div>
               <div className="w-full md:w-1/2 p-8 md:p-10 flex flex-col justify-center">
@@ -231,9 +283,10 @@ export default function Home2() {
                 <h2 className="text-2xl font-black text-[#394158] mb-1">{mulherSelecionada.nome}</h2>
                 <span className="text-[#f9943b] font-black italic uppercase text-xs mb-6">{mulherSelecionada.negocio}</span>
                 <div className="bg-[#F5F2ED] p-5 rounded-3xl mb-8">
+                  <div className="flex items-center gap-2 mb-3 text-[#394158]/50 uppercase font-black text-[9px]"><BookOpen size={12} /> Nossa História</div>
                   <p className="text-sm text-[#394158] leading-relaxed italic">"{mulherSelecionada.historia}"</p>
                 </div>
-                <button onClick={() => setMulherSelecionada(null)} className="w-full bg-[#55833d] text-white py-4 rounded-2xl font-black uppercase text-[10px] flex items-center justify-center gap-3"><Store size={16} /> Ver Loja</button>
+                <button onClick={() => setMulherSelecionada(null)} className="w-full bg-[#55833d] text-white py-4 rounded-2xl font-black uppercase text-[10px] flex items-center justify-center gap-3"><Store size={16} /> Ver Loja da Vendedora</button>
               </div>
             </div>
           </div>
@@ -241,19 +294,26 @@ export default function Home2() {
       )}
 
       <main className="max-w-7xl mx-auto px-4 md:px-8 pt-6 md:pt-10">
-        
-        {/* EMPREENDEDORAS */}
-        <section className="w-full max-w-6xl mb-12 md:mb-16 bg-[#fededf] p-4 md:p-8 rounded-[1rem] shadow-xl mx-auto border border-[#fededf]">
-            <div className="flex justify-between items-center mb-8 px-4">
-                <h2 className="text-sm md:text-xl font-black italic uppercase tracking-widest flex items-center gap-3">
-                    <Star size={18} className="fill-[#FFCD0D] text-[#FFCD0D]" /> Empreendedoras de Sergipe
-                </h2>
+        <div className="relative w-full mb-8 md:hidden group">
+          <input type="text" value={busca} onChange={(e) => setBusca(e.target.value)} onKeyDown={handleKeyDown} placeholder="O que procura?" className="w-full bg-white py-3 pl-6 pr-12 rounded-full border border-gray-100 shadow-sm outline-none text-sm font-medium text-[#394158]" />
+          <button onClick={handlePesquisa} className="absolute right-2 top-1/2 -translate-y-1/2 bg-[#55833d] text-white p-2 rounded-full active:scale-95 transition-all"><Search size={16}/></button>
+        </div>
+
+        <section className="w-full max-w-6xl mb-12 md:mb-16 bg-[#fededf] p-4 md:p-8 rounded-[2rem] md:rounded-[1rem] border border-[#fededf] mx-auto shadow-xl">
+            <div className="flex items-center justify-between mb-6 md:mb-8 px-2 md:px-4 text-[#394158]">
+                <div className="flex items-center gap-2 md:gap-3">
+                    <div className="p-1.5 md:p-2 bg-white/20 rounded-xl"><Star size={18} className="fill-[#FFCD0D] text-[#FFCD0D]" /></div>
+                    <h2 className="text-sm md:text-xl font-black italic uppercase tracking-widest">Empreendedoras de Sergipe</h2>
+                </div>
                 <button className="text-[10px] font-black uppercase hover:underline">Ver todas</button>
             </div>
-            <div className="flex gap-4 md:gap-6 overflow-x-auto pb-2 no-scrollbar px-4">
+            <div className="flex gap-4 md:gap-6 overflow-x-auto pb-2 no-scrollbar px-2 md:px-4">
                 {EMPREENDEDORAS.map(mulher => (
-                    <div key={mulher.id} onClick={() => setMulherSelecionada(mulher)} className="min-w-[240px] md:min-w-[280px] bg-white rounded-[1rem] p-3 shadow-lg flex items-center gap-3 group cursor-pointer hover:bg-[#f9943b]/10 hover:border-[#f9943b]/30 transition-all duration-300 border border-white">
-                        <img src={mulher.img} className="w-12 h-12 md:w-16 md:h-16 rounded-full object-cover border-2 border-[#394158]/20 group-hover:border-[#f9943b]/50" alt={mulher.nome} />
+                    <div key={mulher.id} 
+                        onClick={() => setMulherSelecionada(mulher)} 
+                        className="min-w-[240px] md:min-w-[280px] bg-white rounded-[1rem] p-3 shadow-lg flex items-center gap-3 group cursor-pointer hover:bg-[#f9943b]/10 hover:border-[#f9943b]/30 transition-all duration-300 border border-white"
+                    >
+                        <img src={mulher.img} className="w-12 h-12 md:w-16 md:h-16 rounded-full object-cover border-2 border-[#394158]/20 transition-colors group-hover:border-[#f9943b]/50" alt={mulher.nome} />
                         <div className="flex flex-col">
                             <h3 className="text-xs md:text-sm font-black uppercase text-[#394158] group-hover:text-[#f9943b] transition-colors leading-tight">{mulher.nome}</h3>
                             <span className="text-[8px] md:text-[10px] font-bold text-[#394158]/60 uppercase italic">{mulher.negocio}</span>
@@ -263,27 +323,29 @@ export default function Home2() {
             </div>
         </section>
 
-        {/* CATEGORIAS (AJUSTE DE TAMANHO REALIZADO AQUI) */}
         <section className="w-full max-w-7xl mx-auto bg-gray-100/50 p-4 md:p-10 rounded-[1rem] border border-gray-200 shadow-inner mb-12">
-          <h2 className="text-xs md:text-xl font-black uppercase tracking-widest italic mb-10 text-[#394158]">Categorias</h2>
-          <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-10 gap-4">
-            {CATEGORIAS.map(cat => (
-              <button key={cat.nome} onClick={() => handleCategoriaClick(cat.nome)} className="flex flex-col items-center gap-2 group w-full">
-                {/* Quadrado redimensionado para max-w-[44px] e arredondamento 0.8rem */}
-                <div className={`w-full aspect-square max-w-[44px] rounded-[0.8rem] flex items-center justify-center border transition-all shadow-sm ${catAtiva === cat.nome ? 'bg-[#f9943b] border-[#f9943b] text-white scale-110' : 'bg-white border-gray-200 group-hover:border-[#394158]'}`}>
-                  {/* Ícone reduzido para size={18} ou 20 para caber melhor */}
-                  <cat.Icone size={20} />
-                </div>
-                <span className={`text-[8px] md:text-[9px] font-black uppercase text-center leading-tight ${catAtiva === cat.nome ? 'text-[#394158]' : 'text-[#394158]/40'}`}>{cat.nome}</span>
-              </button>
-            ))}
+          <div className="mb-12">
+            <h2 className="text-xs md:text-xl font-black uppercase tracking-widest italic mb-10 text-[#394158]">Categorias</h2>
+            <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-10 gap-4">
+              {CATEGORIAS.map(cat => (
+                <button 
+                  key={cat.nome} 
+                  onClick={() => handleCategoriaClick(cat.nome)} 
+                  className="flex flex-col items-center gap-2 group w-full"
+                >
+                  <div className={`w-full aspect-square max-w-[52px] rounded-xl flex items-center justify-center border transition-all shadow-sm ${catAtiva === cat.nome ? 'bg-[#f9943b] border-[#f9943b] text-white scale-110' : 'bg-white border-gray-200 group-hover:border-[#394158]'}`}>
+                    <cat.Icone size={21} />
+                  </div>
+                  <span className={`text-[8px] md:text-[9px] font-black uppercase text-center leading-tight ${catAtiva === cat.nome ? 'text-[#394158]' : 'text-[#394158]/40'}`}>{cat.nome}</span>
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* GRID PRODUTOS */}
-          <div className="w-full mt-12">
-            <div className="flex justify-between items-center mb-10">
+          <div className="w-full">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
               <h2 className="text-xl font-black italic uppercase text-[#394158]">{catAtiva !== "Todos" ? catAtiva : "Nossos Produtos"}</h2>
-              <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-gray-100 shadow-sm">
+              <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-gray-100 shadow-sm self-start">
                 <Filter size={14} className="text-[#55833d]" />
                 <select value={ordenacao} onChange={(e) => setOrdenacao(e.target.value)} className="bg-transparent text-[10px] font-black uppercase outline-none cursor-pointer">
                   <option value="recomendados">Recomendados</option>
@@ -303,8 +365,9 @@ export default function Home2() {
                   </div>
                   <span className="text-[6px] md:text-[9px] font-black uppercase text-[#55833d] mb-1">{prod.categoria}</span>
                   <Link to={`/produto/${prod.id}`}><h3 className="font-bold text-[#394158] text-[8px] md:text-sm leading-tight mb-1 line-clamp-1 hover:text-[#55833d] transition-colors">{prod.nome}</h3></Link>
+                  <div className="flex items-center gap-1 text-[#394158]/50 mb-2 uppercase font-bold text-[6px] md:text-[9px]"><MapPin size={8} /> {prod.local || "Sergipe, BR"}</div>
                   <div className="mt-auto pt-2 border-t border-gray-50 flex justify-between items-center">
-                    <span className="text-[10px] md:text-lg font-black text-[#394158]">R$ {prod.preco.toFixed(2)}</span>
+                    <span className="text-[10px] md:text-lg font-black text-[#394158]">R$ {prod.preco.toFixed(2)}<span className="text-[7px] md:text-[10px] opacity-40 ml-1">/{prod.un || 'un'}</span></span>
                     <Link to={`/produto/${prod.id}`} className="hidden md:block text-[9px] font-black uppercase bg-[#394158] text-white px-4 py-1.5 rounded-xl hover:bg-[#55833d]">Detalhes</Link>
                   </div>
                 </div>
@@ -313,21 +376,45 @@ export default function Home2() {
 
             {totalPaginas > 1 && (
               <div className="flex justify-center items-center gap-2 mt-12 pt-8 border-t border-gray-100">
-                <button onClick={() => setPaginaAtual(p => Math.max(1, p - 1))} disabled={paginaAtual === 1} className={`p-2 rounded-full transition-all ${paginaAtual === 1 ? 'text-gray-200' : 'hover:bg-white text-[#394158] shadow-sm'}`}><ChevronLeft size={16} /></button>
+                <button 
+                  onClick={() => setPaginaAtual(p => Math.max(1, p - 1))}
+                  disabled={paginaAtual === 1}
+                  className={`p-2 rounded-full transition-all ${paginaAtual === 1 ? 'text-gray-200' : 'hover:bg-white text-[#394158] shadow-sm'}`}
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                
                 {[...Array(totalPaginas)].map((_, i) => (
-                  <button key={i + 1} onClick={() => setPaginaAtual(i + 1)} className={`w-8 h-8 rounded-full text-[10px] font-black transition-all ${paginaAtual === i + 1 ? 'bg-[#394158] text-white shadow-md' : 'bg-white text-[#394158]/40 hover:bg-gray-200 shadow-sm'}`}>{i + 1}</button>
+                  <button
+                    key={i + 1}
+                    onClick={() => setPaginaAtual(i + 1)}
+                    className={`w-8 h-8 rounded-full text-[10px] font-black transition-all ${
+                      paginaAtual === i + 1 
+                      ? 'bg-[#394158] text-white shadow-md' 
+                      : 'bg-white text-[#394158]/40 hover:bg-gray-200 shadow-sm'
+                    }`}
+                  >
+                    {i + 1}
+                  </button>
                 ))}
-                <button onClick={() => setPaginaAtual(p => Math.min(totalPaginas, p + 1))} disabled={paginaAtual === totalPaginas} className={`p-2 rounded-full transition-all ${paginaAtual === totalPaginas ? 'text-gray-200' : 'hover:bg-white text-[#394158] shadow-sm'}`}><ChevronRight size={16} /></button>
+
+                <button 
+                  onClick={() => setPaginaAtual(p => Math.min(totalPaginas, p + 1))}
+                  disabled={paginaAtual === totalPaginas}
+                  className={`p-2 rounded-full transition-all ${paginaAtual === totalPaginas ? 'text-gray-200' : 'hover:bg-white text-[#394158] shadow-sm'}`}
+                >
+                  <ChevronRight size={16} />
+                </button>
               </div>
             )}
           </div>
         </section>
 
-        {/* CONTINUAR VENDO (RESTAURADO) */}
         <section className="w-full max-w-7xl mx-auto border-t border-gray-50 pt-16 bg-gray-100/50 p-4 md:p-10 rounded-[1rem] border border-gray-200 shadow-inner mb-16">
           <h2 className="text-xl font-black italic uppercase text-[#394158] mb-10 tracking-widest">Continue Comprando</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 px-2">
-            {PRODUTOS_DATA.slice(0, 3).map(prod => (
+            {/* --- ALTERADO AQUI: Lendo de produtosGlobais em vez de PRODUTOS_DATA --- */}
+            {produtosGlobais.slice(0, 3).map(prod => (
               <div key={prod.id} className="bg-white p-4 rounded-[1rem] shadow-sm flex items-center gap-4 group border border-gray-100 hover:border-[#55833d]/20 transition-all">
                 <Link to={`/produto/${prod.id}`}><img src={prod.img} className="w-16 h-16 md:w-24 md:h-24 rounded-xl object-cover" alt={prod.nome} /></Link>
                 <div>

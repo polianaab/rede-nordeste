@@ -586,7 +586,7 @@ export default function Perfil() {
       <header className="w-full bg-white/80 backdrop-blur-md py-6 px-6 border-b border-gray-100 sticky top-0 z-50">
         <div className="max-w-4xl mx-auto flex justify-between items-center relative">
           <div className="flex-1 flex justify-start">
-            <button onClick={() => telaAtual === 'perfil' ? navigate('/home2') : setTelaAtual('perfil')} className="p-3 active:scale-90 transition-all"><ArrowLeft size={20} className="text-[#802D44]" /></button>
+            <button onClick={() => telaAtual === 'perfil' ? navigate('/vendedor') : setTelaAtual('perfil')} className="p-3 active:scale-90 transition-all"><ArrowLeft size={20} className="text-[#802D44]" /></button>
           </div>
           <h2 className="absolute left-1/2 -translate-x-1/2 text-xl font-black font-poppins uppercase italic text-[#394158]">PERFIL</h2>
           <div className="flex-1 flex items-center justify-end gap-2">
@@ -605,7 +605,7 @@ export default function Perfil() {
                 <div className="w-24 h-24 rounded-full border-4 border-[#f9943b] overflow-hidden shadow-inner bg-white/20"><img src={fotoPerfil} className="w-full h-full object-cover" alt="User"/></div>
                 <button onClick={() => fileInputRef.current?.click()} className="absolute bottom-0 right-0 bg-[#55833d] p-2.5 rounded-full border-2 border-[#f9943b] shadow-lg active:scale-90 transition-all"><Camera size={14} className="text-white" /></button>
               </div>
-              <div className="text-center md:text-left z-10"><h3 className="text-2xl font-black font-poppins italic uppercase leading-none mb-2 tracking-tight">{dadosUsuario.nome}</h3><span className="text-[10px] font-black uppercase bg-white px-4 py-1.5 rounded-full flex items-center gap-1.5 text-[#55833d] shadow-sm"><CheckCircle size={12} className="text-[#4ade80]" /> Comprador Verificado</span></div>
+              <div className="text-center md:text-left z-10"><h3 className="text-2xl font-black font-poppins italic uppercase leading-none mb-2 tracking-tight">{dadosUsuario.nome}</h3><span className="text-[10px] font-black uppercase bg-white px-4 py-1.5 rounded-full flex items-center gap-1.5 text-[#55833d] shadow-sm"><CheckCircle size={12} className="text-[#4ade80]" /> Vendedor Verificado</span></div>
             </div>
 
             <section className="bg-white rounded-[1rem] p-8 shadow-xl border border-white">
