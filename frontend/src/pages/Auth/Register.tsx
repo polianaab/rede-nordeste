@@ -4,21 +4,20 @@ import {
   User, Mail, Lock, FileText, Phone, 
   ArrowRight, ChevronLeft 
 } from 'lucide-react';
-// Importando as funções do seu api.ts configurado para a porta 8080
 import { registrarUsuario } from '../../services/api';
 
 export default function Register() {
   const navigate = useNavigate();
+  const [carregando, setCarregando] = useState(false);
   
-  // Estado inicial ajustado para bater com a Model Usuario.java
+  // Estado inicial sincronizado com o DTO do Java (UsuarioRegistroRequest)
   const [formData, setFormData] = useState({
     nomeCompleto: '',
     cpfCnpj: '',
     telefone: '',
     email: '',
-    senhaHash: '',
-    tipoPerfil: 'COMPRADOR', // Campo obrigatório no seu Java (Enum TipoPerfil)
-    contaAtiva: true
+    senha: '', // Alterado de senhaHash para senha para casar com o DTO
+    tipoPerfil: 'COMPRADOR' // Valor padrão do Enum
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -27,16 +26,20 @@ export default function Register() {
 
   const handleFinalize = async (e: React.FormEvent) => {
     e.preventDefault();
+    setCarregando(true);
+
     try {
-      // Envia os dados para http://localhost:8080/api/usuarios/registrar
+      // Envia os dados para o endpoint /api/usuarios/registrar
       await registrarUsuario(formData);
       
-      alert("🎉 Cadastro realizado com sucesso!");
+      alert("🎉 Cadastro realizado com sucesso! Faça seu login.");
       navigate('/login');
     } catch (error: any) {
-      // Exibe a mensagem real (ex: "E-mail já cadastrado") em vez da mensagem genérica
-      alert(`⚠️ ${error.message}`);
+      // Pega a mensagem de erro que o seu ExceptionHandler do Java enviar
+      alert(`⚠️ Erro no cadastro: ${error.message}`);
       console.error("Erro detalhado:", error);
+    } finally {
+      setCarregando(false);
     }
   };
 
@@ -45,7 +48,7 @@ export default function Register() {
       
       <div className="mb-8">
         <Link to="/">
-          <img src="/assets/logo-login.png" alt="Rede Nordeste" className="h-32" />
+          <img src="/assets/logo-rede-nordeste.png" alt="Rede Nordeste" className="h-32" />
         </Link>
       </div>
 
@@ -60,68 +63,81 @@ export default function Register() {
         </header>
 
         <form onSubmit={handleFinalize} className="space-y-4">
+          {/* Nome Completo */}
           <div className="relative">
             <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
             <input 
               name="nomeCompleto" 
+              type="text"
               placeholder="Nome Completo" 
               className="w-full bg-[#F5F2ED]/50 py-4 pl-12 pr-4 rounded-2xl outline-none focus:ring-2 focus:ring-[#55833d] transition-all" 
               onChange={handleChange}
+              value={formData.nomeCompleto}
               required
             />
           </div>
 
+          {/* CPF ou CNPJ */}
           <div className="relative">
             <FileText className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
             <input 
               name="cpfCnpj" 
+              type="text"
               placeholder="CPF ou CNPJ (apenas números)" 
-              className="w-full bg-[#F5F2ED]/50 py-4 pl-12 pr-4 rounded-2xl outline-none" 
+              className="w-full bg-[#F5F2ED]/50 py-4 pl-12 pr-4 rounded-2xl outline-none focus:ring-2 focus:ring-[#55833d] transition-all" 
               onChange={handleChange}
+              value={formData.cpfCnpj}
               required
             />
           </div>
 
+          {/* Telefone */}
           <div className="relative">
             <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
             <input 
               name="telefone" 
+              type="tel"
               placeholder="Telefone (ex: 81999998888)" 
-              className="w-full bg-[#F5F2ED]/50 py-4 pl-12 pr-4 rounded-2xl outline-none" 
+              className="w-full bg-[#F5F2ED]/50 py-4 pl-12 pr-4 rounded-2xl outline-none focus:ring-2 focus:ring-[#55833d] transition-all" 
               onChange={handleChange}
+              value={formData.telefone}
               required
             />
           </div>
 
+          {/* Email */}
           <div className="relative">
             <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
             <input 
               name="email" 
               type="email"
               placeholder="E-mail" 
-              className="w-full bg-[#F5F2ED]/50 py-4 pl-12 pr-4 rounded-2xl outline-none" 
+              className="w-full bg-[#F5F2ED]/50 py-4 pl-12 pr-4 rounded-2xl outline-none focus:ring-2 focus:ring-[#55833d] transition-all" 
               onChange={handleChange}
+              value={formData.email}
               required
             />
           </div>
 
+          {/* Senha */}
           <div className="relative">
             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
             <input 
-              name="senhaHash" 
+              name="senha" 
               type="password"
               placeholder="Senha" 
-              className="w-full bg-[#F5F2ED]/50 py-4 pl-12 pr-4 rounded-2xl outline-none" 
+              className="w-full bg-[#F5F2ED]/50 py-4 pl-12 pr-4 rounded-2xl outline-none focus:ring-2 focus:ring-[#55833d] transition-all" 
               onChange={handleChange}
+              value={formData.senha}
               required
             />
           </div>
 
-          {/* Campo de seleção de perfil - Essencial para o seu Backend Java */}
+          {/* Tipo de Perfil */}
           <div className="relative">
             <select 
               name="tipoPerfil"
-              className="w-full bg-[#F5F2ED]/50 py-4 px-4 rounded-2xl outline-none appearance-none font-bold text-[#394158]/60"
+              className="w-full bg-[#F5F2ED]/50 py-4 px-4 rounded-2xl outline-none appearance-none font-bold text-[#394158]/60 focus:ring-2 focus:ring-[#55833d] transition-all"
               onChange={handleChange}
               value={formData.tipoPerfil}
               required
@@ -133,9 +149,10 @@ export default function Register() {
 
           <button 
             type="submit"
-            className="w-full bg-[#55833d] text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest flex items-center justify-center gap-3 hover:bg-[#394158] transition-all active:scale-95 shadow-lg shadow-green-900/10 mt-6"
+            disabled={carregando}
+            className={`w-full ${carregando ? 'bg-gray-400' : 'bg-[#55833d] hover:bg-[#394158]'} text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest flex items-center justify-center gap-3 transition-all active:scale-95 shadow-lg mt-6`}
           >
-            Finalizar Cadastro <ArrowRight size={18} />
+            {carregando ? 'Processando...' : 'Finalizar Cadastro'} <ArrowRight size={18} />
           </button>
         </form>
 
