@@ -16,6 +16,7 @@ import Perfil from './pages/Comprador/Perfil';
 import Notificacao from './pages/Comprador/Notificacao';
 import HomeVendedor from './pages/Vendedor/HomeVendedor';
 import PainelVendedor from './pages/Vendedor/PainelVendedor';
+import HomeAdmin from './pages/Admin/HomeAdmin';
 
 // Verificação de autenticação antes da liberação da página
 const RotaPrivada = ({ children }: { children: React.ReactNode }) => {
@@ -39,6 +40,7 @@ function App() {
           <Route path="/cadastro" element={<Register />} />
           <Route path="/blog" element={<Blog />} />
           <Route path="/blog/:id" element={<Post />} />
+          <Route path="/admin-teste" element={<HomeAdmin />} />
 
           {/* Rotas Privadas - Comprador */}
           <Route path="/home2" element={
