@@ -18,59 +18,79 @@ import org.springframework.web.cors.CorsConfiguration;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Autowired
-    private SecurityFilter securityFilter;
+        @Autowired
+        private SecurityFilter securityFilter;
 
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-                .csrf(csrf -> csrf.disable())
-                .cors(cors -> cors.configurationSource(request -> {
-                    CorsConfiguration config = new CorsConfiguration();
-                    config.setAllowedOrigins(List.of(
-                            "http://localhost:5173",
-                            "http://127.0.0.1:5173",
-                            "http://localhost:8080"));
-                    config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-                    config.setAllowedHeaders(List.of("*"));
-                    config.setAllowCredentials(true);
-                    return config;
-                }))
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth
-                        // Auth pública
-                        .requestMatchers(
-                                "/api/usuarios/registrar",
-                                "/api/usuarios/login",
-                                "/api/usuarios/refresh")
-                        .permitAll()
+        @Bean
+        public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+                http
+                                .csrf(csrf -> csrf.disable())
+                                .cors(cors -> cors.configurationSource(request -> {
+                                        CorsConfiguration config = new CorsConfiguration();
+                                        config.setAllowedOrigins(List.of(
+                                                        "http://localhost:5173",
+                                                        "http://127.0.0.1:5173",
+                                                        "http://localhost:8080"));
+                                        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+                                        config.setAllowedHeaders(List.of("*"));
+                                        config.setAllowCredentials(true);
+                                        return config;
+                                }))
+                                .sessionManagement(session -> session
+                                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                                .authorizeHttpRequests(auth -> auth
+                                                // Entregadores — cadastro público
+                                                .requestMatchers("/api/entregadores/cadastrar").permitAll()
 
-                        // Marketplace público (leitura)
-                        .requestMatchers(
-                                HttpMethod.GET,
-                                "/api/produtos/**",
-                                "/api/lojas/**",
-                                "/api/categorias")
-                        .permitAll()
+                                                // Simulação de frete — pública
+                                                .requestMatchers("/api/frete/simular").permitAll()
 
-                        // Admin - Acesso exclusivo
-                        .requestMatchers("/api/categorias/admin/**").hasAuthority("ADMIN")
+                                                // Admin
+                                                .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
+                                                // Auth pública
+                                                .requestMatchers(
+                                                                "/api/usuarios/registrar",
+                                                                "/api/usuarios/login",
+                                                                "/api/usuarios/refresh")
+                                                .permitAll()
 
-                        // Rotas por perfil - ADMIN pode gerenciar ambos
-                        .requestMatchers("/api/produtor/**").hasAnyAuthority("PRODUTOR", "ADMIN")
-                        .requestMatchers("/api/comprador/**").hasAnyAuthority("COMPRADOR", "ADMIN")
+                                                .requestMatchers("/api/chats/**").authenticated()
+                                                .requestMatchers("/api/comprador/chats/**").hasAuthority("COMPRADOR")
+                                                .requestMatchers("/api/produtor/chats/**").hasAuthority("PRODUTOR")
 
-                        // Qualquer outra rota exige login
-                        .anyRequest().authenticated())
-                .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
-                .httpBasic(basic -> basic.disable())
-                .formLogin(form -> form.disable());
+                                                // WebSocket — liberado no nível do STOMP (WebSocketSecurityConfig)
+                                                .requestMatchers("/ws/**").permitAll()
 
-        return http.build();
-    }
+                                                .anyRequest().authenticated()
 
-    @Bean
-    public BCryptPasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+                                                // Marketplace público (leitura)
+                                                .requestMatchers(
+                                                                HttpMethod.GET,
+                                                                "/api/produtos/**",
+                                                                "/api/lojas/**",
+                                                                "/api/categorias")
+                                                .permitAll()
+
+                                                // Admin - Acesso exclusivo
+                                                .requestMatchers("/api/categorias/admin/**").hasAuthority("ADMIN")
+
+                                                // Rotas por perfil - ADMIN pode gerenciar ambos
+                                                .requestMatchers("/api/produtor/**")
+                                                .hasAnyAuthority("PRODUTOR", "ADMIN")
+                                                .requestMatchers("/api/comprador/**")
+                                                .hasAnyAuthority("COMPRADOR", "ADMIN")
+
+                                                // Qualquer outra rota exige login
+                                                .anyRequest().authenticated())
+                                .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
+                                .httpBasic(basic -> basic.disable())
+                                .formLogin(form -> form.disable());
+
+                return http.build();
+        }
+
+        @Bean
+        public BCryptPasswordEncoder passwordEncoder() {
+                return new BCryptPasswordEncoder();
+        }
 }

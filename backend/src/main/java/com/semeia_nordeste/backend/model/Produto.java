@@ -64,4 +64,7 @@ public class Produto {
 
     @Column(name = "data_cadastro", updatable = false)
     private OffsetDateTime dataCadastro = OffsetDateTime.now();
+
+    @Column(name = "peso_kg", precision = 8, scale = 2)
+    private BigDecimal pesoKg = BigDecimal.valueOf(0.5);
 }

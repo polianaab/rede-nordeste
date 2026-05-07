@@ -70,4 +70,10 @@ public class Loja {
 
     @Column(name = "data_abertura", updatable = false)
     private OffsetDateTime dataAbertura = OffsetDateTime.now();
+
+    @Column(name = "latitude_loja")
+    private Double latitudeLoja;
+
+    @Column(name = "longitude_loja")
+    private Double longitudeLoja;
 }
