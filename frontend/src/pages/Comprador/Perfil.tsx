@@ -8,6 +8,7 @@ import {
   MapPin, CreditCard, Lock, ShoppingBag, Calendar, 
   CreditCard as CardIcon, ShoppingCart, Filter, HeartOff, Eye, Trash2, X
 } from 'lucide-react';
+import { getMeuPerfil, getMeusPedidos } from '../../services/api';
 
 export default function Perfil() {
   const navigate = useNavigate();
@@ -60,10 +61,30 @@ export default function Perfil() {
 
   // Dados do Usuário para o Formulário de Conta
   const [dadosUsuario, setDadosUsuario] = useState({
-    nome: "Maria Silva",
-    email: "maria.silva@exemplo.com",
-    telefone: "(79) 99999-0000",
+    nome: '', email: '', telefone: '',
   });
+  const [pedidos, setPedidos] = useState<any[]>([]);
+  
+  useEffect(() => {
+    getMeuPerfil()
+      .then((u: any) => setDadosUsuario({
+        nome: u.nomeCompleto,
+        email: u.email,
+        telefone: u.telefone,
+      }))
+      .catch(() => {
+        // fallback: lê do localStorage
+        const raw = localStorage.getItem('usuarioLogado');
+        if (raw) {
+          const u = JSON.parse(raw);
+          setDadosUsuario({ nome: u.nome, email: '', telefone: '' });
+        }
+      });
+  
+    getMeusPedidos()
+      .then((data: any) => setPedidos(data.content || []))
+      .catch(() => setPedidos([]));
+  }, []);
 
   const PRODUTOS_DATA = [
     { id: 1, nome: 'Tomate Cereja Orgânico', preco: 8.90, img: 'https://cdn.shoppub.io/cdn-cgi/image/w=1000,h=1000,q=80,f=auto/beirario/media/uploads/produtos/foto/b3fd841dfd2c3file.png' },
@@ -552,10 +573,10 @@ export default function Perfil() {
         <div className="p-8 min-h-[400px] bg-[#FDFCFB]">
           {abaAtiva === 'finalizados' ? (
             <div className="space-y-4">
-              {COMPRAS_FINALIZADAS.map((pedido) => (
+              {pedidos.map((pedido) => (
                 <div key={pedido.id} onClick={() => { setPedidoSelecionado(pedido); setTelaAtual('detalhe-pedido'); }} className="bg-gradient-to-r from-[#55833d]/10 to-[#55833d]/5 rounded-[1rem] p-6 border border-[#55833d]/10 flex items-center justify-between cursor-pointer active:scale-[0.98] transition-all hover:shadow-md group">
                   <div className="flex items-center gap-5">
-                    <div className="flex -space-x-4">{pedido.produtos.map((p, idx) => <img key={idx} src={p.img} className="w-14 h-14 rounded-2xl border-4 border-white object-cover" />)}</div>
+                    <div className="flex -space-x-4">{pedido.produtos?.map((p: any, idx: number) => <img key={idx} src={p.img} className="w-14 h-14 rounded-2xl border-4 border-white object-cover" />)}</div>
                     <div><p className="text-[10px] font-black text-[#55833d] uppercase">Pedido {pedido.id}</p><h4 className="text-lg font-black font-montserrat text-[#394158] italic">R$ {pedido.total}</h4><p className="text-[9px] font-black uppercase text-[#55833d] flex items-center gap-1"><CheckCircle size={10} /> Finalizada</p></div>
                   </div>
                   <div className="bg-white p-3 rounded-full text-[#55833d] shadow-sm transition-all"><ChevronRight size={20} /></div>
@@ -564,10 +585,10 @@ export default function Perfil() {
             </div>
           ) : abaAtiva === 'caminho' ? (
             <div className="space-y-4">
-              {COMPRAS_FINALIZADAS.map((pedido) => (
+              {pedidos.map((pedido) => (
                 <div key={pedido.id} className="bg-gradient-to-r from-[#f9943b]/10 to-[#f9943b]/5 rounded-[1rem] p-6 border border-[#f9943b]/10 flex flex-col md:flex-row items-center justify-between gap-4 transition-all hover:shadow-md group">
                   <div className="flex items-center gap-5 w-full md:w-auto">
-                    <div className="flex -space-x-4">{pedido.produtos.map((p: any, idx: number) => <img key={idx} src={p.img} className="w-14 h-14 rounded-2xl border-4 border-white object-cover" />)}</div>
+                    <div className="flex -space-x-4">{pedido.produtos?.map((p: any, idx: number) => <img key={idx} src={p.img} className="w-14 h-14 rounded-2xl border-4 border-white object-cover" />)}</div>
                     <div><p className="text-[10px] font-black text-[#f9943b] uppercase">Pedido {pedido.id}</p><h4 className="text-lg font-black font-montserrat text-[#394158] italic">R$ {pedido.total}</h4><p className="text-[9px] font-black uppercase text-[#f9943b] flex items-center gap-1"><Truck size={10} /> A Caminho</p></div>
                   </div>
                   <button onClick={() => { setPedidoSelecionado(pedido); setTelaAtual('rastreio-pedido'); }} className="w-full md:w-auto bg-[#f9943b] text-white px-6 py-4 md:py-3 rounded-[1.5rem] md:rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg active:scale-95 transition-all text-center">Rastrear Pedido</button>

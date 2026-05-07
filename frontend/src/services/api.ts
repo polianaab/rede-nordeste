@@ -177,6 +177,9 @@ export const checkout = async (dados: {
   retiradaNaLoja: boolean;
   enderecoEntrega?: string;
   observacoes?: string;
+  cidadeDestino?: string;
+  latitudeDestino?: number;
+  longitudeDestino?: number;
 }) => {
   const res = await apiService.post("/comprador/pedidos/checkout", dados);
   return res.data;
@@ -242,4 +245,101 @@ export const alterarDisponibilidade = async (
   disponivel: boolean
 ) => {
   await apiService.patch(`/entregadores/${id}/disponibilidade?disponivel=${disponivel}`);
+};
+
+export const abrirChat = async (lojaId: number) => {
+  const res = await apiService.post(`/comprador/chats/abrir?lojaId=${lojaId}`);
+  return res.data;
+};
+
+export const getChatsComprador = async () => {
+  const res = await apiService.get("/comprador/chats");
+  return res.data;
+};
+
+export const getChatsDaLoja = async () => {
+  const res = await apiService.get("/produtor/chats");
+  return res.data;
+};
+
+export const getMensagens = async (chatId: number, page = 0) => {
+  const res = await apiService.get(
+    `/chats/${chatId}/mensagens?page=${page}&sort=dataEnvio,asc`
+  );
+  return res.data;
+};
+
+export const enviarMensagemREST = async (chatId: number, conteudo: string) => {
+  const res = await apiService.post(`/chats/${chatId}/mensagens`, { conteudo });
+  return res.data;
+};
+
+export const getNaoLidas = async () => {
+  const res = await apiService.get("/chats/nao-lidas");
+  return res.data;
+};
+
+
+// Instale: npm install @stomp/stompjs sockjs-client
+// npm install --save-dev @types/sockjs-client
+
+import { Client } from "@stomp/stompjs";
+import SockJS from "sockjs-client";
+
+let stompClient: Client | null = null;
+
+export const conectarWebSocket = (
+  chatId: number,
+  onMensagem: (msg: any) => void,
+  onNotificacao?: (notif: any) => void
+) => {
+  const raw = localStorage.getItem("usuarioLogado");
+  const token = raw ? JSON.parse(raw).accessToken : null;
+
+  stompClient = new Client({
+    webSocketFactory: () =>
+      new SockJS("http://localhost:8080/ws/chat") as WebSocket,
+
+    connectHeaders: {
+      Authorization: `Bearer ${token}`,
+    },
+
+    onConnect: () => {
+      // Assina o tópico do chat
+      stompClient?.subscribe(`/topic/chat/${chatId}`, (frame) => {
+        onMensagem(JSON.parse(frame.body));
+      });
+
+      // Assina notificações pessoais
+      if (onNotificacao) {
+        stompClient?.subscribe("/user/queue/notificacoes", (frame) => {
+          onNotificacao(JSON.parse(frame.body));
+        });
+      }
+    },
+
+    onDisconnect: () => console.log("WebSocket desconectado"),
+    onStompError: (frame) => console.error("STOMP error:", frame),
+
+    reconnectDelay: 5000, // reconecta automaticamente
+  });
+
+  stompClient.activate();
+  return stompClient;
+};
+
+export const enviarMensagemWS = (chatId: number, conteudo: string) => {
+  if (stompClient?.connected) {
+    stompClient.publish({
+      destination: `/app/chat/${chatId}`,
+      body: JSON.stringify({ conteudo }),
+    });
+    return true;
+  }
+  return false; // fallback para REST
+};
+
+export const desconectarWebSocket = () => {
+  stompClient?.deactivate();
+  stompClient = null;
 };
