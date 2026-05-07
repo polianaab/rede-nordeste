@@ -47,8 +47,8 @@ public class Loja {
     @Column(length = 100)
     private String cidade;
 
-    @Column(length = 2)
-    private String estado = "SE";
+    @Column(name = "estado", length = 2)
+    private String estado;
 
     @Column(length = 8)
     private String cep;

@@ -27,11 +27,9 @@ public class SecurityConfig {
                                 .csrf(csrf -> csrf.disable())
                                 .cors(cors -> cors.configurationSource(request -> {
                                         CorsConfiguration config = new CorsConfiguration();
-                                        config.setAllowedOrigins(List.of(
-                                                        "http://localhost:5173",
-                                                        "http://127.0.0.1:5173",
-                                                        "http://localhost:8080"));
-                                        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+                                        config.setAllowedOriginPatterns(List.of("*")); // aceita qualquer origem em dev
+                                        config.setAllowedMethods(
+                                                        List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
                                         config.setAllowedHeaders(List.of("*"));
                                         config.setAllowCredentials(true);
                                         return config;
@@ -39,48 +37,33 @@ public class SecurityConfig {
                                 .sessionManagement(session -> session
                                                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                                 .authorizeHttpRequests(auth -> auth
-                                                // Entregadores — cadastro público
+                                                // 1. TUDO QUE É PÚBLICO (Acesso livre)
                                                 .requestMatchers("/api/entregadores/cadastrar").permitAll()
-
-                                                // Simulação de frete — pública
                                                 .requestMatchers("/api/frete/simular").permitAll()
-
-                                                // Admin
-                                                .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
-                                                // Auth pública
-                                                .requestMatchers(
-                                                                "/api/usuarios/registrar",
-                                                                "/api/usuarios/login",
+                                                .requestMatchers("/api/usuarios/registrar", "/api/usuarios/login",
                                                                 "/api/usuarios/refresh")
                                                 .permitAll()
-
-                                                .requestMatchers("/api/chats/**").authenticated()
-                                                .requestMatchers("/api/comprador/chats/**").hasAuthority("COMPRADOR")
-                                                .requestMatchers("/api/produtor/chats/**").hasAuthority("PRODUTOR")
-
-                                                // WebSocket — liberado no nível do STOMP (WebSocketSecurityConfig)
                                                 .requestMatchers("/ws/**").permitAll()
-
-                                                .anyRequest().authenticated()
-
-                                                // Marketplace público (leitura)
-                                                .requestMatchers(
-                                                                HttpMethod.GET,
-                                                                "/api/produtos/**",
-                                                                "/api/lojas/**",
+                                                .requestMatchers(HttpMethod.GET, "/api/produtos/**", "/api/lojas/**",
                                                                 "/api/categorias")
                                                 .permitAll()
 
-                                                // Admin - Acesso exclusivo
-                                                .requestMatchers("/api/categorias/admin/**").hasAuthority("ADMIN")
+                                                // 2. REGRAS ESPECÍFICAS DE PERFIL (Authorities)
+                                                .requestMatchers("/api/admin/**", "/api/categorias/admin/**")
+                                                .hasAuthority("ADMIN")
+                                                .requestMatchers("/api/comprador/chats/**").hasAuthority("COMPRADOR")
+                                                .requestMatchers("/api/produtor/chats/**").hasAuthority("PRODUTOR")
 
-                                                // Rotas por perfil - ADMIN pode gerenciar ambos
+                                                // 3. REGRAS COMPOSTAS (Permite perfil específico OU Admin)
                                                 .requestMatchers("/api/produtor/**")
                                                 .hasAnyAuthority("PRODUTOR", "ADMIN")
                                                 .requestMatchers("/api/comprador/**")
                                                 .hasAnyAuthority("COMPRADOR", "ADMIN")
 
-                                                // Qualquer outra rota exige login
+                                                // 4. QUALQUER COISA AUTENTICADA (Logado, independente do perfil)
+                                                .requestMatchers("/api/chats/**").authenticated()
+
+                                                // 5. O FILTRO FINAL (A regra de ouro: sempre por último)
                                                 .anyRequest().authenticated())
                                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
                                 .httpBasic(basic -> basic.disable())
