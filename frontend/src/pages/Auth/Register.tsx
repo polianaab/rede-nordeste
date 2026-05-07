@@ -29,8 +29,15 @@ export default function Register() {
     setCarregando(true);
 
     try {
-      // Envia os dados para o endpoint /api/usuarios/registrar
-      await registrarUsuario(formData);
+
+    await registrarUsuario({
+    nomeCompleto: formData.nomeCompleto,
+    cpfCnpj: formData.cpfCnpj,
+    telefone: formData.telefone,
+    email: formData.email,
+    senha: formData.senha,
+    tipoPerfil: formData.tipoPerfil,
+});
       
       alert("🎉 Cadastro realizado com sucesso! Faça seu login.");
       navigate('/login');
@@ -45,7 +52,6 @@ export default function Register() {
 
   return (
     <div className="min-h-screen bg-[#F5F2ED] flex flex-col items-center justify-center py-10 px-6">
-      
       <div className="mb-8">
         <Link to="/">
           <img src="/assets/logo-rede-nordeste.png" alt="Rede Nordeste" className="h-32" />

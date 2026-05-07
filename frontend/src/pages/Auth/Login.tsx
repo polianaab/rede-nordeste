@@ -9,19 +9,27 @@ export default function Login() {
   const [senha, setSenha] = useState('');
   const [carregando, setCarregando] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setCarregando(true);
-    try {
-      const dadosUsuario = await login(email, senha);
-      localStorage.setItem('usuarioLogado', JSON.stringify(dadosUsuario));
-      navigate('/home2');
-    } catch (error: any) {
-      alert("❌ Erro de Acesso: " + (error.message || "Credenciais inválidas"));
-    } finally {
-      setCarregando(false);
+const handleLogin = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setCarregando(true);
+  try {
+    const dadosUsuario = await login(email, senha);
+    localStorage.setItem('usuarioLogado', JSON.stringify(dadosUsuario));
+
+    // Redireciona conforme perfil
+    if (dadosUsuario.perfil === 'PRODUTOR') {
+      navigate('/produtor/home');
+    } else if (dadosUsuario.perfil === 'COMPRADOR') {
+      navigate('/comprador/home');
+    } else {
+      navigate('/home');
     }
-  };
+  } catch (error: any) {
+    alert("❌ " + error.message);
+  } finally {
+    setCarregando(false);
+  }
+};
 
   return (
     <div className="min-h-screen bg-[#F5F2ED] flex flex-col items-center justify-center px-6">
