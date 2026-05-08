@@ -42,11 +42,10 @@ export default function Register() {
       alert("🎉 Cadastro realizado com sucesso! Faça seu login.");
       navigate('/login');
     } catch (error: any) {
-      // Pega a mensagem de erro que o seu ExceptionHandler do Java enviar
-      alert(`⚠️ Erro no cadastro: ${error.message}`);
-      console.error("Erro detalhado:", error);
+    alert("⚠️ " + (error?.message || "Erro ao cadastrar. Tente novamente."));
+    console.error("Erro detalhado:", error);
     } finally {
-      setCarregando(false);
+    setCarregando(false);
     }
   };
 

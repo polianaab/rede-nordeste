@@ -1,32 +1,41 @@
 import axios from "axios";
+import { Client } from "@stomp/stompjs";
+import SockJS from "sockjs-client";
 
+// ============================================================
+// INSTÂNCIA BASE
+// ============================================================
 export const apiService = axios.create({
   baseURL: "http://localhost:8080/api",
   headers: { "Content-Type": "application/json" },
 });
 
-
-// injeta token em toda requisição
-
+// ============================================================
+// INTERCEPTOR — injeta token em toda requisição
+// ============================================================
 apiService.interceptors.request.use((config) => {
   const raw = localStorage.getItem("usuarioLogado");
   if (raw) {
-    const dados = JSON.parse(raw);
-    if (dados?.accessToken) {
-      config.headers.Authorization = `Bearer ${dados.accessToken}`;
+    try {
+      const dados = JSON.parse(raw);
+      if (dados?.accessToken) {
+        config.headers.Authorization = `Bearer ${dados.accessToken}`;
+      }
+    } catch {
+      localStorage.removeItem("usuarioLogado");
     }
   }
   return config;
 });
 
-
-// tenta refresh quando expira 
+// ============================================================
+// INTERCEPTOR — trata erros e faz refresh automático
+// ============================================================
 apiService.interceptors.response.use(
   (response) => response,
   async (error) => {
     const original = error.config;
 
-    // Se 401 e ainda não tentou refresh
     if (error.response?.status === 401 && !original._retry) {
       original._retry = true;
       try {
@@ -39,37 +48,51 @@ apiService.interceptors.response.use(
           { refreshToken: dados.refreshToken }
         );
 
-        // Atualiza tokens no localStorage
         const novos = { ...dados, ...res.data };
         localStorage.setItem("usuarioLogado", JSON.stringify(novos));
-
-        // Reenvia a requisição original com novo token
         original.headers.Authorization = `Bearer ${res.data.accessToken}`;
         return apiService(original);
       } catch {
-        // Refresh falhou — desloga
         localStorage.removeItem("usuarioLogado");
         window.location.href = "/login";
+        return Promise.reject(new Error("Sessão expirada. Faça login novamente."));
       }
     }
 
+    // ── Extrai mensagem legível do erro ──────────────────────
+    let mensagem = "Erro de conexão com o servidor.";
 
-    const mensagem =
-      error.response?.data?.erro ||
-      error.response?.data ||
-      "Erro de conexão com o servidor.";
+    if (error.response) {
+      const data = error.response.data;
+
+      if (typeof data === "string" && data.trim() !== "") {
+        mensagem = data;
+      } else if (data && typeof data === "object") {
+        // GlobalExceptionHandler retorna { erro: "...", status: ... }
+        mensagem =
+          data.erro ||
+          data.message ||
+          data.error ||
+          "Erro ao processar requisição.";
+      }
+    } else if (error.request) {
+      // Requisição foi feita mas não houve resposta — backend fora do ar
+      mensagem = "Não foi possível conectar ao servidor. Verifique se o backend está rodando.";
+    }
+
     return Promise.reject(new Error(mensagem));
   }
 );
 
+// ============================================================
 // AUTH
-
+// ============================================================
 export const registrarUsuario = async (dados: {
   nomeCompleto: string;
   cpfCnpj: string;
   telefone: string;
   email: string;
-  senha: string;         // ← campo correto do DTO
+  senha: string;
   tipoPerfil: string;
 }) => {
   const res = await apiService.post("/usuarios/registrar", dados);
@@ -91,6 +114,9 @@ export const getMeuPerfil = async () => {
   return res.data;
 };
 
+// ============================================================
+// LOJA
+// ============================================================
 export const criarLoja = async (dados: any) => {
   const res = await apiService.post("/produtor/loja", dados);
   return res.data;
@@ -111,11 +137,17 @@ export const getLojaPorId = async (id: number) => {
   return res.data;
 };
 
+// ============================================================
+// CATEGORIAS
+// ============================================================
 export const getCategorias = async () => {
   const res = await apiService.get("/categorias");
   return res.data;
 };
 
+// ============================================================
+// PRODUTOS
+// ============================================================
 export const criarProduto = async (dados: any) => {
   const res = await apiService.post("/produtor/produtos", dados);
   return res.data;
@@ -135,7 +167,11 @@ export const getProdutosPorLoja = async (lojaId: number, page = 0) => {
   return res.data;
 };
 
-export const buscarProdutos = async (nome?: string, categoriaId?: number, page = 0) => {
+export const buscarProdutos = async (
+  nome?: string,
+  categoriaId?: number,
+  page = 0
+) => {
   const params = new URLSearchParams();
   if (nome) params.append("nome", nome);
   if (categoriaId) params.append("categoriaId", String(categoriaId));
@@ -149,16 +185,22 @@ export const getProdutoPorId = async (id: number) => {
   return res.data;
 };
 
-export default apiService;
-
-
+// ============================================================
+// CARRINHO
+// ============================================================
 export const getCarrinho = async () => {
   const res = await apiService.get("/comprador/carrinho");
   return res.data;
 };
 
-export const adicionarAoCarrinho = async (produtoId: number, quantidade: number) => {
-  const res = await apiService.post("/comprador/carrinho", { produtoId, quantidade });
+export const adicionarAoCarrinho = async (
+  produtoId: number,
+  quantidade: number
+) => {
+  const res = await apiService.post("/comprador/carrinho", {
+    produtoId,
+    quantidade,
+  });
   return res.data;
 };
 
@@ -171,15 +213,17 @@ export const limparCarrinho = async () => {
   await apiService.delete("/comprador/carrinho");
 };
 
-
+// ============================================================
+// PEDIDOS
+// ============================================================
 export const checkout = async (dados: {
   metodoPagamento: string;
   retiradaNaLoja: boolean;
   enderecoEntrega?: string;
-  observacoes?: string;
   cidadeDestino?: string;
   latitudeDestino?: number;
   longitudeDestino?: number;
+  observacoes?: string;
 }) => {
   const res = await apiService.post("/comprador/pedidos/checkout", dados);
   return res.data;
@@ -210,7 +254,9 @@ export const atualizarStatusEntrega = async (
   return res.data;
 };
 
-// frete
+// ============================================================
+// FRETE
+// ============================================================
 export const simularFrete = async (
   lojaId: number,
   latitudeDestino: number,
@@ -224,7 +270,9 @@ export const simularFrete = async (
   return res.data;
 };
 
-// entregadores
+// ============================================================
+// ENTREGADORES
+// ============================================================
 export const cadastrarEntregador = async (dados: {
   nomeCompleto: string;
   cpf: string;
@@ -244,11 +292,18 @@ export const alterarDisponibilidade = async (
   id: number,
   disponivel: boolean
 ) => {
-  await apiService.patch(`/entregadores/${id}/disponibilidade?disponivel=${disponivel}`);
+  await apiService.patch(
+    `/entregadores/${id}/disponibilidade?disponivel=${disponivel}`
+  );
 };
 
+// ============================================================
+// CHAT — REST
+// ============================================================
 export const abrirChat = async (lojaId: number) => {
-  const res = await apiService.post(`/comprador/chats/abrir?lojaId=${lojaId}`);
+  const res = await apiService.post(
+    `/comprador/chats/abrir?lojaId=${lojaId}`
+  );
   return res.data;
 };
 
@@ -270,7 +325,9 @@ export const getMensagens = async (chatId: number, page = 0) => {
 };
 
 export const enviarMensagemREST = async (chatId: number, conteudo: string) => {
-  const res = await apiService.post(`/chats/${chatId}/mensagens`, { conteudo });
+  const res = await apiService.post(`/chats/${chatId}/mensagens`, {
+    conteudo,
+  });
   return res.data;
 };
 
@@ -279,13 +336,9 @@ export const getNaoLidas = async () => {
   return res.data;
 };
 
-
-// Instale: npm install @stomp/stompjs sockjs-client
-// npm install --save-dev @types/sockjs-client
-
-import { Client } from "@stomp/stompjs";
-import SockJS from "sockjs-client";
-
+// ============================================================
+// CHAT — WebSocket com STOMP
+// ============================================================
 let stompClient: Client | null = null;
 
 export const conectarWebSocket = (
@@ -299,29 +352,20 @@ export const conectarWebSocket = (
   stompClient = new Client({
     webSocketFactory: () =>
       new SockJS("http://localhost:8080/ws/chat") as WebSocket,
-
-    connectHeaders: {
-      Authorization: `Bearer ${token}`,
-    },
-
+    connectHeaders: { Authorization: `Bearer ${token}` },
     onConnect: () => {
-      // Assina o tópico do chat
       stompClient?.subscribe(`/topic/chat/${chatId}`, (frame) => {
         onMensagem(JSON.parse(frame.body));
       });
-
-      // Assina notificações pessoais
       if (onNotificacao) {
         stompClient?.subscribe("/user/queue/notificacoes", (frame) => {
           onNotificacao(JSON.parse(frame.body));
         });
       }
     },
-
     onDisconnect: () => console.log("WebSocket desconectado"),
     onStompError: (frame) => console.error("STOMP error:", frame),
-
-    reconnectDelay: 5000, // reconecta automaticamente
+    reconnectDelay: 5000,
   });
 
   stompClient.activate();
@@ -336,10 +380,12 @@ export const enviarMensagemWS = (chatId: number, conteudo: string) => {
     });
     return true;
   }
-  return false; // fallback para REST
+  return false;
 };
 
 export const desconectarWebSocket = () => {
   stompClient?.deactivate();
   stompClient = null;
 };
+
+export default apiService;
