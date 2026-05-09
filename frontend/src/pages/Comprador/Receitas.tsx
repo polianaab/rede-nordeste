@@ -6,7 +6,6 @@ import {
   Trash2, Truck, Tag, Info, Package
 } from 'lucide-react';
 
-// --- DADOS DE NOTIFICAÇÕES (ADICIONADO) ---
 const NOTIFICACOES_DATA = [
   { id: 1, titulo: 'Pedido a caminho!', mensagem: 'Seu pedido #4582 saiu para entrega.', tempo: 'Há 2 horas', lida: false, icone: Truck, cor: 'text-[#f9943b]', bg: 'bg-[#f9943b]/10' },
   { id: 2, titulo: 'Promoção do Dia 🍎', mensagem: 'Tomate Cereja com 20% de desconto.', tempo: 'Há 5 horas', lida: false, icone: Tag, cor: 'text-[#55833d]', bg: 'bg-[#55833d]/10' },
@@ -19,7 +18,7 @@ const RECEITAS_DATA = [
     titulo: 'Escondidinho de Carne', 
     tempo: '45 min', 
     dificuldade: 'Média',
-    img: 'https://images.unsplash.com/photo-1595666548990-788e19dc3885?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+    img: 'https://images.unsplash.com/photo-1595666548990-788e19dc3885?q=80&w=1170&auto=format&fit=crop',
     descricao: 'O clássico sertanejo com macaxeira cremosa e queijo coalho gratinado.',
     ingredientes: ['500g de carne de sol', '1kg de macaxeira cozida', '200g de queijo coalho', '1 cebola roxa', 'Nata a gosto'],
     preparo: 'Dessalgue a carne, refogue com cebola. Amasse a macaxeira com nata para o purê. Monte em camadas e gratine com o queijo.'
@@ -49,7 +48,7 @@ const RECEITAS_DATA = [
     titulo: 'Bolo de Rolo', 
     tempo: '1h 20min', 
     dificuldade: 'Difícil',
-    img: 'https://images.unsplash.com/photo-1593872423141-bb230bd352c6?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+    img: 'https://images.unsplash.com/photo-1593872423141-bb230bd352c6?q=80&w=687&auto=format&fit=crop',
     descricao: 'A iguaria mais famosa de Pernambuco, com camadas finas e goiabada cascão.',
     ingredientes: ['Manteiga', 'Açúcar', 'Farinha de Trigo', 'Goiabada Cascão'],
     preparo: 'Asse camadas finas, recheie com a goiabada derretida e enrole com cuidado ainda quente.'
@@ -81,8 +80,8 @@ export default function Receitas() {
   const [termoBusca, setTermoBusca] = useState('');
   const [dificuldadeFiltro, setDificuldadeFiltro] = useState('Todas');
   const [menuAberto, setMenuAberto] = useState(false); 
-  const [notifAberta, setNotifAberta] = useState(false); // NOVO: Controle do modal
-  const [notificacoes, setNotificacoes] = useState(NOTIFICACOES_DATA); // NOVO: Estado de notificações
+  const [notifAberta, setNotifAberta] = useState(false); 
+  const [notificacoes, setNotificacoes] = useState(NOTIFICACOES_DATA); 
   const navigate = useNavigate();
 
   const [carrinhoCount, setCarrinhoCount] = useState(() => {
@@ -111,7 +110,6 @@ export default function Receitas() {
     const correspondeBusca = rec.titulo.toLowerCase().includes(termoBusca.toLowerCase()) ||
                              rec.descricao.toLowerCase().includes(termoBusca.toLowerCase());
     const correspondeDificuldade = dificuldadeFiltro === 'Todas' || rec.dificuldade === dificuldadeFiltro;
-    
     return correspondeBusca && correspondeDificuldade;
   });
 
@@ -129,11 +127,9 @@ export default function Receitas() {
 
   return (
     <div className="min-h-screen bg-[#F5F2ED] text-[#394158] antialiased pb-10 font-sans">
-      
-      {/* NAVBAR */}
-      <header className="w-full bg-white py-4 px-4 md:px-8 border-b border-gray-100 sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-4 md:gap-10 flex-shrink-0 -ml-2 md:-ml-6">
+      <header className="w-full bg-white py-4 px-4 md:px-8 border-b border-gray-100 sticky top-0 z-50 shadow-sm">
+        <div className="max-w-6xl mx-auto flex justify-between items-center gap-4 md:gap-8">
+          <div className="flex items-center gap-4 md:gap-10 flex-shrink-0">
             <Link to="/home2">
               <img src="/assets/logo-home.png" alt="Logo" className="h-10 md:h-12 w-auto object-contain" />
             </Link>
@@ -144,28 +140,25 @@ export default function Receitas() {
             </nav>
           </div>
 
-          <div className="flex items-center gap-3 md:gap-6 flex-shrink-0">
-            <div className="hidden md:flex items-center gap-1 relative">
-              
-              {/* SINO DE NOTIFICAÇÃO COM MODAL INTERNO (DROPDOWN) */}
+          <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
+            <div className="hidden md:flex items-center gap-2">
               <div className="relative">
                 <button 
                   onClick={() => setNotifAberta(!notifAberta)} 
-                  className={`p-2.5 rounded-full transition-all duration-300 relative ${notifAberta ? 'bg-[#f9943b] text-white shadow-lg' : 'hover:bg-[#f9943b] hover:text-white text-[#394158]'}`}
+                  className={`w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full transition-all duration-300 relative group ${notifAberta ? 'bg-[#f9943b] text-white shadow-lg' : 'hover:bg-[#f9943b] text-[#394158] hover:text-white'}`}
                 >
-                  <Bell size={22} />
+                  <Bell className="w-[18px] h-[18px] md:w-[22px] md:h-[22px]" />
                   {notificacoes.filter(n => !n.lida).length > 0 && (
-                    <span className="absolute top-1 right-1 bg-red-500 text-white text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center border-2 border-white">
+                    <span className="absolute top-0 right-0 md:top-1 md:right-1 bg-red-500 text-white text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center border-2 border-white group-hover:border-[#f9943b]">
                       {notificacoes.filter(n => !n.lida).length}
                     </span>
                   )}
                 </button>
 
-                {/* MODAL DAS NOTIFICAÇÕES (POPOVER) */}
                 {notifAberta && (
                   <>
                     <div className="fixed inset-0 z-[60]" onClick={() => setNotifAberta(false)}></div>
-                    <div className="absolute top-14 right-0 w-[320px] md:w-[380px] bg-white rounded-[1rem] shadow-[0_10px_40px_rgba(0,0,0,0.15)] border border-gray-100 z-[70] animate-in slide-in-from-top-2 duration-200 overflow-hidden">
+                    <div className="absolute top-14 right-0 md:right-auto md:-left-44 w-[320px] md:w-[380px] bg-white rounded-[1rem] shadow-[0_10px_40px_rgba(0,0,0,0.15)] border border-gray-100 z-[70] animate-in slide-in-from-top-2 duration-200 overflow-hidden">
                       <header className="p-4 border-b border-gray-50 flex justify-between items-center bg-white">
                         <h3 className="text-sm font-black uppercase italic text-[#394158]">Notificações</h3>
                         <div className="flex gap-2">
@@ -174,12 +167,8 @@ export default function Receitas() {
                         </div>
                       </header>
                       <div className="max-h-[350px] overflow-y-auto no-scrollbar">
-                        {notificacoes.length > 0 ? notificacoes.map(n => (
-                          <div 
-                            key={n.id} 
-                            onClick={() => marcarComoLida(n.id)} 
-                            className={`flex gap-4 p-4 border-b border-gray-50 transition-all cursor-pointer hover:bg-gray-50 relative ${!n.lida ? 'bg-[#f9943b]/5' : 'opacity-60'}`}
-                          >
+                        {notificacoes.map(n => (
+                          <div key={n.id} onClick={() => marcarComoLida(n.id)} className={`flex gap-4 p-4 border-b border-gray-50 transition-all cursor-pointer hover:bg-gray-50 relative ${!n.lida ? 'bg-[#f9943b]/5' : 'opacity-60'}`}>
                             <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${n.bg} ${n.cor}`}><n.icone size={18}/></div>
                             <div className="flex-1 min-w-0">
                                <h4 className="text-[11px] font-black uppercase truncate text-[#394158]">{n.titulo}</h4>
@@ -187,41 +176,40 @@ export default function Receitas() {
                             </div>
                             {!n.lida && <div className="absolute right-3 top-1/2 -translate-y-1/2 w-2 h-2 bg-[#f9943b] rounded-full"></div>}
                           </div>
-                        )) : (
-                          <div className="py-16 text-center opacity-20 flex flex-col items-center gap-2">
-                            <Bell size={40}/><p className="text-[10px] font-black uppercase italic">Sem notificações</p>
-                          </div>
-                        )}
+                        ))}
                       </div>
                     </div>
                   </>
                 )}
               </div>
 
-              <Link to="/chat" className="p-2.5 rounded-full hover:bg-[#f9943b] hover:text-white transition-all duration-300 text-[#394158]"><MessageCircle size={22} /></Link>
-              <Link to="/carrinho" className="p-2.5 rounded-full hover:bg-[#f9943b] hover:text-white transition-all duration-300 text-[#394158] relative group">
-                <ShoppingCart size={22} />
+              <Link to="/chat" className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full transition-all duration-300 hover:bg-[#f9943b] hover:text-white text-[#394158] group">
+                <MessageCircle className="w-[18px] h-[18px] md:w-[22px] md:h-[22px]" />
+              </Link>
+              <Link to="/carrinho" className="relative w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full transition-all duration-300 hover:bg-[#f9943b] hover:text-white text-[#394158] group">
+                <ShoppingCart className="w-[18px] h-[18px] md:w-[22px] md:h-[22px]" />
                 {carrinhoCount > 0 && (
-                  <span className="absolute top-0 right-0 bg-white text-[#f9943b] text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center border-2 border-white group-hover:bg-white group-hover:text-[#f9943b] shadow-sm">
+                  <span className="absolute top-0 right-0 md:top-1 md:right-1 bg-red-500 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center border-2 border-white group-hover:border-[#f9943b]">
                     {carrinhoCount}
                   </span>
                 )}
               </Link>
-              <Link to="/perfil" className="p-2.5 rounded-full hover:bg-[#f9943b] hover:text-white transition-all duration-300 text-[#394158]"><User size={22} /></Link>
+              <Link to="/perfil" className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full transition-all duration-300 hover:bg-[#f9943b] hover:text-white text-[#394158] group">
+                <User className="w-[18px] h-[18px] md:w-[22px] md:h-[22px]" />
+              </Link>
             </div>
 
-            <button onClick={() => setMenuAberto(true)} className="md:hidden p-2 text-[#394158] hover:text-[#55833d] transition-colors">
-              <Menu size={28} />
+            <button onClick={() => setMenuAberto(true)} className="md:hidden p-1 text-[#394158] hover:text-[#f9943b] transition-colors">
+              <Menu size={24} />
             </button>
           </div>
         </div>
 
-        {/* Menu Lateral Mobile */}
         {menuAberto && (
           <div className="fixed inset-0 z-[110] md:hidden">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMenuAberto(false)}></div>
-            <div className="absolute right-0 top-0 h-full w-72 bg-white shadow-2xl p-8 flex flex-col gap-8 animate-in slide-in-from-right duration-300">
-              <button onClick={() => setMenuAberto(false)} className="self-end p-2 bg-[#F5F2ED] rounded-full text-[#394158] hover:bg-red-50 hover:text-red-500 transition-all">
+            <div className="absolute right-0 top-0 h-full w-72 bg-white shadow-2xl p-8 flex flex-col gap-8">
+              <button onClick={() => setMenuAberto(false)} className="self-end p-2 bg-[#F5F2ED] rounded-full text-[#394158] hover:bg-red-500 hover:text-white transition-all">
                 <X size={24} />
               </button>
               <nav className="flex flex-col gap-5 text-sm font-black uppercase tracking-widest text-[#394158]">
@@ -229,6 +217,21 @@ export default function Receitas() {
                 <Link to="/receitas" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 text-[#55833d]"><ChevronRight size={14}/> Receitas</Link>
                 <Link to="/blog" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#f9943b]"><ChevronRight size={14}/> Notícias</Link>
                 <hr className="border-gray-50 my-2" />
+                <button onClick={() => { setMenuAberto(false); setNotifAberta(true); }} className="flex items-center gap-4 hover:text-[#55833d] uppercase font-black text-sm tracking-widest">
+                  <div className="relative">
+                    <Bell size={20} />
+                    {notificacoes.filter(n => !n.lida).length > 0 && <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center border-2 border-white">{notificacoes.filter(n => !n.lida).length}</span>}
+                  </div>
+                  Notificações
+                </button>
+                <Link to="/chat" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d]"><MessageCircle size={20}/> Chat</Link>
+                <Link to="/carrinho" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d]">
+                  <div className="relative">
+                    <ShoppingCart size={20} />
+                    {carrinhoCount > 0 && <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center border-2 border-white">{carrinhoCount}</span>}
+                  </div>
+                  Carrinho
+                </Link>
                 <Link to="/perfil" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d]"><User size={20}/> Meu Perfil</Link>
               </nav>
             </div>
@@ -236,8 +239,8 @@ export default function Receitas() {
         )}
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 md:px-8 pt-8 md:pt-12">
-        {/* ... Restante do conteúdo das receitas permanece inalterado ... */}
+      {/* ... Restante do conteúdo das receitas permanece exatamente igual ... */}
+      <main className="max-w-6xl mx-auto px-4 md:px-8 pt-8 md:pt-12">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-3">
@@ -291,31 +294,18 @@ export default function Receitas() {
                 className="bg-white rounded-[1rem] overflow-hidden shadow-lg shadow-gray-200/50 group cursor-pointer hover:scale-[1.02] transition-all duration-300 border border-white h-full flex flex-col"
               >
                 <div className="relative overflow-hidden bg-gray-100 aspect-[4/3]">
-                  <img 
-                    src={rec.img} 
-                    alt={rec.titulo} 
-                    className="w-full h-full object-cover block group-hover:scale-110 transition-transform duration-700" 
-                    loading="lazy"
-                  />
+                  <img src={rec.img} alt={rec.titulo} className="w-full h-full object-cover block group-hover:scale-110 transition-transform duration-700" loading="lazy" />
                   <div className="absolute top-2 left-2 bg-white/90 backdrop-blur px-2 py-1 rounded-full flex items-center gap-1 text-[7px] sm:text-[8px] font-black uppercase tracking-widest text-[#394158] shadow-sm">
                     <Clock size={8} className="text-[#f9943b]" /> {rec.tempo}
                   </div>
                 </div>
-                
                 <div className="p-3 sm:p-5 flex flex-col flex-1">
                   <span className="text-[#55833d] text-[7px] sm:text-[8px] font-black uppercase tracking-widest italic mb-1 block">{rec.dificuldade}</span>
-                  <h3 className="text-[10px] sm:text-sm font-black text-[#394158] mb-1 uppercase italic leading-tight group-hover:text-[#802D44] transition-colors line-clamp-2">
-                    {rec.titulo}
-                  </h3>
-                  <p className="hidden sm:line-clamp-2 text-[10px] text-[#394158]/50 leading-tight mt-1 mb-3 font-medium">
-                    {rec.descricao}
-                  </p>
-                  
+                  <h3 className="text-[10px] sm:text-sm font-black text-[#394158] mb-1 uppercase italic leading-tight group-hover:text-[#802D44] transition-colors line-clamp-2">{rec.titulo}</h3>
+                  <p className="hidden sm:line-clamp-2 text-[10px] text-[#394158]/50 leading-tight mt-1 mb-3 font-medium">{rec.descricao}</p>
                   <div className="mt-auto pt-2 border-t border-gray-50 flex items-center justify-between">
                      <span className="text-[7px] sm:text-[8px] font-black uppercase text-gray-400 tracking-widest">Ver Receita</span>
-                     <div className="p-1 bg-[#F5F2ED] rounded-full text-[#394158] group-hover:bg-[#802D44] group-hover:text-white transition-all">
-                        <ChevronRight size={12} />
-                     </div>
+                     <div className="p-1 bg-[#F5F2ED] rounded-full text-[#394158] group-hover:bg-[#802D44] group-hover:text-white transition-all"><ChevronRight size={12} /></div>
                   </div>
                 </div>
               </div>
@@ -328,7 +318,6 @@ export default function Receitas() {
         </div>
       </main>
 
-      {/* MODAL RECEITA */}
       {receitaAberta && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 md:p-6">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity animate-in fade-in duration-300" onClick={() => setReceitaAberta(null)}></div>

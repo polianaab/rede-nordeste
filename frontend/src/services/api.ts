@@ -36,6 +36,7 @@ apiService.interceptors.response.use(
   async (error) => {
     const original = error.config;
 
+    // Lógica de Refresh Token (401)
     if (error.response?.status === 401 && !original._retry) {
       original._retry = true;
       try {
@@ -59,25 +60,24 @@ apiService.interceptors.response.use(
       }
     }
 
-    // ── Extrai mensagem legível do erro ──────────────────────
-    let mensagem = "Erro de conexão com o servidor.";
+    // ── Extração da mensagem de erro corrigida ──────────────────
+    let mensagem = "Erro inesperado no servidor.";
 
     if (error.response) {
       const data = error.response.data;
 
+      // Se o backend retornou uma string pura
       if (typeof data === "string" && data.trim() !== "") {
         mensagem = data;
-      } else if (data && typeof data === "object") {
-        // GlobalExceptionHandler retorna { erro: "...", status: ... }
-        mensagem =
-          data.erro ||
-          data.message ||
-          data.error ||
-          "Erro ao processar requisição.";
+      } 
+      // Se retornou um objeto JSON (padrão do Spring ou GlobalExceptionHandler)
+      else if (data && typeof data === "object") {
+        mensagem = data.message || data.erro || data.error || data.details || "Erro ao processar requisição.";
       }
-    } else if (error.request) {
-      // Requisição foi feita mas não houve resposta — backend fora do ar
-      mensagem = "Não foi possível conectar ao servidor. Verifique se o backend está rodando.";
+    } 
+    else if (error.request) {
+      // O erro cai aqui quando o servidor NÃO responde (Backend fora do ar)
+      mensagem = "Não foi possível conectar ao servidor. Verifique se o backend está rodando na porta 8080.";
     }
 
     return Promise.reject(new Error(mensagem));

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Blog.css";
 
@@ -68,11 +68,37 @@ export const postsData = [
 export default function Blog() {
   const navigate = useNavigate();
   const [filtroAtivo, setFiltroAtivo] = useState("Todos");
-  const categorias = ["Todos", "Tecnologia", "Sustentabilidade", "Inovação", "Mercado"];
+  const [posts, setPosts] = useState<any[]>(postsData);
+
+  useEffect(() => {
+    const carregarPosts = () => {
+      const salvas = localStorage.getItem('noticias_globais');
+      if (salvas) {
+        const parseadas = JSON.parse(salvas);
+        const adminPosts = parseadas.filter((n: any) => n.id > 10).map((n: any) => ({
+          id: n.id,
+          titulo: n.titulo,
+          subtitulo: n.subtitulo,
+          categoria: "NOTÍCIA",
+          imagem: n.imagem,
+          data: n.data,
+          leitura: n.tempoLeitura || '3 min',
+          conteudo: n.descricao || '',
+          citacao: n.citacao || ''
+        }));
+        setPosts([...adminPosts, ...postsData]);
+      }
+    };
+    carregarPosts();
+    window.addEventListener('storage', carregarPosts);
+    return () => window.removeEventListener('storage', carregarPosts);
+  }, []);
+
+  const categorias = ["Todos", "Tecnologia", "Sustentabilidade", "Inovação", "Mercado", "Notícia"];
 
   const postsFiltrados = filtroAtivo === "Todos" 
-    ? postsData 
-    : postsData.filter(p => p.categoria.toLowerCase() === filtroAtivo.toLowerCase());
+    ? posts 
+    : posts.filter(p => p.categoria.toLowerCase() === filtroAtivo.toLowerCase());
 
   return (
     <div>

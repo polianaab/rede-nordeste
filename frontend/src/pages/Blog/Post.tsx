@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { postsData } from "./Blog"; 
 import { ArrowLeft, Calendar, Clock } from 'lucide-react';
@@ -6,7 +7,40 @@ export default function Post() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const post = postsData.find((p) => p.id === Number(id));
+  const [post, setPost] = useState<any>(null);
+
+  useEffect(() => {
+    const carregarPost = () => {
+      const postId = Number(id);
+      
+      const salvas = localStorage.getItem('noticias_globais');
+      if (salvas) {
+        const parseadas = JSON.parse(salvas);
+        const adminPost = parseadas.find((p: any) => p.id === postId);
+        if (adminPost) {
+          setPost({
+            id: adminPost.id,
+            titulo: adminPost.titulo,
+            subtitulo: adminPost.subtitulo,
+            categoria: "NOTÍCIA",
+            imagem: adminPost.imagem,
+            data: adminPost.data,
+            leitura: adminPost.tempoLeitura || '3 min',
+            conteudo: adminPost.descricao || '',
+            citacao: adminPost.citacao || ''
+          });
+          return;
+        }
+      }
+
+      const localPost = postsData.find((p) => p.id === postId);
+      if (localPost) {
+        setPost(localPost);
+      }
+    };
+    
+    carregarPost();
+  }, [id]);
 
   if (!post) {
     return <div className="min-h-screen flex items-center justify-center font-black uppercase italic text-[#394158]">Post não encontrado!</div>;
@@ -81,13 +115,13 @@ export default function Post() {
           </h2>
           
           <div className="text-lg font-medium leading-relaxed text-[#394158]/80 space-y-6">
-            {post.conteudo.split('\n').map((line, index) => (
+            {post.conteudo.split('\n').map((line: string, index: number) => (
               <p key={index}>{line}</p>
             ))}
           </div>
           
           <div className="bg-[#f9943b]/10 border-l-4 border-[#f9943b] p-8 italic text-xl font-medium rounded-r-2xl">
-            "A tecnologia não substitui o produtor, mas potencializa seu conhecimento e sua produção."
+            "{post.citacao || "A tecnologia não substitui o produtor, mas potencializa seu conhecimento e sua produção."}"
           </div>
         </article>
 
