@@ -1,9 +1,12 @@
 package com.semeia_nordeste.backend.model;
 
 public enum StatusEntrega {
-    PENDENTE,
-    EM_PREPARACAO,
+    PEDIDO_RECEBIDO,
+    AGUARDANDO_ENTREGADOR,
+    ENTREGADOR_ACEITOU,
+    PEDIDO_EM_COLETA,
     SAIU_PARA_ENTREGA,
     ENTREGUE,
-    RETIRADA_DISPONIVEL
+    RETIRADA_DISPONIVEL,
+    CANCELADO
 }

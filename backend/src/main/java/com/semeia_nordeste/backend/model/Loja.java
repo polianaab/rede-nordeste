@@ -47,8 +47,8 @@ public class Loja {
     @Column(length = 100)
     private String cidade;
 
-    @Column(length = 2)
-    private String estado = "SE";
+    @Column(name = "estado", length = 2)
+    private String estado;
 
     @Column(length = 8)
     private String cep;
@@ -70,4 +70,10 @@ public class Loja {
 
     @Column(name = "data_abertura", updatable = false)
     private OffsetDateTime dataAbertura = OffsetDateTime.now();
+
+    @Column(name = "latitude_loja")
+    private Double latitudeLoja;
+
+    @Column(name = "longitude_loja")
+    private Double longitudeLoja;
 }
