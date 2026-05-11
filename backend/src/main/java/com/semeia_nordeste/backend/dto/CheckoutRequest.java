@@ -3,11 +3,11 @@ package com.semeia_nordeste.backend.dto;
 import jakarta.validation.constraints.NotBlank;
 
 public record CheckoutRequest(
-        @NotBlank(message = "O método de pagamento é obrigatório") String metodoPagamento,
-
+        @NotBlank String metodoPagamento,
         boolean retiradaNaLoja,
-
         String enderecoEntrega,
-
+        String cidadeDestino,
+        Double latitudeDestino,
+        Double longitudeDestino,
         String observacoes) {
 }

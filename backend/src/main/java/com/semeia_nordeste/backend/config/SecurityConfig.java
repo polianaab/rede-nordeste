@@ -18,59 +18,62 @@ import org.springframework.web.cors.CorsConfiguration;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Autowired
-    private SecurityFilter securityFilter;
+        @Autowired
+        private SecurityFilter securityFilter;
 
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-                .csrf(csrf -> csrf.disable())
-                .cors(cors -> cors.configurationSource(request -> {
-                    CorsConfiguration config = new CorsConfiguration();
-                    config.setAllowedOrigins(List.of(
-                            "http://localhost:5173",
-                            "http://127.0.0.1:5173",
-                            "http://localhost:8080"));
-                    config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-                    config.setAllowedHeaders(List.of("*"));
-                    config.setAllowCredentials(true);
-                    return config;
-                }))
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth
-                        // Auth pública
-                        .requestMatchers(
-                                "/api/usuarios/registrar",
-                                "/api/usuarios/login",
-                                "/api/usuarios/refresh")
-                        .permitAll()
+        @Bean
+        public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+                http
+                                .csrf(csrf -> csrf.disable())
+                                .cors(cors -> cors.configurationSource(request -> {
+                                        CorsConfiguration config = new CorsConfiguration();
+                                        config.setAllowedOriginPatterns(List.of("*")); // aceita qualquer origem em dev
+                                        config.setAllowedMethods(
+                                                        List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+                                        config.setAllowedHeaders(List.of("*"));
+                                        config.setAllowCredentials(true);
+                                        return config;
+                                }))
+                                .sessionManagement(session -> session
+                                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                                .authorizeHttpRequests(auth -> auth
+                                                // 1. TUDO QUE É PÚBLICO (Acesso livre)
+                                                .requestMatchers("/api/entregadores/cadastrar").permitAll()
+                                                .requestMatchers("/api/frete/simular").permitAll()
+                                                .requestMatchers("/api/usuarios/registrar", "/api/usuarios/login",
+                                                                "/api/usuarios/refresh")
+                                                .permitAll()
+                                                .requestMatchers("/ws/**").permitAll()
+                                                .requestMatchers(HttpMethod.GET, "/api/produtos/**", "/api/lojas/**",
+                                                                "/api/categorias")
+                                                .permitAll()
 
-                        // Marketplace público (leitura)
-                        .requestMatchers(
-                                HttpMethod.GET,
-                                "/api/produtos/**",
-                                "/api/lojas/**",
-                                "/api/categorias")
-                        .permitAll()
+                                                // 2. REGRAS ESPECÍFICAS DE PERFIL (Authorities)
+                                                .requestMatchers("/api/admin/**", "/api/categorias/admin/**")
+                                                .hasAuthority("ADMIN")
+                                                .requestMatchers("/api/comprador/chats/**").hasAuthority("COMPRADOR")
+                                                .requestMatchers("/api/produtor/chats/**").hasAuthority("PRODUTOR")
 
-                        // Admin - Acesso exclusivo
-                        .requestMatchers("/api/categorias/admin/**").hasAuthority("ADMIN")
+                                                // 3. REGRAS COMPOSTAS (Permite perfil específico OU Admin)
+                                                .requestMatchers("/api/produtor/**")
+                                                .hasAnyAuthority("PRODUTOR", "ADMIN")
+                                                .requestMatchers("/api/comprador/**")
+                                                .hasAnyAuthority("COMPRADOR", "ADMIN")
 
-                        // Rotas por perfil - ADMIN pode gerenciar ambos
-                        .requestMatchers("/api/produtor/**").hasAnyAuthority("PRODUTOR", "ADMIN")
-                        .requestMatchers("/api/comprador/**").hasAnyAuthority("COMPRADOR", "ADMIN")
+                                                // 4. QUALQUER COISA AUTENTICADA (Logado, independente do perfil)
+                                                .requestMatchers("/api/chats/**").authenticated()
 
-                        // Qualquer outra rota exige login
-                        .anyRequest().authenticated())
-                .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
-                .httpBasic(basic -> basic.disable())
-                .formLogin(form -> form.disable());
+                                                // 5. O FILTRO FINAL (A regra de ouro: sempre por último)
+                                                .anyRequest().authenticated())
+                                .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
+                                .httpBasic(basic -> basic.disable())
+                                .formLogin(form -> form.disable());
 
-        return http.build();
-    }
+                return http.build();
+        }
 
-    @Bean
-    public BCryptPasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+        @Bean
+        public BCryptPasswordEncoder passwordEncoder() {
+                return new BCryptPasswordEncoder();
+        }
 }
