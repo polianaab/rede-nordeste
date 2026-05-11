@@ -253,3 +253,191 @@ body {
   border-radius: 15px;
   margin-top: 60px;
 }
+
+/* Animação de Surgimento (Reveal) */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.reveal-card {
+  opacity: 0;
+  animation: fadeInUp 0.6s ease forwards;
+}
+
+/* Animação do Trator */
+.infographic-divider {
+  padding: 50px 0;
+  overflow: hidden;
+  background: rgba(85, 131, 61, 0.05);
+  border-radius: 20px;
+  margin: 40px 0;
+}
+
+.tractor-animation {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  animation: moveTractor 15s linear infinite;
+  white-space: nowrap;
+}
+
+@keyframes moveTractor {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100vw); }
+}
+
+.tractor-icon {
+  color: #f9943b;
+}
+
+.delivery-text {
+  font-weight: 800;
+  font-size: 10px;
+  text-transform: uppercase;
+  color: #55833d;
+  letter-spacing: 2px;
+}
+
+/* Estilo do Botão de Áudio */
+.audio-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: white;
+  color: #f9943b;
+  border: none;
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  transition: all 0.3s;
+}
+
+.audio-btn:hover {
+  transform: scale(1.1);
+  background: #f9943b;
+  color: white;
+}
+
+.audio-btn.reading {
+  background: #f9943b;
+  color: white;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+.card-footer-icons {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid #eee;
+}
+
+.icon-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #999;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+/* Estilos para o Canto do Aprendizado */
+.learning-corner {
+  margin: 60px 0;
+}
+
+.learning-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 30px;
+}
+
+.learning-card {
+  padding: 30px;
+  border-radius: 25px;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+  border: 1px solid rgba(255,255,255,0.8);
+  transition: transform 0.3s ease;
+}
+
+.learning-card:hover {
+  transform: translateY(-5px);
+}
+
+.sustainability {
+  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+}
+
+.entrepreneur {
+  background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+}
+
+.learning-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+.learning-header h4 {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 800;
+  text-transform: uppercase;
+  font-size: 1.1rem;
+  color: #394158;
+}
+
+.learning-icon {
+  color: #55833d;
+}
+
+.entrepreneur .learning-icon {
+  color: #f9943b;
+}
+
+.learning-tips {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.tip-item {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.tip-icon {
+  opacity: 0.6;
+  flex-shrink: 0;
+}
+
+.tip-item p {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #4a5568;
+}
+
+.tip-item strong {
+  color: #2d3748;
+}

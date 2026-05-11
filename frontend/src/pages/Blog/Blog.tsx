@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { Play, Volume2, Eye, Ear, Tractor, ChevronRight, Leaf, Lightbulb, Store, Droplets, Package } from "lucide-react"; // Importando ícones intuitivos
 import "./Blog.css";
 
 export const postsData = [
@@ -68,14 +69,43 @@ export const postsData = [
 export default function Blog() {
   const navigate = useNavigate();
   const [filtroAtivo, setFiltroAtivo] = useState("Todos");
-  const categorias = ["Todos", "Tecnologia", "Sustentabilidade", "Inovação", "Mercado"];
+  const [posts, setPosts] = useState<any[]>(postsData);
+
+  useEffect(() => {
+    const carregarPosts = () => {
+      const salvas = localStorage.getItem('noticias_globais');
+      if (salvas) {
+        const parseadas = JSON.parse(salvas);
+        const adminPosts = parseadas.filter((n: any) => n.id > 10).map((n: any) => ({
+          id: n.id,
+          titulo: n.titulo,
+          subtitulo: n.subtitulo,
+          categoria: "NOTÍCIA",
+          imagem: n.imagem,
+          data: n.data,
+          leitura: n.tempoLeitura || '3 min',
+          conteudo: n.descricao || '',
+          citacao: n.citacao || ''
+        }));
+        setPosts([...adminPosts, ...postsData]);
+      }
+    };
+    carregarPosts();
+    window.addEventListener('storage', carregarPosts);
+    
+    return () => {
+      window.removeEventListener('storage', carregarPosts);
+    };
+  }, []);
+
+  const categorias = ["Todos", "Tecnologia", "Sustentabilidade", "Inovação", "Mercado", "Notícia"];
 
   const postsFiltrados = filtroAtivo === "Todos" 
-    ? postsData 
-    : postsData.filter(p => p.categoria.toLowerCase() === filtroAtivo.toLowerCase());
+    ? posts 
+    : posts.filter(p => p.categoria.toLowerCase() === filtroAtivo.toLowerCase());
 
   return (
-    <div>
+    <div className="blog-container">
       {/* HERO COM VÍDEO EM TELA CHEIA */}
       <header className="video-hero">
         <nav className="blog-nav">
@@ -91,7 +121,7 @@ export default function Blog() {
         </nav>
 
         <video autoPlay loop muted playsInline>
-          <source src="/assets/agricultura.mp4" type="video/mp4" />
+          <source src="/assets/video-blog.mp4" type="video/mp4" />
           Seu navegador não suporta vídeo HTML5.
         </video>
 
@@ -104,7 +134,7 @@ export default function Blog() {
               document.getElementById("cards-section")?.scrollIntoView({ behavior: "smooth" })
             }
           >
-            LEIA MAIS
+            VER NOTÍCIAS
           </button>
         </div>
       </header>
@@ -125,22 +155,92 @@ export default function Blog() {
 
           {/* Seção dos cards com ID para scroll */}
           <div id="cards-section" className="blog-grid">
-            {postsFiltrados.map((post) => (
-              <article key={post.id} className="blog-card" onClick={() => navigate(`/blog/${post.id}`)}>
+            {postsFiltrados.map((post, index) => (
+              <article 
+                key={post.id} 
+                className="blog-card reveal-card" 
+                style={{ animationDelay: `${index * 0.1}s` }} // Delay para efeito de cascata
+                onClick={() => navigate(`/blog/${post.id}`)}
+              >
                 <div className="card-thumb">
                   <img src={post.imagem} alt={post.titulo} />
                 </div>
+                
                 <div className="card-info">
-                  <span className="card-tag">{post.categoria}</span>
+                  <div className="card-header-info">
+                    <span className="card-tag">{post.categoria}</span>
+                    <span className="card-date">{post.data}</span>
+                  </div>
+                  
                   <h3>{post.titulo}</h3>
                   <p>{post.subtitulo}</p>
-                  <div className="card-link">
-                    <span>Ler mais →</span>
+                  
+                  <div className="card-footer-icons">
+                    <div className="icon-group">
+                      <Eye size={16} /> <span>Ver fotos</span>
+                    </div>
+                    <div className="icon-group">
+                      <Ear size={16} /> <span>Ler história</span>
+                    </div>
+                    <div className="read-more-link">
+                       <ChevronRight size={18} />
+                    </div>
                   </div>
                 </div>
               </article>
             ))}
           </div>
+
+          {/* INFOGRÁFICO ANIMADO (Tratorzinho) */}
+          <div className="infographic-divider">
+            <div className="tractor-path">
+              <div className="tractor-animation">
+                <Tractor size={40} className="tractor-icon" />
+                <span className="delivery-text">Levando o melhor do campo até você...</span>
+              </div>
+            </div>
+          </div>
+
+          {/* NOVO: CANTO DO APRENDIZADO (DICAS DE SUSTENTABILIDADE E EMPREENDEDORISMO) */}
+          <section className="learning-corner">
+            <div className="learning-grid">
+              {/* Quadro de Sustentabilidade */}
+              <div className="learning-card sustainability">
+                <div className="learning-header">
+                  <Leaf size={32} className="learning-icon" />
+                  <h4>Semeando Sustentabilidade</h4>
+                </div>
+                <div className="learning-tips">
+                  <div className="tip-item">
+                    <Droplets size={20} className="tip-icon" />
+                    <p><strong>Reuso de Água:</strong> Utilize a água da lavagem de vegetais para regar suas plantas. Elas agradecem os nutrientes!</p>
+                  </div>
+                  <div className="tip-item">
+                    <Package size={20} className="tip-icon" />
+                    <p><strong>Embalagem Consciente:</strong> Troque o plástico por papel reciclado ou palha. É melhor para o planeta e valoriza o artesanato.</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Quadro de Apoio ao Empreendedor */}
+              <div className="learning-card entrepreneur">
+                <div className="learning-header">
+                  <Lightbulb size={32} className="learning-icon" />
+                  <h4>Papo de Empreendedora</h4>
+                </div>
+                <div className="learning-tips">
+                  <div className="tip-item">
+                    <Eye size={20} className="tip-icon" />
+                    <p><strong>Dica de Ouro:</strong> Fotos atraentes vendem mais! Use a luz natural da manhã para fotografar seus pratos ou artesanatos.</p>
+                  </div>
+                  <div className="tip-item">
+                    <Store size={20} className="tip-icon" />
+                    <p><strong>Na Feirinha:</strong> Conte a história por trás do seu produto. Pessoas compram experiências e conexão emocional.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
           
           <footer className="footer-banner">
             <p>🍃 Acompanhe nossas atualizações e fique por dentro do agro!</p>

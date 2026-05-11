@@ -41,6 +41,11 @@ function App() {
           <Route path="/blog" element={<Blog />} />
           <Route path="/blog/:id" element={<Post />} />
           <Route path="/admin-teste" element={<HomeAdmin />} />
+          <Route path="/home2-teste" element={<Home2 />} />
+          <Route path="/receitas-teste" element={<Receitas />} />
+          <Route path="/perfil-teste" element={<Perfil />} />
+          
+          
 
           {/* Rotas Privadas - Comprador */}
           <Route path="/home2" element={

@@ -24,12 +24,14 @@ const handleLogin = async (e: React.FormEvent) => {
     } else {
       navigate('/home');
     }
+
   } catch (error: any) {
-    alert("❌ " + error.message);
+  // error já é um Error com .message graças ao interceptor
+  alert("❌ " + (error?.message || "Erro ao fazer login. Tente novamente."));
   } finally {
-    setCarregando(false);
-  }
-};
+  setCarregando(false);
+  } 
+};  
 
   return (
     <div className="min-h-screen bg-[#F5F2ED] flex flex-col items-center justify-center px-6">
