@@ -22,7 +22,8 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.badRequest().body(Map.of(
                 "status", 400,
-                "erro", "Dados inválidos",
+                "message", "Dados inválidos", // Padronizado para 'message'
+                "erro", "Dados inválidos", // Mantido para compatibilidade
                 "campos", erros,
                 "timestamp", OffsetDateTime.now().toString()));
     }
@@ -32,7 +33,8 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleRuntime(RuntimeException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
                 "status", 400,
-                "erro", ex.getMessage(),
+                "message", ex.getMessage(), // Adicionado 'message'
+                "erro", ex.getMessage(), // Mantido 'erro'
                 "timestamp", OffsetDateTime.now().toString()));
     }
 
@@ -41,6 +43,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleSecurity(SecurityException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
                 "status", 401,
+                "message", ex.getMessage(),
                 "erro", ex.getMessage(),
                 "timestamp", OffsetDateTime.now().toString()));
     }
