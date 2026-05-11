@@ -1,24 +1,43 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { postsData } from "./Blog"; 
-import { ArrowLeft, Calendar, Clock } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock, Volume2, VolumeX } from 'lucide-react';
 
 export default function Post() {
   const { id } = useParams();
   const navigate = useNavigate();
 
   const [post, setPost] = useState<any>(null);
+  const [isReading, setIsReading] = useState(false);
+
+  // --- FUNÇÃO PARA CONTROLAR A VOZ (AGORA LÊ TUDO E SÓ NO CLIQUE) ---
+  const toggleSpeech = () => {
+    if ('speechSynthesis' in window) {
+      if (isReading) {
+        window.speechSynthesis.cancel();
+        setIsReading(false);
+      } else {
+        const textoParaLer = `${post.titulo}. ${post.subtitulo}. ${post.conteudo}`;
+        const utterance = new SpeechSynthesisUtterance(textoParaLer);
+        utterance.lang = 'pt-BR';
+        utterance.onend = () => setIsReading(false);
+        window.speechSynthesis.speak(utterance);
+        setIsReading(true);
+      }
+    }
+  };
 
   useEffect(() => {
     const carregarPost = () => {
       const postId = Number(id);
+      let postEncontrado = null;
       
       const salvas = localStorage.getItem('noticias_globais');
       if (salvas) {
         const parseadas = JSON.parse(salvas);
         const adminPost = parseadas.find((p: any) => p.id === postId);
         if (adminPost) {
-          setPost({
+          postEncontrado = {
             id: adminPost.id,
             titulo: adminPost.titulo,
             subtitulo: adminPost.subtitulo,
@@ -28,18 +47,24 @@ export default function Post() {
             leitura: adminPost.tempoLeitura || '3 min',
             conteudo: adminPost.descricao || '',
             citacao: adminPost.citacao || ''
-          });
-          return;
+          };
         }
       }
 
-      const localPost = postsData.find((p) => p.id === postId);
-      if (localPost) {
-        setPost(localPost);
+      if (!postEncontrado) {
+        postEncontrado = postsData.find((p) => p.id === postId);
+      }
+
+      if (postEncontrado) {
+        setPost(postEncontrado);
       }
     };
     
     carregarPost();
+
+    return () => {
+      window.speechSynthesis.cancel();
+    };
   }, [id]);
 
   if (!post) {
@@ -49,41 +74,37 @@ export default function Post() {
   return (
     <div className="min-h-screen bg-[#F9F7F2] font-sans text-[#394158]">
       
-      {/* NAVBAR AJUSTADA */}
       <nav className="w-full bg-white border-b border-gray-100 sticky top-0 z-50 py-4 px-8 shadow-sm">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
-          {/* Logo agora leva para a Home Principal (Institucional) */}
           <div className="flex items-center gap-4 cursor-pointer" onClick={() => navigate('/')}>
             <img src="/assets/logo-home.png" alt="Logo" className="h-12 w-auto object-contain" />
           </div>
           
           <div className="flex gap-8 text-[10px] font-black uppercase tracking-widest">
-            {/* Rota corrigida para '/' (Home.tsx) e cor escurecida para leitura */}
-            <button 
-              onClick={() => navigate('/')} 
-              className="text-[#394158] hover:text-[#55833d] transition-colors cursor-pointer"
-            >
-              Início
-            </button>
-            <button 
-              onClick={() => navigate('/blog')} 
-              className="text-[#f9943b] cursor-pointer"
-            >
-              Blog
-            </button>
+            <button onClick={() => navigate('/')} className="text-[#394158] hover:text-[#55833d] transition-colors cursor-pointer">Início</button>
+            <button onClick={() => navigate('/blog')} className="text-[#f9943b] cursor-pointer">Blog</button>
           </div>
         </div>
       </nav>
 
       <main className="max-w-4xl mx-auto px-6 py-12">
         
-        {/* BOTÃO VOLTAR - AGORA FUNCIONANDO */}
-        <button 
-          className="flex items-center gap-2 mb-10 px-6 py-3 bg-white border border-gray-100 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm hover:shadow-md hover:-translate-x-1 transition-all cursor-pointer"
-          onClick={() => navigate("/blog")}
-        >
-          <ArrowLeft size={14} /> Voltar para o Blog
-        </button>
+        <div className="flex justify-between items-center mb-10">
+          <button 
+            className="flex items-center gap-2 px-6 py-3 bg-white border border-gray-100 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm hover:shadow-md hover:-translate-x-1 transition-all cursor-pointer"
+            onClick={() => navigate("/blog")}
+          >
+            <ArrowLeft size={14} /> Voltar para o Blog
+          </button>
+
+          {/* BOTÃO PARA INICIAR/PARAR O ÁUDIO */}
+          <button 
+            onClick={toggleSpeech}
+            className={`flex items-center gap-2 px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all shadow-sm ${isReading ? 'bg-[#f9943b] text-white' : 'bg-white text-[#f9943b] border border-[#f9943b]'}`}
+          >
+            {isReading ? <><VolumeX size={14} /> Parar Áudio</> : <><Volume2 size={14} /> Ouvir Notícia</>}
+          </button>
+        </div>
 
         <header className="mb-10">
           <span className="inline-block bg-[#55833d] text-white text-[9px] font-black px-3 py-1 rounded-md uppercase tracking-widest mb-4">
@@ -103,12 +124,10 @@ export default function Post() {
           </div>
         </header>
 
-        {/* IMAGEM DO POST */}
         <div className="w-full aspect-video rounded-[2.5rem] overflow-hidden shadow-2xl mb-12 border-4 border-white">
           <img src={post.imagem} alt={post.titulo} className="w-full h-full object-cover" />
         </div>
 
-        {/* TEXTO DO POST */}
         <article className="space-y-8">
           <h2 className="text-2xl font-black text-[#55833d] uppercase italic leading-tight">
             {post.subtitulo}
@@ -125,7 +144,6 @@ export default function Post() {
           </div>
         </article>
 
-        {/* FOOTER DO POST */}
         <footer className="mt-20 pt-10 border-t border-gray-100 text-center">
              <button 
                 onClick={() => navigate('/blog')}
