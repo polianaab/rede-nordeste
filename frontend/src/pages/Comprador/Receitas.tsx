@@ -76,6 +76,7 @@ const RECEITAS_DATA = [
 ];
 
 export default function Receitas() {
+  const [receitas, setReceitas] = useState<any[]>(RECEITAS_DATA);
   const [receitaAberta, setReceitaAberta] = useState<any>(null);
   const [termoBusca, setTermoBusca] = useState('');
   const [dificuldadeFiltro, setDificuldadeFiltro] = useState('Todas');
@@ -90,12 +91,23 @@ export default function Receitas() {
   });
 
   useEffect(() => {
-    const atualizarCarrinho = () => {
-      const salvo = localStorage.getItem('carrinho_count');
-      setCarrinhoCount(salvo ? parseInt(salvo) : 0);
+    const carregarReceitas = () => {
+      const salvas = localStorage.getItem('receitas_globais');
+      if (salvas) {
+        setReceitas(JSON.parse(salvas));
+      } else {
+        localStorage.setItem('receitas_globais', JSON.stringify(RECEITAS_DATA));
+      }
     };
-    window.addEventListener('storage', atualizarCarrinho);
-    return () => window.removeEventListener('storage', atualizarCarrinho);
+    carregarReceitas();
+
+    const atualizarDados = () => {
+      const salvoCarrinho = localStorage.getItem('carrinho_count');
+      setCarrinhoCount(salvoCarrinho ? parseInt(salvoCarrinho) : 0);
+      carregarReceitas();
+    };
+    window.addEventListener('storage', atualizarDados);
+    return () => window.removeEventListener('storage', atualizarDados);
   }, []);
 
   const marcarComoLida = (id: number) => {
@@ -106,7 +118,7 @@ export default function Receitas() {
     if(window.confirm('Deseja limpar todas as notificações?')) setNotificacoes([]);
   };
 
-  const receitasFiltradas = RECEITAS_DATA.filter(rec => {
+  const receitasFiltradas = receitas.filter(rec => {
     const correspondeBusca = rec.titulo.toLowerCase().includes(termoBusca.toLowerCase()) ||
                              rec.descricao.toLowerCase().includes(termoBusca.toLowerCase());
     const correspondeDificuldade = dificuldadeFiltro === 'Todas' || rec.dificuldade === dificuldadeFiltro;

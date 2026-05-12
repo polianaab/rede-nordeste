@@ -1,75 +1,18 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Play, Volume2, Eye, Ear, Tractor, ChevronRight, Leaf, Lightbulb, Store, Droplets, Package } from "lucide-react"; // Importando ícones intuitivos
+import { BookOpen, Ear, Tractor, ChevronRight, Leaf, Lightbulb, Store, Droplets, Package } from "lucide-react";
 import "./Blog.css";
-
-export const postsData = [
-  {
-    id: 0,
-    titulo: "Tecnologia na Agricultura",
-    subtitulo: "Como a tecnologia está revolucionando o campo.",
-    categoria: "TECNOLOGIA",
-    imagem: "https://images.pexels.com/photos/34182385/pexels-photo-34182385.jpeg",
-    data: "24 de Abril de 2024",
-    leitura: "5 min",
-    conteudo: `O cenário do agronegócio brasileiro passa por sua maior transformação desde a mecanização. A entrada da Agricultura 4.0 trouxe dispositivos que hoje são protagonistas de uma colheita eficiente.`
-  },
-  {
-    id: 1,
-    titulo: "Agricultura Sustentável",
-    subtitulo: "Produzir mais sem prejudicar o meio ambiente.",
-    categoria: "SUSTENTABILIDADE",
-    imagem: "https://images.pexels.com/photos/14776863/pexels-photo-14776863.jpeg",
-    data: "22 de Abril de 2024",
-    leitura: "4 min",
-    conteudo: "A sustentabilidade é o pilar central das fazendas modernas."
-  },
-  {
-    id: 2,
-    titulo: "Inovação no Agronegócio",
-    subtitulo: "Novas soluções para o futuro da agricultura.",
-    categoria: "INOVAÇÃO",
-    imagem: "https://images.pexels.com/photos/5622487/pexels-photo-5622487.jpeg",
-    data: "20 de Abril de 2024",
-    leitura: "6 min",
-    conteudo: "Desde sementes geneticamente aprimoradas até a automação total."
-  },
-  {
-    id: 3,
-    titulo: "Manejo Inteligente",
-    subtitulo: "Práticas modernas para melhorar a produtividade.",
-    categoria: "MANEJO",
-    imagem: "https://images.unsplash.com/photo-1625246333195-78d9c38ad449?q=80&w=800",
-    data: "18 de Abril de 2024",
-    leitura: "5 min",
-    conteudo: "Otimizar o uso de recursos hídricos e fertilizantes é a chave."
-  },
-  {
-    id: 4,
-    titulo: "Dados no Campo",
-    subtitulo: "Como dados ajudam produtores a tomar decisões.",
-    categoria: "DADOS",
-    imagem: "https://images.pexels.com/photos/5230983/pexels-photo-5230983.jpeg",
-    data: "15 de Abril de 2024",
-    leitura: "7 min",
-    conteudo: "Big Data e análise preditiva ajudam a prever safras com precisão."
-  },
-  {
-    id: 5,
-    titulo: "Histórias de Sucesso",
-    subtitulo: "Produtores que estão transformando a realidade.",
-    categoria: "PRODUTOR",
-    imagem: "https://images.pexels.com/photos/7456796/pexels-photo-7456796.jpeg",
-    data: "12 de Abril de 2024",
-    leitura: "8 min",
-    conteudo: "Conheça trajetórias reais de produtores que triplicaram sua produtividade."
-  }
-];
 
 export default function Blog() {
   const navigate = useNavigate();
   const [filtroAtivo, setFiltroAtivo] = useState("Todos");
-  const [posts, setPosts] = useState<any[]>(postsData);
+  const [ordem, setOrdem] = useState<"recentes" | "antigas">("recentes");
+  const [paginaAtual, setPaginaAtual] = useState(1);
+  const [posts, setPosts] = useState<any[]>([]);
+
+  useEffect(() => {
+    setPaginaAtual(1);
+  }, [filtroAtivo, ordem]);
 
   useEffect(() => {
     const carregarPosts = () => {
@@ -80,172 +23,224 @@ export default function Blog() {
           id: n.id,
           titulo: n.titulo,
           subtitulo: n.subtitulo,
-          categoria: "NOTÍCIA",
+          categoria: n.categoria || "NOTÍCIA",
           imagem: n.imagem,
           data: n.data,
           leitura: n.tempoLeitura || '3 min',
           conteudo: n.descricao || '',
           citacao: n.citacao || ''
         }));
-        setPosts([...adminPosts, ...postsData]);
+        setPosts(adminPosts);
       }
     };
     carregarPosts();
     window.addEventListener('storage', carregarPosts);
-    
-    return () => {
-      window.removeEventListener('storage', carregarPosts);
-    };
+    return () => window.removeEventListener('storage', carregarPosts);
   }, []);
 
-  const categorias = ["Todos", "Tecnologia", "Sustentabilidade", "Inovação", "Mercado", "Notícia"];
+  const categorias = ["Todos", "Tecnologia", "Sustentabilidade", "Inovação", "Manejo", "Produtor", "Mercado", "Notícia"];
 
-  const postsFiltrados = filtroAtivo === "Todos" 
-    ? posts 
+  let postsFiltrados = filtroAtivo === "Todos"
+    ? [...posts]
     : posts.filter(p => p.categoria.toLowerCase() === filtroAtivo.toLowerCase());
 
+  // Ordenação
+  postsFiltrados.sort((a, b) => {
+    if (ordem === "recentes") return b.id - a.id;
+    return a.id - b.id;
+  });
+
+  // Paginação
+  const POSTS_POR_PAGINA = 6;
+  const totalPaginas = Math.ceil(postsFiltrados.length / POSTS_POR_PAGINA) || 1;
+  const postsPaginados = postsFiltrados.slice((paginaAtual - 1) * POSTS_POR_PAGINA, paginaAtual * POSTS_POR_PAGINA);
+
   return (
-    <div className="blog-container">
-      {/* HERO COM VÍDEO EM TELA CHEIA */}
-      <header className="video-hero">
-        <nav className="blog-nav">
-          <div className="nav-container">
-            <div className="logo-brand">
-              <img src="/assets/logo-sem-fundo.png" alt="Logo" />
-            </div>
-            <div className="nav-menu">
-              <a href="#" onClick={() => navigate("/")}>Início</a>
-              <a href="#" className="active" onClick={() => navigate("/blog")}>Blog</a>
-            </div>
+    <div className="blog-container w-full bg-[#F5F2ED] font-sans">
+
+      {/* NAVBAR ALTERADA PARA ABSOLUTE PARA NÃO ACOMPANHAR A ROLAGEM */}
+      <nav className="absolute top-0 left-0 w-full bg-white/95 backdrop-blur-md z-[100] border-b border-gray-100 py-3 md:py-4 px-6 md:px-12">
+        <div className="max-w-7xl mx-auto flex justify-between items-center">
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/")}>
+            <img src="/assets/logo-blog.png" alt="Logo Rede Nordeste" className="h-8 md:h-12 object-contain" />
           </div>
-        </nav>
+          <div className="flex gap-6 md:gap-10">
+            <button onClick={() => navigate("/")} className="text-[#394158] font-bold uppercase text-[10px] md:text-xs tracking-widest hover:text-[#f9943b] transition-colors">Início</button>
+            <button className="text-[#f9943b] font-black uppercase text-[10px] md:text-xs tracking-widest border-b-2 border-[#f9943b]">Blog</button>
+          </div>
+        </div>
+      </nav>
 
-        <video autoPlay loop muted playsInline>
+      {/* HERO SECTION */}
+      <header className="video-hero relative w-full h-[30vh] md:h-[50vh] overflow-hidden">
+        <video autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover">
           <source src="/assets/video-blog.mp4" type="video/mp4" />
-          Seu navegador não suporta vídeo HTML5.
         </video>
-
-        <div className="video-overlay">
-          <h1>NOTÍCIAS REDE NORDESTE</h1>
-          <p>Conectando o produtor ao mercado nacional</p>
+        <div className="video-overlay absolute inset-0 bg-black/40 flex flex-col justify-center items-center text-center p-4">
+          <h1 className="text-white text-2xl md:text-6xl font-black italic mb-2 md:mb-4">NOTÍCIAS REDE NORDESTE</h1>
+          <p className="text-white/80 text-[10px] md:text-lg mb-4 md:mb-8 uppercase tracking-widest">Conectando o produtor ao mercado nacional</p>
           <button
-            className="hero-read-btn"
-            onClick={() =>
-              document.getElementById("cards-section")?.scrollIntoView({ behavior: "smooth" })
-            }
+            onClick={() => document.getElementById("cards-section")?.scrollIntoView({ behavior: "smooth" })}
+            className="bg-white text-[#394158] px-6 py-2 md:px-10 md:py-4 rounded-full font-black uppercase text-[10px] md:text-xs shadow-xl hover:scale-105 transition-transform"
           >
-            VER NOTÍCIAS
+            Ver Notícias
           </button>
         </div>
       </header>
 
-      <main className="blog-main">
-        <div className="blog-master">
-          <div className="filter-group">
+      <main className="max-w-7xl mx-auto px-4 md:px-8 py-8 md:py-16">
+
+        {/* CONTROLES (FILTROS E ORDENAÇÃO) */}
+        <div className="flex flex-col lg:flex-row justify-between items-center gap-6 pb-8">
+
+          {/* FILTROS */}
+          <div className="flex flex-wrap gap-1.5 md:gap-2 w-full lg:w-auto justify-center lg:justify-start">
             {categorias.map(cat => (
-              <button 
-                key={cat} 
-                className={`filter-item ${filtroAtivo === cat ? "active" : ""}`}
+              <button
+                key={cat}
                 onClick={() => setFiltroAtivo(cat)}
+                className={`px-3 py-1.5 md:px-5 md:py-2 rounded-md font-black text-[7px] md:text-[9px] uppercase tracking-widest border transition-all ${filtroAtivo === cat ? "bg-[#55833d] text-white border-[#55833d] shadow-sm" : "bg-white text-gray-400 border-gray-100 shadow-sm hover:border-[#55833d] hover:text-[#55833d]"
+                  }`}
               >
                 {cat}
               </button>
             ))}
           </div>
 
-          {/* Seção dos cards com ID para scroll */}
-          <div id="cards-section" className="blog-grid">
-            {postsFiltrados.map((post, index) => (
-              <article 
-                key={post.id} 
-                className="blog-card reveal-card" 
-                style={{ animationDelay: `${index * 0.1}s` }} // Delay para efeito de cascata
-                onClick={() => navigate(`/blog/${post.id}`)}
-              >
-                <div className="card-thumb">
-                  <img src={post.imagem} alt={post.titulo} />
-                </div>
-                
-                <div className="card-info">
-                  <div className="card-header-info">
-                    <span className="card-tag">{post.categoria}</span>
-                    <span className="card-date">{post.data}</span>
-                  </div>
-                  
-                  <h3>{post.titulo}</h3>
-                  <p>{post.subtitulo}</p>
-                  
-                  <div className="card-footer-icons">
-                    <div className="icon-group">
-                      <Eye size={16} /> <span>Ver fotos</span>
-                    </div>
-                    <div className="icon-group">
-                      <Ear size={16} /> <span>Ler história</span>
-                    </div>
-                    <div className="read-more-link">
-                       <ChevronRight size={18} />
-                    </div>
-                  </div>
-                </div>
-              </article>
-            ))}
+          {/* ORDENAÇÃO */}
+          <div className="shrink-0 w-full lg:w-auto flex flex-col sm:flex-row items-center justify-center lg:justify-end gap-2 md:gap-3">
+            <span className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-gray-400">Ordenar:</span>
+            <select
+              value={ordem}
+              onChange={(e) => setOrdem(e.target.value as "recentes" | "antigas")}
+              className="bg-white border border-gray-100 shadow-sm text-[#394158] text-[7px] md:text-[9px] font-black uppercase tracking-widest px-3 py-1.5 md:px-5 md:py-2 rounded-md outline-none hover:border-[#f9943b] focus:border-[#f9943b] transition-all cursor-pointer appearance-none"
+              style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23f9943b\' stroke-width=\'3\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpolyline points=\'6 9 12 15 18 9\'%3E%3C/polyline%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.5rem center', backgroundSize: '1em', paddingRight: '2rem' }}
+            >
+              <option value="recentes">Mais recentes</option>
+              <option value="antigas">Mais antigas</option>
+            </select>
           </div>
-
-          {/* INFOGRÁFICO ANIMADO (Tratorzinho) */}
-          <div className="infographic-divider">
-            <div className="tractor-path">
-              <div className="tractor-animation">
-                <Tractor size={40} className="tractor-icon" />
-                <span className="delivery-text">Levando o melhor do campo até você...</span>
-              </div>
-            </div>
-          </div>
-
-          {/* NOVO: CANTO DO APRENDIZADO (DICAS DE SUSTENTABILIDADE E EMPREENDEDORISMO) */}
-          <section className="learning-corner">
-            <div className="learning-grid">
-              {/* Quadro de Sustentabilidade */}
-              <div className="learning-card sustainability">
-                <div className="learning-header">
-                  <Leaf size={32} className="learning-icon" />
-                  <h4>Semeando Sustentabilidade</h4>
-                </div>
-                <div className="learning-tips">
-                  <div className="tip-item">
-                    <Droplets size={20} className="tip-icon" />
-                    <p><strong>Reuso de Água:</strong> Utilize a água da lavagem de vegetais para regar suas plantas. Elas agradecem os nutrientes!</p>
-                  </div>
-                  <div className="tip-item">
-                    <Package size={20} className="tip-icon" />
-                    <p><strong>Embalagem Consciente:</strong> Troque o plástico por papel reciclado ou palha. É melhor para o planeta e valoriza o artesanato.</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Quadro de Apoio ao Empreendedor */}
-              <div className="learning-card entrepreneur">
-                <div className="learning-header">
-                  <Lightbulb size={32} className="learning-icon" />
-                  <h4>Papo de Empreendedora</h4>
-                </div>
-                <div className="learning-tips">
-                  <div className="tip-item">
-                    <Eye size={20} className="tip-icon" />
-                    <p><strong>Dica de Ouro:</strong> Fotos atraentes vendem mais! Use a luz natural da manhã para fotografar seus pratos ou artesanatos.</p>
-                  </div>
-                  <div className="tip-item">
-                    <Store size={20} className="tip-icon" />
-                    <p><strong>Na Feirinha:</strong> Conte a história por trás do seu produto. Pessoas compram experiências e conexão emocional.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-          
-          <footer className="footer-banner">
-            <p>🍃 Acompanhe nossas atualizações e fique por dentro do agro!</p>
-          </footer>
         </div>
+
+        {/* GRID DE NOTÍCIAS (3 COLUNAS) */}
+        <div id="cards-section" className="grid grid-cols-3 gap-3 md:gap-8">
+          {postsPaginados.map((post) => (
+            <article
+              key={post.id}
+              onClick={() => navigate(`/blog/${post.id}`)}
+              className="bg-white rounded-xl md:rounded-[1rem] overflow-hidden shadow-md hover:shadow-xl transition-all cursor-pointer group flex flex-col"
+            >
+              <div className="aspect-video md:aspect-[4/3] overflow-hidden">
+                <img src={post.imagem} alt={post.titulo} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+              </div>
+              <div className="p-3 md:p-8 flex flex-col flex-1">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-2 md:mb-4 gap-2 md:gap-0">
+                  <span className="bg-[#55833d]/10 text-[#55833d] px-2 py-0.5 md:px-3 md:py-1 rounded-md text-[6px] md:text-[9px] font-black uppercase">{post.categoria}</span>
+                  <span className="text-[#f9943b] text-[8px] md:text-[10px] font-black uppercase tracking-widest">{post.data}</span>
+                </div>
+
+                <h3 className="text-[#394158] font-black text-[10px] md:text-xl mb-1 md:mb-3 uppercase italic leading-tight line-clamp-2">{post.titulo}</h3>
+                <p className="hidden md:block text-gray-400 text-xs leading-relaxed mb-6 line-clamp-3">{post.subtitulo}</p>
+
+                {/* RODAPÉ DO CARD COM LER E OUVIR */}
+                <div className="mt-auto pt-2 md:pt-6 border-t border-gray-50 flex justify-between items-center text-gray-400">
+                  <div className="flex items-center gap-2 md:gap-4">
+                    {/* Ícone Livro + LER */}
+                    <div className="flex items-center gap-1">
+                      <BookOpen size={14} className="w-3 h-3 md:w-4 md:h-4 text-[#55833d]" />
+                      <span className="text-[7px] md:text-[10px] font-black uppercase">Ler</span>
+                    </div>
+                    {/* Ícone Orelha + OUVIR */}
+                    <div className="flex items-center gap-1">
+                      <Ear size={14} className="w-3 h-3 md:w-4 md:h-4 text-[#55833d]" />
+                      <span className="text-[7px] md:text-[10px] font-black uppercase">Ouvir</span>
+                    </div>
+                  </div>
+                  <ChevronRight size={18} className="text-[#f9943b] w-3 h-3 md:w-5 md:h-5" />
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+
+        {/* PAGINAÇÃO COM TRATOR INTEGRADO */}
+        {totalPaginas > 1 ? (
+          <div className="py-16 md:py-24 max-w-2xl mx-auto relative px-4">
+            <div className="relative w-full">
+              {/* LINHA DE FUNDO (vai do centro da primeira bolinha ao centro da última) */}
+              <div className="absolute top-1/2 left-[16px] right-[16px] h-0.5 bg-gray-200 -translate-y-1/2 rounded-full"></div>
+
+              {/* LINHA DE PROGRESSO VERDE */}
+              <div
+                className="absolute top-1/2 left-[16px] h-0.5 bg-[#55833d] -translate-y-1/2 rounded-full transition-all duration-1000 ease-in-out"
+                style={{ width: `calc((100% - 32px) * ${((paginaAtual - 1) / (totalPaginas - 1))})` }}
+              ></div>
+
+              {/* TRATOR */}
+              <div
+                className="absolute top-1/2 -mt-2 z-10 transition-all duration-1000 ease-in-out flex flex-col items-center"
+                style={{
+                  left: `calc(16px + (100% - 32px) * ${((paginaAtual - 1) / (totalPaginas - 1))})`,
+                  transform: `translate(-50%, -100%)`
+                }}
+              >
+                <Tractor size={28} className="text-[#55833d] drop-shadow-sm" />
+                <span className="absolute -top-6 text-[7px] font-black uppercase text-[#f9943b] tracking-widest whitespace-nowrap bg-[#F5F2ED] px-2 py-0.5 rounded-full shadow-sm border border-[#f9943b]/20 hidden md:block">
+                  Página {paginaAtual}
+                </span>
+              </div>
+
+              {/* BOLINHAS DA PAGINAÇÃO */}
+              <div className="relative z-20 flex justify-between items-center w-full">
+                {Array.from({ length: totalPaginas }, (_, i) => i + 1).map(num => (
+                  <button
+                    key={num}
+                    onClick={() => {
+                      setPaginaAtual(num);
+                      document.getElementById("cards-section")?.scrollIntoView({ behavior: "smooth" });
+                    }}
+                    className={`w-6 h-6 flex justify-center items-center rounded-full text-[10px] font-black transition-all bg-[#F5F2ED] ${paginaAtual === num
+                      ? 'text-[#f9943b] border border-[#f9943b] shadow-md shadow-[#f9943b]/20 bg-white'
+                      : 'text-gray-400 hover:text-[#f9943b] border border-transparent hover:border-gray-200 hover:bg-white'
+                      }`}
+                  >
+                    {num}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="py-20 overflow-hidden relative">
+            <div className="h-px bg-gray-100 w-full absolute top-1/2"></div>
+            <div className="relative flex items-center gap-4 animate-tractor whitespace-nowrap bg-[#F5F2ED] pr-10 w-fit">
+              <Tractor size={32} className="text-[#55833d]" />
+              <span className="text-[10px] font-black uppercase text-gray-300 tracking-[0.3em]">Levando o melhor do campo até você...</span>
+            </div>
+          </div>
+        )}
+
+        {/* SEÇÃO APRENDIZADO */}
+        <section className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-20">
+          <div className="bg-[#55833d] p-6 md:p-10 rounded-[1rem] md:rounded-[1rem] text-white shadow-xl">
+            <div className="flex items-center gap-4 mb-6"><Leaf size={32} /><h4 className="font-black uppercase italic text-xl md:text-2xl leading-none">Semeando Sustentabilidade</h4></div>
+            <div className="space-y-6 text-white/90">
+              <div className="flex gap-4"><Droplets className="shrink-0 opacity-70" /><p className="text-xs md:text-sm"><strong>Reuso de Água:</strong> Utilize a água da lavagem de vegetais para regar suas plantas.</p></div>
+              <div className="flex gap-4"><Package className="shrink-0 opacity-70" /><p className="text-xs md:text-sm"><strong>Embalagem Consciente:</strong> Troque o plástico por papel reciclado ou palha.</p></div>
+            </div>
+          </div>
+          <div className="bg-[#f9943b] p-6 md:p-10 rounded-[1rem] md:rounded-[1rem] text-white shadow-xl">
+            <div className="flex items-center gap-4 mb-6"><Lightbulb size={32} /><h4 className="font-black uppercase italic text-xl md:text-2xl leading-none">Papo de Empreendedora</h4></div>
+            <div className="space-y-6 text-white/90">
+              <div className="flex gap-4"><BookOpen className="shrink-0 opacity-70" /><p className="text-xs md:text-sm"><strong>Dica de Ouro:</strong> Fotos atraentes vendem mais! Use a luz natural da manhã.</p></div>
+              <div className="flex gap-4"><Store className="shrink-0 opacity-70" /><p className="text-xs md:text-sm"><strong>Na Feirinha:</strong> Conte a história por trás do seu produto. Pessoas compram experiências.</p></div>
+            </div>
+          </div>
+        </section>
+
+        <footer className="text-center py-10 opacity-30 text-[10px] font-black uppercase tracking-widest border-t border-gray-200">
+          © 2026 Rede Nordeste — Blog Oficial do Produtor
+        </footer>
       </main>
     </div>
   );

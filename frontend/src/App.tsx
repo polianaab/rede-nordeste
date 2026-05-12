@@ -40,10 +40,16 @@ function App() {
           <Route path="/cadastro" element={<Register />} />
           <Route path="/blog" element={<Blog />} />
           <Route path="/blog/:id" element={<Post />} />
+
           <Route path="/admin-teste" element={<HomeAdmin />} />
           <Route path="/home2-teste" element={<Home2 />} />
           <Route path="/receitas-teste" element={<Receitas />} />
           <Route path="/perfil-teste" element={<Perfil />} />
+          <Route path="/notificacao-teste" element={<Notificacao />} />
+          <Route path="/chat-teste" element={<Chat />} />
+          <Route path="/produto-teste" element={<ProdutoDetalhes />} />
+          <Route path="/carrinho-teste" element={<Carrinho />} />
+          
           
           
 
