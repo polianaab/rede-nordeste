@@ -49,15 +49,29 @@ const HISTORIAS_DB = [
 ];
 
 export default function Home() {
+  const [destaques, setDestaques] = useState<any[]>(SLIDES_DESTAQUE);
   const [current, setCurrent] = useState(0);
   const navigate = useNavigate();
 
   useEffect(() => {
+    const loadDestaques = () => {
+      const saved = localStorage.getItem('destaques_home');
+      if (saved) {
+        setDestaques(JSON.parse(saved));
+      }
+    };
+    loadDestaques();
+    window.addEventListener('storage', loadDestaques);
+    return () => window.removeEventListener('storage', loadDestaques);
+  }, []);
+
+  useEffect(() => {
+    if (destaques.length === 0) return;
     const timer = setInterval(() => {
-      setCurrent((prev) => (prev + 1) % SLIDES_DESTAQUE.length);
+      setCurrent((prev) => (prev + 1) % destaques.length);
     }, 8000);
     return () => clearInterval(timer);
-  }, []);
+  }, [destaques.length]);
 
   return (
     <div className="min-h-screen flex flex-col items-center bg-[#F5F2ED] font-sans overflow-x-hidden">
@@ -73,7 +87,7 @@ export default function Home() {
       {/* CARROSSEL HERO */}
       <section className="w-full relative overflow-hidden h-[500px] z-10">
         <div className="flex h-full transition-transform duration-1000 ease-in-out" style={{ transform: `translateX(-${current * 100}%)` }}>
-          {SLIDES_DESTAQUE.map((slide) => (
+          {destaques.map((slide) => (
             <div key={slide.id} className="w-full h-full flex-shrink-0 relative">
               <img src={slide.img} className="w-full h-full object-cover" alt={slide.titulo} />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
@@ -96,7 +110,7 @@ export default function Home() {
           ))}
         </div>
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-3 z-50">
-          {SLIDES_DESTAQUE.map((_, i) => (
+          {destaques.map((_, i) => (
             <button key={i} onClick={() => setCurrent(i)} className={`w-2 h-2 rounded-full cursor-pointer ${i === current ? 'bg-white scale-150' : 'bg-white/30'}`} />
           ))}
         </div>
@@ -133,12 +147,12 @@ export default function Home() {
               </div>
               <h3 className="text-4xl font-black text-[#394158] uppercase italic leading-tight">Por que usar a Rede Nordeste?</h3>
               <div className="space-y-4 text-gray-600 font-medium leading-relaxed">
-                <p>Valorizamos o pequeno produtor e o artesão nordestino, removendo as barreiras logísticas que dificultam o acesso ao mercado nacional.</p>
-                <p>Garantimos que produtos frescos e artesanais cheguem à sua mesa, fortalecendo a economia regional de forma segura, justa e direta.</p>
+                <p>A Rede Nordeste nasceu para dar voz e escala ao talento das empreendedoras e produtores da nossa terra. Unimos a força do artesanato e da produção regional à inovação digital para remover as barreiras que limitam o crescimento do pequeno negócio.</p>
+                <p>Acreditamos na colaboração como motor de mudança. Por isso, oferecemos uma plataforma que conecta quem produz com paixão a quem busca produtos autênticos, garantindo uma logística inteligente e um mercado mais justo, humano e conectado para todos.</p>
               </div>
             </div>
-            <div className="rounded-[3rem] overflow-hidden shadow-2xl h-80 bg-gray-50">
-              <img src="/assets/image-home.png" className="w-full h-full object-cover" alt="Nossa Missão" />
+            <div className="rounded-[1rem] overflow-hidden shadow-2xl h-120 bg-gray-50">
+              <img src="/assets/image-home3.png" className="w-full h-full object-cover" alt="Nossa Missão" />
             </div>
           </div>
         </section>
@@ -148,7 +162,7 @@ export default function Home() {
           <h2 className="font-black uppercase italic tracking-widest text-xs text-[#f9943b] mb-12">Histórias de Sucesso</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {HISTORIAS_DB.map((hist) => (
-              <div key={hist.id} className="bg-[#ff8a23] p-8 rounded-[3rem] text-white space-y-4 hover:-translate-y-2 transition-all shadow-xl">
+              <div key={hist.id} className="bg-[#ff8a23] p-8 rounded-[1rem] text-white space-y-4 hover:-translate-y-2 transition-all shadow-xl">
                 <div className="flex items-center gap-4">
                   <img src={hist.foto} className="w-16 h-16 object-cover rounded-2xl border-2 border-white/20" alt="" />
                   <div>
