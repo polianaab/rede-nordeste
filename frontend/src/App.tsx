@@ -17,6 +17,7 @@ import Notificacao from './pages/Comprador/Notificacao';
 import HomeVendedor from './pages/Vendedor/HomeVendedor';
 import PainelVendedor from './pages/Vendedor/PainelVendedor';
 import HomeAdmin from './pages/Admin/HomeAdmin';
+import PerfilVendedor from './pages/Vendedor/PerfilVendedor';
 
 // Verificação de autenticação antes da liberação da página
 const RotaPrivada = ({ children }: { children: React.ReactNode }) => {
@@ -49,6 +50,7 @@ function App() {
           <Route path="/chat-teste" element={<Chat />} />
           <Route path="/produto-teste" element={<ProdutoDetalhes />} />
           <Route path="/carrinho-teste" element={<Carrinho />} />
+          <Route path="/perfilvendedor-teste" element={<PerfilVendedor />} />
           
           
           

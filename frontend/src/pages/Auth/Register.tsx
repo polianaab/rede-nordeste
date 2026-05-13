@@ -53,7 +53,7 @@ export default function Register() {
     <div className="min-h-screen bg-[#F5F2ED] flex flex-col items-center justify-center py-10 px-6">
       <div className="mb-8">
         <Link to="/">
-          <img src="/assets/logo-rede-nordeste.png" alt="Rede Nordeste" className="h-32" />
+          <img src="/assets/logo-login.png" alt="Rede Nordeste" className="h-32" />
         </Link>
       </div>
 

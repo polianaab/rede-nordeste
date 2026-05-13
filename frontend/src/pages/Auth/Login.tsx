@@ -51,13 +51,20 @@ const handleLogin = async (e: React.FormEvent) => {
               className="w-full pl-12 pr-4 py-4 bg-gray-50 border-transparent rounded-2xl focus:bg-white focus:border-[#394158] transition-all outline-none text-sm font-medium" 
             />
           </div>
-          <div className="relative">
-            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-            <input 
-              type="password" placeholder="Sua senha" required 
-              value={senha} onChange={(e) => setSenha(e.target.value)}
-              className="w-full pl-12 pr-4 py-4 bg-gray-50 border-transparent rounded-2xl focus:bg-white focus:border-[#394158] transition-all outline-none text-sm font-medium" 
-            />
+          <div>
+            <div className="relative">
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+              <input 
+                type="password" placeholder="Sua senha" required 
+                value={senha} onChange={(e) => setSenha(e.target.value)}
+                className="w-full pl-12 pr-4 py-4 bg-gray-50 border-transparent rounded-2xl focus:bg-white focus:border-[#394158] transition-all outline-none text-sm font-medium" 
+              />
+            </div>
+            <div className="flex justify-center mt-4 px-2">
+              <Link to="/esqueci-senha" className="text-xs text-[#394158] font-semibold hover:text-[#f9943b] transition-colors">
+                Esqueci minha senha
+              </Link>
+            </div>
           </div>
           <button
             type="submit" disabled={carregando}
