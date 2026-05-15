@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -27,7 +29,7 @@ public class SecurityConfig {
                                 .csrf(csrf -> csrf.disable())
                                 .cors(cors -> cors.configurationSource(request -> {
                                         CorsConfiguration config = new CorsConfiguration();
-                                        config.setAllowedOriginPatterns(List.of("*")); // aceita qualquer origem em dev
+                                        config.setAllowedOriginPatterns(List.of("*"));
                                         config.setAllowedMethods(
                                                         List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
                                         config.setAllowedHeaders(List.of("*"));
@@ -37,39 +39,49 @@ public class SecurityConfig {
                                 .sessionManagement(session -> session
                                                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                                 .authorizeHttpRequests(auth -> auth
-                                                // 1. TUDO QUE É PÚBLICO (Acesso livre)
-                                                .requestMatchers("/api/entregadores/cadastrar").permitAll()
-                                                .requestMatchers("/api/frete/simular").permitAll()
+                                                // 1. TUDO QUE É PÚBLICO
                                                 .requestMatchers("/api/usuarios/registrar", "/api/usuarios/login",
                                                                 "/api/usuarios/refresh")
                                                 .permitAll()
+                                                .requestMatchers("/api/entregadores/cadastrar").permitAll()
+                                                .requestMatchers("/api/frete/simular").permitAll()
                                                 .requestMatchers("/ws/**").permitAll()
+
+                                                // Permitindo GET público para produtos e categorias para o front não
+                                                // ficar vazio
                                                 .requestMatchers(HttpMethod.GET, "/api/produtos/**", "/api/lojas/**",
-                                                                "/api/categorias")
+                                                                "/api/categorias/**")
                                                 .permitAll()
 
-                                                // 2. REGRAS ESPECÍFICAS DE PERFIL (Authorities)
+                                                // 2. REGRAS DO ADMIN (Para você construir o Admin agora)
+                                                // Se quiser testar sem token por enquanto, mude para .permitAll()
                                                 .requestMatchers("/api/admin/**", "/api/categorias/admin/**")
                                                 .hasAuthority("ADMIN")
-                                                .requestMatchers("/api/comprador/chats/**").hasAuthority("COMPRADOR")
-                                                .requestMatchers("/api/produtor/chats/**").hasAuthority("PRODUTOR")
 
-                                                // 3. REGRAS COMPOSTAS (Permite perfil específico OU Admin)
+                                                // 3. REGRAS DO PRODUTOR
+                                                .requestMatchers("/api/produtor/chats/**").hasAuthority("PRODUTOR")
                                                 .requestMatchers("/api/produtor/**")
                                                 .hasAnyAuthority("PRODUTOR", "ADMIN")
+
+                                                // 4. REGRAS DO COMPRADOR
+                                                .requestMatchers("/api/comprador/chats/**").hasAuthority("COMPRADOR")
                                                 .requestMatchers("/api/comprador/**")
                                                 .hasAnyAuthority("COMPRADOR", "ADMIN")
 
-                                                // 4. QUALQUER COISA AUTENTICADA (Logado, independente do perfil)
+                                                // 5. GERAL
                                                 .requestMatchers("/api/chats/**").authenticated()
-
-                                                // 5. O FILTRO FINAL (A regra de ouro: sempre por último)
                                                 .anyRequest().authenticated())
                                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
                                 .httpBasic(basic -> basic.disable())
                                 .formLogin(form -> form.disable());
 
                 return http.build();
+        }
+
+        @Bean
+        public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)
+                        throws Exception {
+                return authenticationConfiguration.getAuthenticationManager();
         }
 
         @Bean
