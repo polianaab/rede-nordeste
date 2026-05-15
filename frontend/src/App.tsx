@@ -12,12 +12,14 @@ import Carrinho from './pages/Comprador/Carrinho';
 import Chat from './pages/Comprador/Chat'; 
 import Blog from './pages/Blog/Blog';
 import Post from './pages/Blog/Post';
+import Loja from './pages/Comprador/Loja';
 import Perfil from './pages/Comprador/Perfil';
 import Notificacao from './pages/Comprador/Notificacao';
 import HomeVendedor from './pages/Vendedor/HomeVendedor';
 import PainelVendedor from './pages/Vendedor/PainelVendedor';
 import HomeAdmin from './pages/Admin/HomeAdmin';
 import PerfilVendedor from './pages/Vendedor/PerfilVendedor';
+import ReceitasVendedor from './pages/Vendedor/ReceitasVendedor';
 
 // Verificação de autenticação antes da liberação da página
 const RotaPrivada = ({ children }: { children: React.ReactNode }) => {
@@ -43,16 +45,6 @@ function App() {
           <Route path="/blog/:id" element={<Post />} />
 
           <Route path="/admin-teste" element={<HomeAdmin />} />
-          <Route path="/home2-teste" element={<Home2 />} />
-          <Route path="/receitas-teste" element={<Receitas />} />
-          <Route path="/perfil-teste" element={<Perfil />} />
-          <Route path="/notificacao-teste" element={<Notificacao />} />
-          <Route path="/chat-teste" element={<Chat />} />
-          <Route path="/produto-teste" element={<ProdutoDetalhes />} />
-          <Route path="/carrinho-teste" element={<Carrinho />} />
-          <Route path="/perfilvendedor-teste" element={<PerfilVendedor />} />
-          
-          
           
 
           {/* Rotas Privadas - Comprador */}
@@ -64,6 +56,9 @@ function App() {
           } />
           <Route path="/produto/:id" element={
             <RotaPrivada><ProdutoDetalhes /></RotaPrivada>
+          } />
+          <Route path="/loja/:id" element={
+            <RotaPrivada><Loja /></RotaPrivada>
           } />
           <Route path="/carrinho" element={
             <RotaPrivada><Carrinho /></RotaPrivada>
@@ -84,6 +79,12 @@ function App() {
           } />
           <Route path="/painelvendedor" element={
             <RotaPrivada><PainelVendedor /></RotaPrivada>
+          } />
+          <Route path="/perfilvendedor" element={
+            <RotaPrivada><PerfilVendedor /></RotaPrivada>
+          } />
+          <Route path="/receitasvendedor" element={
+            <RotaPrivada><ReceitasVendedor /></RotaPrivada>
           } />
 
           {/* Rota de Fallback (Página não encontrada) */}

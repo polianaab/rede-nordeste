@@ -4,7 +4,7 @@ import {
   Search, ShoppingCart, User, Plus, Filter, MapPin, 
   MessageCircle, ChevronRight, Menu, X, Bell, Trash2, 
   Package, Info, DollarSign, TrendingUp, Clock, Edit2, 
-  CheckCircle, Store, Tag, Image as ImageIcon
+  CheckCircle, Store, Tag, Image as ImageIcon, Settings
 } from 'lucide-react';
 
 // --- DADOS INICIAIS MOCKADOS ---
@@ -33,6 +33,14 @@ export default function PainelVendedor() {
   const [menuAberto, setMenuAberto] = useState(false);
   const [notifAberta, setNotifAberta] = useState(false); 
   const [modalProduto, setModalProduto] = useState(false); 
+  const [modalLoja, setModalLoja] = useState(false);
+  const [formLoja, setFormLoja] = useState({
+    nomeLoja: 'Fazenda Alvorada',
+    descricao: '',
+    cidade: 'Aracaju',
+    estado: 'SE',
+    logoUrl: ''
+  });
   
   // --- ESTADO GLOBAL DOS PRODUTOS ---
   const [produtosGlobais, setProdutosGlobais] = useState<any[]>([]);
@@ -49,12 +57,13 @@ export default function PainelVendedor() {
   });
 
   const [ordenacaoProd, setOrdenacaoProd] = useState('a_z');
-  const [filtroGanhos, setFiltroGanhos] = useState('semana');
   const [notificacoes, setNotificacoes] = useState(NOTIFICACOES_DATA); 
   const [carrinhoCount, setCarrinhoCount] = useState(() => {
     const salvo = localStorage.getItem('carrinho_count');
     return salvo ? parseInt(salvo) : 0;
   });
+
+  const [pedidosGlobais, setPedidosGlobais] = useState<any[]>([]);
 
   useEffect(() => {
     localStorage.setItem('user_role', 'vendedor');
@@ -68,17 +77,60 @@ export default function PainelVendedor() {
         setProdutosGlobais(PRODUTOS_INICIAIS);
       }
     };
+    
+    const carregarPedidos = () => {
+      const salvos = localStorage.getItem('pedidos_globais');
+      if (salvos) setPedidosGlobais(JSON.parse(salvos));
+    };
+
+    const carregarLoja = () => {
+      const lojaSalva = localStorage.getItem('loja_config');
+      if (lojaSalva) setFormLoja(JSON.parse(lojaSalva));
+    };
+
     carregarProdutos();
+    carregarPedidos();
+    carregarLoja();
 
     const atualizarUI = () => {
       const c = localStorage.getItem('carrinho_count');
       setCarrinhoCount(c ? parseInt(c) : 0);
       carregarProdutos(); 
+      carregarPedidos();
     };
     atualizarUI();
     window.addEventListener('storage', atualizarUI);
     return () => window.removeEventListener('storage', atualizarUI);
   }, []);
+
+  const atualizarEstoque = (id: number, delta: number) => {
+    const novaLista = produtosGlobais.map(p => {
+      if (p.id === id) return { ...p, estoque: Math.max(0, p.estoque + delta) };
+      return p;
+    });
+    setProdutosGlobais(novaLista);
+    localStorage.setItem('produtos_globais', JSON.stringify(novaLista));
+    window.dispatchEvent(new Event('storage'));
+  };
+
+  const deletarProdutoLocal = (id: number) => {
+    if (confirm("Tem certeza que deseja excluir este produto?")) {
+      const novaLista = produtosGlobais.filter(p => p.id !== id);
+      setProdutosGlobais(novaLista);
+      localStorage.setItem('produtos_globais', JSON.stringify(novaLista));
+      window.dispatchEvent(new Event('storage'));
+    }
+  };
+
+  const atualizarStatusPedido = (id: string, novoStatus: string) => {
+    const novaLista = pedidosGlobais.map(p => {
+      if (p.id === id) return { ...p, status: novoStatus };
+      return p;
+    });
+    setPedidosGlobais(novaLista);
+    localStorage.setItem('pedidos_globais', JSON.stringify(novaLista));
+    window.dispatchEvent(new Event('storage'));
+  };
 
   // --- LÓGICA DE UPLOAD DE IMAGEM ---
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -107,6 +159,29 @@ export default function PainelVendedor() {
       ...prev,
       imagens: prev.imagens.filter((_, index) => index !== indexParaRemover)
     }));
+  };
+
+  // --- LÓGICA DA LOJINHA ---
+  const salvarLoja = () => {
+    if (!formLoja.nomeLoja) {
+      alert("O Nome da Loja é obrigatório.");
+      return;
+    }
+    localStorage.setItem('loja_config', JSON.stringify(formLoja));
+    setModalLoja(false);
+    alert('Configurações da loja salvas com sucesso!');
+    window.dispatchEvent(new Event('storage'));
+  };
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormLoja({...formLoja, logoUrl: reader.result as string});
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   // --- LÓGICA PARA SALVAR O NOVO PRODUTO ---
@@ -165,14 +240,7 @@ export default function PainelVendedor() {
 
   const produtosExibidos = getMeusProdutosOrdenados();
 
-  const getDadosGrafico = () => {
-    if(filtroGanhos === 'semana') return { valor: 'R$ 840,00', barras: [40, 70, 45, 90, 65, 80, 100], labels: ['S','T','Q','Q','S','S','D'] };
-    if(filtroGanhos === '15dias') return { valor: 'R$ 1.950,00', barras: [60, 50, 80, 70, 90, 100, 85], labels: ['1-3','4-6','7-9','10-12','12-15','',''] };
-    if(filtroGanhos === 'mes') return { valor: 'R$ 4.250,00', barras: [30, 50, 40, 80, 70, 90, 100], labels: ['Sem 1','Sem 2','Sem 3','Sem 4','','',''] };
-    return { valor: 'R$ 38.400,00', barras: [40, 50, 60, 70, 80, 90, 100], labels: ['Jan','Fev','Mar','Abr','Mai','Jun','Jul'] };
-  };
 
-  const grafData = getDadosGrafico();
 
   return (
     <div className="min-h-screen bg-gray-50/30 text-[#394158] antialiased pb-20 font-sans">
@@ -184,9 +252,9 @@ export default function PainelVendedor() {
             <Link to="/vendedor"><img src="/assets/logo-home.png" alt="Logo" className="h-10 md:h-12" /></Link>
             <nav className="hidden lg:flex gap-6 text-[10px] font-black uppercase tracking-widest text-[#394158]">
               <Link to="/vendedor" className="hover:text-[#55833d] transition-colors">Início</Link>
-              <Link to="/painel-vendedor" className="text-[#55833d] border-b-2 border-[#55833d] pb-1">Painel Vendedor</Link>
-              <Link to="/receitas" className="hover:text-[#f9943b] transition-colors">Receitas</Link>
+              <Link to="/receitasvendedor" className="hover:text-[#f9943b] transition-colors">Receitas</Link>
               <Link to="/blog" className="hover:text-[#f9943b] transition-colors">Notícias</Link>
+               <Link to="/painelvendedor" className="text-[#55833d] border-b-2 border-[#55833d] pb-1">Painel Vendedor</Link>
             </nav>
           </div>
           <div className="relative flex-1 max-w-xl hidden md:block">
@@ -234,7 +302,7 @@ export default function PainelVendedor() {
                 <ShoppingCart size={22} />
                 {carrinhoCount > 0 && <span className="absolute top-0 right-0 bg-white text-[#f9943b] text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center border-2 border-white shadow-sm">{carrinhoCount}</span>}
               </Link>
-              <Link to="/perfil" className="p-2.5 rounded-full hover:bg-[#f9943b] hover:text-white transition-all text-[#394158]"><User size={22} /></Link>
+              <Link to="/perfilvendedor" className="p-2.5 rounded-full hover:bg-[#f9943b] hover:text-white transition-all text-[#394158]"><User size={22} /></Link>
             </div>
             <button onClick={() => setMenuAberto(true)} className="md:hidden p-2"><Menu size={28} /></button>
           </div>
@@ -249,9 +317,9 @@ export default function PainelVendedor() {
             <button onClick={() => setMenuAberto(false)} className="self-end p-2 bg-[#F5F2ED] rounded-full text-[#394158] hover:text-red-500 transition-all"><X size={24} /></button>
             <nav className="flex flex-col gap-5 text-sm font-black uppercase tracking-widest text-[#394158]">
                 <Link to="/vendedor" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d]"><ChevronRight size={14}/> Início</Link>
-                <Link to="/painel-vendedor" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 text-[#55833d]"><ChevronRight size={14}/> Painel Vendedor</Link>
-                <Link to="/receitas" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d]"><ChevronRight size={14}/> Receitas</Link>
+                <Link to="/receitasvendedor" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d]"><ChevronRight size={14}/> Receitas</Link>
                 <Link to="/blog" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#f9943b]"><ChevronRight size={14}/> Notícias</Link>
+                <Link to="/painelvendedor" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 text-[#55833d]"><ChevronRight size={14}/> Painel Vendedor</Link>
                 <hr className="border-gray-50 my-2" />
                 <Link to="/notificacoes" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d]"><Bell size={20}/> Notificações</Link>
                 <Link to="/chat" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d]"><MessageCircle size={20}/> Chat</Link>
@@ -259,7 +327,7 @@ export default function PainelVendedor() {
                   <ShoppingCart size={20}/> Carrinho 
                   {carrinhoCount > 0 && <span className="bg-[#f9943b] text-white text-[10px] px-2 py-0.5 rounded-full ml-auto">{carrinhoCount}</span>}
                 </Link>
-                <Link to="/perfil" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d]"><User size={20}/> Meu Perfil</Link>
+                <Link to="/perfilvendedor" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d]"><User size={20}/> Meu Perfil</Link>
             </nav>
           </div>
         </div>
@@ -408,76 +476,69 @@ export default function PainelVendedor() {
         
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-white p-6 md:p-8 rounded-[1rem] border border-gray-100 shadow-sm">
             <div className="flex items-center gap-4">
-               <div className="p-3 bg-[#55833d]/10 rounded-xl text-[#55833d]"><Store size={28}/></div>
+               {formLoja.logoUrl ? (
+                 <img src={formLoja.logoUrl} className="w-14 h-14 rounded-xl object-cover border border-gray-100" alt="Logo" />
+               ) : (
+                 <div className="p-3 bg-[#55833d]/10 rounded-xl text-[#55833d]"><Store size={28}/></div>
+               )}
                <div>
                   <h1 className="text-xl md:text-2xl font-black italic uppercase tracking-tighter text-[#394158]">Painel de Controle</h1>
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Fazenda Alvorada</p>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">{formLoja.nomeLoja}</p>
                </div>
             </div>
-            <button onClick={() => setModalProduto(true)} className="w-full sm:w-auto bg-[#f9943b] text-white px-8 py-4 rounded-[1rem] font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-3 shadow-lg hover:bg-[#55833d] transition-all">
-                <Plus size={16}/> Cadastrar Produto
-            </button>
+            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+               <button onClick={() => setModalLoja(true)} className="w-full sm:w-auto bg-white border border-gray-200 text-[#394158] px-6 py-4 rounded-[1rem] font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-2 hover:bg-gray-50 transition-all">
+                   <Settings size={16}/> Configurar Loja
+               </button>
+               <button onClick={() => setModalProduto(true)} className="w-full sm:w-auto bg-[#f9943b] text-white px-8 py-4 rounded-[1rem] font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-3 shadow-lg hover:bg-[#55833d] transition-all">
+                   <Plus size={16}/> Cadastrar Produto
+               </button>
+            </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-           <div className="lg:col-span-2 bg-white p-6 md:p-8 rounded-[1rem] border border-gray-100 shadow-sm flex flex-col">
-              <div className="flex justify-between items-start mb-8">
-                 <div>
-                    <h3 className="font-black uppercase italic tracking-widest text-sm mb-1 text-[#394158]">Meus Ganhos</h3>
-                    <p className="text-3xl font-black text-[#55833d] tracking-tighter">{grafData.valor}</p>
-                 </div>
-                 <div className="flex items-center gap-2 bg-[#F5F2ED] px-3 py-2 rounded-xl border border-gray-100">
-                    <Filter size={14} className="text-[#f9943b]" />
-                    <select value={filtroGanhos} onChange={(e) => setFiltroGanhos(e.target.value)} className="bg-transparent text-[10px] font-black uppercase outline-none cursor-pointer text-[#394158]">
-                       <option value="semana">Esta Semana</option>
-                       <option value="15dias">Últimos 15 Dias</option>
-                       <option value="mes">Este Mês</option>
-                       <option value="ano">Este Ano</option>
-                    </select>
-                 </div>
-              </div>
-
-              <div className="flex-1 min-h-[160px] flex items-end justify-between gap-2 mt-auto">
-                 {grafData.barras.map((h, i) => (
-                    <div key={i} className="flex-1 flex flex-col items-center gap-2 group">
-                       <div className="w-full bg-[#55833d]/10 rounded-t-lg group-hover:bg-[#f9943b] transition-all duration-500 relative" style={{ height: `${h}%` }}></div>
-                       <span className="text-[8px] md:text-[9px] font-black uppercase text-[#394158]/50">{grafData.labels[i]}</span>
-                    </div>
-                 ))}
-              </div>
+        <section className="bg-white p-6 md:p-8 rounded-[1rem] border border-gray-100 shadow-sm mb-8">
+           <div className="flex justify-between items-center mb-6">
+              <h3 className="font-black uppercase italic tracking-widest text-sm flex items-center gap-2 text-[#394158]">
+                 <ShoppingCart size={16} className="text-[#f9943b]"/> Gerenciamento de Pedidos
+              </h3>
            </div>
 
-           <div className="bg-white p-6 md:p-8 rounded-[1rem] border border-gray-100 shadow-sm flex flex-col">
-              <div className="flex justify-between items-center mb-6">
-                 <h3 className="font-black uppercase italic tracking-widest text-sm flex items-center gap-2 text-[#394158]">
-                    <ShoppingCart size={16} className="text-[#f9943b]"/> Recentes
-                 </h3>
-                 <button className="text-[9px] font-black uppercase text-gray-400 hover:text-[#f9943b] transition-colors">Ver todos</button>
-              </div>
-
-              <div className="space-y-4 overflow-y-auto no-scrollbar pr-2 flex-1">
-                 {ULTIMOS_PEDIDOS.map((ped, i) => (
-                    <div key={i} className="flex flex-col gap-2 p-4 bg-[#F5F2ED]/50 rounded-[1rem] border border-transparent hover:border-gray-200 transition-all">
-                       <div className="flex justify-between items-center">
-                          <span className="text-[10px] font-black uppercase text-[#394158]">{ped.id}</span>
-                          <span className={`px-2 py-1 rounded-md text-[8px] font-black uppercase ${
-                             ped.status === 'Preparando' ? 'bg-blue-100 text-blue-600' : 
-                             ped.status === 'Enviado' ? 'bg-green-100 text-green-600' : 
-                             'bg-orange-100 text-orange-600'
-                          }`}>
-                             {ped.status}
-                          </span>
-                       </div>
-                       <p className="text-xs font-bold text-[#394158]">{ped.cliente}</p>
-                       <div className="flex justify-between items-center mt-1">
-                          <span className="text-[9px] text-[#394158]/40 font-bold">{ped.data}</span>
-                          <span className="text-xs font-black text-[#55833d]">R$ {ped.total.toFixed(2)}</span>
-                       </div>
+           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {pedidosGlobais.length > 0 ? pedidosGlobais.map((ped, i) => (
+                 <div key={i} className="flex flex-col gap-3 p-5 bg-[#F5F2ED]/50 rounded-[1rem] border border-gray-100 hover:border-[#f9943b]/30 transition-all">
+                    <div className="flex justify-between items-center">
+                       <span className="text-[11px] font-black uppercase text-[#394158]">{ped.id}</span>
+                       <span className={`px-2 py-1 rounded-md text-[9px] font-black uppercase ${
+                          ped.status === 'Pendente' ? 'bg-red-100 text-red-600' :
+                          ped.status === 'Preparando' ? 'bg-orange-100 text-orange-600' : 
+                          ped.status === 'A Caminho' ? 'bg-blue-100 text-blue-600' : 
+                          'bg-green-100 text-green-600'
+                       }`}>
+                          {ped.status}
+                       </span>
                     </div>
-                 ))}
-              </div>
+                    <div>
+                       <p className="text-[10px] text-gray-500 font-bold line-clamp-2">{ped.produtos?.map((p:any) => `${p.qtd}x ${p.nome}`).join(', ')}</p>
+                    </div>
+                    <div className="flex justify-between items-end mt-1">
+                       <span className="text-[9px] text-[#394158]/50 font-bold">{ped.data}</span>
+                       <span className="text-sm font-black text-[#55833d]">R$ {Number(ped.total).toFixed(2)}</span>
+                    </div>
+                    
+                    {/* Botões de Ação de Status */}
+                    <div className="grid grid-cols-3 gap-1 mt-2 border-t border-gray-200 pt-3">
+                       <button onClick={() => atualizarStatusPedido(ped.id, 'Preparando')} disabled={ped.status !== 'Pendente'} className={`text-[8px] py-2 rounded uppercase font-black transition-all ${ped.status === 'Pendente' ? 'bg-orange-100 text-orange-600 hover:bg-orange-200' : 'bg-gray-100 text-gray-300'}`}>Preparar</button>
+                       <button onClick={() => atualizarStatusPedido(ped.id, 'A Caminho')} disabled={ped.status !== 'Preparando'} className={`text-[8px] py-2 rounded uppercase font-black transition-all ${ped.status === 'Preparando' ? 'bg-blue-100 text-blue-600 hover:bg-blue-200' : 'bg-gray-100 text-gray-300'}`}>Enviar</button>
+                       <button onClick={() => atualizarStatusPedido(ped.id, 'Entregue')} disabled={ped.status !== 'A Caminho'} className={`text-[8px] py-2 rounded uppercase font-black transition-all ${ped.status === 'A Caminho' ? 'bg-green-100 text-green-600 hover:bg-green-200' : 'bg-gray-100 text-gray-300'}`}>Entregue</button>
+                    </div>
+                 </div>
+              )) : (
+                 <div className="col-span-full py-10 text-center opacity-40">
+                    <p className="text-[10px] font-black uppercase tracking-widest">Nenhum pedido recebido ainda.</p>
+                 </div>
+              )}
            </div>
-        </div>
+        </section>
 
         <section className="bg-white p-6 md:p-8 rounded-[1rem] border border-gray-100 shadow-sm">
            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
@@ -496,18 +557,25 @@ export default function PainelVendedor() {
 
            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
               {produtosExibidos.length > 0 ? (
-                produtosExibidos.map(p => (
-                  <div key={p.id} className="bg-[#F5F2ED]/50 p-4 rounded-[1rem] shadow-sm border border-transparent hover:border-[#f9943b]/30 transition-all flex gap-4 group">
-                    <img src={p.img} className="w-16 h-16 rounded-xl object-cover shrink-0" alt={p.nome} />
-                    <div className="flex-1 flex flex-col justify-center">
-                      <h4 className="font-black text-[10px] uppercase leading-tight line-clamp-2 mb-1 text-[#394158]">{p.nome}</h4>
-                      <p className="text-[#f9943b] font-black text-sm">R$ {p.preco.toFixed(2)}<span className="text-[8px] ml-0.5 text-gray-400 font-bold">/{p.un}</span></p>
-                      <div className="flex gap-3 mt-1">
-                          <span className="text-[8px] font-bold text-[#394158]/50 uppercase">Est: {p.estoque}</span>
-                          <span className="text-[8px] font-bold text-[#394158]/50 uppercase">Vd: {p.vendas}</span>
+                produtosExibidos.map((p: any) => (
+                  <div key={p.id} className="bg-[#F5F2ED]/50 p-4 rounded-[1rem] shadow-sm border border-transparent hover:border-[#f9943b]/30 transition-all flex flex-col gap-3 group">
+                    <div className="flex gap-4">
+                      <img src={p.img} className="w-16 h-16 rounded-xl object-cover shrink-0" alt={p.nome} />
+                      <div className="flex-1 flex flex-col justify-center">
+                        <h4 className="font-black text-[10px] uppercase leading-tight line-clamp-2 mb-1 text-[#394158]">{p.nome}</h4>
+                        <p className="text-[#f9943b] font-black text-sm">R$ {Number(p.preco).toFixed(2)}<span className="text-[8px] ml-0.5 text-gray-400 font-bold">/{p.un}</span></p>
+                      </div>
+                      <button onClick={() => deletarProdutoLocal(p.id)} className="text-gray-300 hover:text-red-500 self-start p-1 transition-colors" title="Excluir produto"><Trash2 size={16}/></button>
+                    </div>
+                    
+                    <div className="flex items-center justify-between mt-2 pt-3 border-t border-gray-200">
+                      <span className="text-[9px] font-bold text-[#394158]/50 uppercase">Estoque:</span>
+                      <div className="flex items-center gap-3 bg-white px-2 py-1 rounded-lg border border-gray-200 shadow-sm">
+                        <button onClick={() => atualizarEstoque(p.id, -1)} className="text-gray-400 hover:text-[#f9943b] px-1">-</button>
+                        <span className="text-xs font-black w-6 text-center">{p.estoque}</span>
+                        <button onClick={() => atualizarEstoque(p.id, 1)} className="text-gray-400 hover:text-[#55833d] px-1">+</button>
                       </div>
                     </div>
-                    <button className="text-gray-300 hover:text-[#f9943b] self-start p-1 transition-colors"><Edit2 size={14}/></button>
                   </div>
                 ))
               ) : (
@@ -519,6 +587,69 @@ export default function PainelVendedor() {
         </section>
 
       </main>
+
+      {/* MODAL EDITAR LOJINHA */}
+      {modalLoja && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-[#394158]/50 backdrop-blur-sm" onClick={() => setModalLoja(false)}></div>
+          <div className="relative bg-white w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-[2rem] shadow-2xl animate-in fade-in zoom-in-95 duration-300 flex flex-col">
+            <div className="sticky top-0 bg-white/90 backdrop-blur-md p-6 md:p-8 border-b border-gray-100 flex justify-between items-center z-10">
+              <div>
+                 <h2 className="text-xl md:text-2xl font-black italic uppercase tracking-tighter text-[#394158] flex items-center gap-2">
+                   <Store size={24} className="text-[#55833d]" /> Minha Loja
+                 </h2>
+                 <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mt-1">Configure o perfil público da sua lojinha</p>
+              </div>
+              <button onClick={() => setModalLoja(false)} className="p-2 bg-[#F5F2ED] rounded-full text-[#394158] hover:text-red-500 transition-all">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-6 md:p-8 space-y-6 flex-1">
+               <div className="flex flex-col items-center gap-4">
+                  <div className="relative group">
+                     {formLoja.logoUrl ? (
+                        <img src={formLoja.logoUrl} className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg" alt="Logo Loja" />
+                     ) : (
+                        <div className="w-24 h-24 rounded-full bg-[#F5F2ED] border-4 border-white shadow-lg flex items-center justify-center text-gray-400"><Store size={32}/></div>
+                     )}
+                     <label className="absolute inset-0 bg-black/50 text-white rounded-full flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer transition-all">
+                        <ImageIcon size={20} />
+                        <span className="text-[8px] font-black uppercase mt-1">Alterar</span>
+                        <input type="file" className="hidden" accept="image/*" onChange={handleLogoUpload} />
+                     </label>
+                  </div>
+               </div>
+
+               <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <label className="uppercase text-gray-400 ml-4 text-[10px] font-black">Nome da Loja *</label>
+                    <input type="text" value={formLoja.nomeLoja} onChange={(e) => setFormLoja({...formLoja, nomeLoja: e.target.value})} className="w-full bg-[#F5F2ED]/50 border-2 border-transparent focus:border-[#55833d]/20 focus:bg-white p-4 rounded-2xl outline-none text-sm font-bold text-[#394158] transition-all" placeholder="Ex: Fazenda Alvorada" />
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                     <div className="space-y-1.5">
+                       <label className="uppercase text-gray-400 ml-4 text-[10px] font-black">Cidade</label>
+                       <input type="text" value={formLoja.cidade} onChange={(e) => setFormLoja({...formLoja, cidade: e.target.value})} className="w-full bg-[#F5F2ED]/50 border-2 border-transparent focus:border-[#55833d]/20 focus:bg-white p-4 rounded-2xl outline-none text-sm font-bold text-[#394158] transition-all" placeholder="Ex: Aracaju" />
+                     </div>
+                     <div className="space-y-1.5">
+                       <label className="uppercase text-gray-400 ml-4 text-[10px] font-black">Estado</label>
+                       <input type="text" value={formLoja.estado} onChange={(e) => setFormLoja({...formLoja, estado: e.target.value})} className="w-full bg-[#F5F2ED]/50 border-2 border-transparent focus:border-[#55833d]/20 focus:bg-white p-4 rounded-2xl outline-none text-sm font-bold text-[#394158] transition-all" placeholder="Ex: SE" />
+                     </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="uppercase text-gray-400 ml-4 text-[10px] font-black">Descrição da Loja</label>
+                    <textarea value={formLoja.descricao} onChange={(e) => setFormLoja({...formLoja, descricao: e.target.value})} className="w-full bg-[#F5F2ED]/50 border-2 border-transparent focus:border-[#55833d]/20 focus:bg-white p-4 rounded-2xl outline-none text-sm font-bold text-[#394158] transition-all resize-none min-h-[100px]" placeholder="Conte um pouco sobre sua loja..."></textarea>
+                  </div>
+               </div>
+
+               <button onClick={salvarLoja} className="w-full py-5 bg-[#55833d] hover:bg-[#466d32] text-white rounded-[1rem] font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all mt-4">
+                  Salvar Configurações
+               </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <footer className="w-full text-center p-10 md:p-20 bg-transparent text-[#394158]/40 border-t border-gray-100 mt-10">
         <span className="text-[8px] md:text-[9px] font-black uppercase tracking-[0.3em]">© 2026 Rede Nordeste - Todos os direitos reservados.</span>

@@ -9,6 +9,19 @@ export default function Post() {
   const [post, setPost] = useState<any>(null);
   const [isReading, setIsReading] = useState(false);
 
+  const usuarioRaw = localStorage.getItem('usuarioLogado');
+  const usuarioLogado = usuarioRaw ? JSON.parse(usuarioRaw) : null;
+
+  const irParaPainel = () => {
+    if (usuarioLogado?.perfil === 'PRODUTOR') {
+      navigate('/vendedor');
+    } else if (usuarioLogado?.perfil === 'COMPRADOR') {
+      navigate('/home2');
+    } else {
+      navigate('/');
+    }
+  };
+
   // --- FUNÇÃO PARA CONTROLAR A VOZ (AGORA LÊ TUDO E SÓ NO CLIQUE) ---
   const toggleSpeech = () => {
     if ('speechSynthesis' in window) {
@@ -75,9 +88,14 @@ export default function Post() {
             <img src="/assets/logo-home.png" alt="Logo" className="h-8 md:h-12 w-auto object-contain" />
           </div>
           
-          <div className="flex gap-4 md:gap-8 text-[10px] font-black uppercase tracking-widest">
+          <div className="flex gap-4 md:gap-6 text-[10px] font-black uppercase tracking-widest items-center">
             <button onClick={() => navigate('/')} className="text-[#394158] hover:text-[#55833d] transition-colors cursor-pointer">Início</button>
             <button onClick={() => navigate('/blog')} className="text-[#f9943b] cursor-pointer">Blog</button>
+            {usuarioLogado && (
+              <button onClick={irParaPainel} className="bg-[#55833d] text-white px-3 py-1.5 md:px-4 md:py-2 rounded-full font-black uppercase text-[8px] md:text-[10px] tracking-widest hover:bg-[#394158] transition-colors shadow-sm cursor-pointer">
+                Meu Painel
+              </button>
+            )}
           </div>
         </div>
       </nav>

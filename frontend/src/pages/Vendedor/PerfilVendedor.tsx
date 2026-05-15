@@ -60,10 +60,13 @@ export default function Perfil() {
   });
 
   // Dados do Usuário para o Formulário de Conta
-  const [dadosUsuario, setDadosUsuario] = useState({
-    nome: "Maria Silva",
-    email: "maria.silva@exemplo.com",
-    telefone: "(79) 99999-0000",
+  const [dadosUsuario, setDadosUsuario] = useState(() => {
+    const saved = localStorage.getItem('dados_vendedor');
+    return saved ? JSON.parse(saved) : {
+      nome: "Maria Silva",
+      email: "maria.silva@exemplo.com",
+      telefone: "(79) 99999-0000",
+    };
   });
 
   const PRODUTOS_DATA = [
@@ -105,7 +108,10 @@ export default function Perfil() {
     { id: 11, nome: "Feijão Corda Novo", preco: 9.50, img: "https://images.unsplash.com/photo-1551462147-37885acc3c44?w=400" }
   ]);
 
-  const [fotoPerfil, setFotoPerfil] = useState("https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?w=200");
+  const [fotoPerfil, setFotoPerfil] = useState(() => {
+    const saved = localStorage.getItem('foto_perfil_vendedor');
+    return saved ? saved : "https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?w=200";
+  });
 
   const COMPRAS_FINALIZADAS = [
     {
@@ -131,8 +137,13 @@ export default function Perfil() {
   const handleTrocarFoto = (event: React.ChangeEvent<HTMLInputElement>) => {
     const arquivo = event.target.files?.[0];
     if (arquivo) {
-      const urlNovaFoto = URL.createObjectURL(arquivo);
-      setFotoPerfil(urlNovaFoto);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setFotoPerfil(base64String);
+        localStorage.setItem('foto_perfil_vendedor', base64String);
+      };
+      reader.readAsDataURL(arquivo);
     }
   };
 
@@ -253,7 +264,7 @@ export default function Perfil() {
                 <label className="uppercase text-gray-400 ml-4 tracking-widest text-[11px] md:text-[12px] font-normal font-inter">Nova Senha</label>
                 <input type="password" placeholder="Digite para alterar" className="w-full bg-[#F5F2ED]/50 border-2 border-transparent focus:border-[#55833d]/20 focus:bg-white p-4 rounded-2xl outline-none text-[#394158] transition-all text-[14px] md:text-[16px] font-normal font-inter" />
               </div>
-              <button type="button" onClick={() => { alert('Dados da conta salvos!'); setSecaoConfig('menu'); }} className="w-full bg-[#55833d] text-white py-5 rounded-2xl uppercase tracking-[0.2em] shadow-lg active:scale-95 transition-all text-[11px] md:text-[12px] font-normal font-inter">Salvar Alterações</button>
+              <button type="button" onClick={() => { localStorage.setItem('dados_vendedor', JSON.stringify(dadosUsuario)); alert('Dados da conta salvos!'); setSecaoConfig('menu'); }} className="w-full bg-[#55833d] text-white py-5 rounded-2xl uppercase tracking-[0.2em] shadow-lg active:scale-95 transition-all text-[11px] md:text-[12px] font-normal font-inter">Salvar Alterações</button>
             </form>
           </div>
         );
@@ -684,7 +695,7 @@ export default function Perfil() {
           <div className="flex-1 flex justify-start">
             <button onClick={() => telaAtual === 'perfil' ? navigate('/vendedor') : setTelaAtual('perfil')} className="p-3 active:scale-90 transition-all"><ArrowLeft size={20} className="text-[#802D44]" /></button>
           </div>
-          <h2 className="absolute left-1/2 -translate-x-1/2 uppercase text-[#394158] text-[24px] md:text-[32px] font-semibold font-['inter']">Perfil</h2>
+          <h2 className="absolute left-1/2 -translate-x-1/2 text-[24px] md:text-[32px] font-bold font-poppins uppercase text-[#394158]">PERFIL</h2>
           <div className="flex-1 flex items-center justify-end gap-2">
             {telaAtual === 'perfil' && <button onClick={() => setTelaAtual('configuracoes')} className="p-3 active:scale-90 transition-all"><Settings size={20} /></button>}
             <button onClick={() => navigate('/')} className="p-3 text-red-500 active:scale-90 transition-all"><LogOut size={20} /></button>
