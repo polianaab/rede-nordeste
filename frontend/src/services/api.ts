@@ -69,12 +69,12 @@ apiService.interceptors.response.use(
       // Se o backend retornou uma string pura
       if (typeof data === "string" && data.trim() !== "") {
         mensagem = data;
-      } 
+      }
       // Se retornou um objeto JSON (padrão do Spring ou GlobalExceptionHandler)
       else if (data && typeof data === "object") {
         mensagem = data.message || data.erro || data.error || data.details || "Erro ao processar requisição.";
       }
-    } 
+    }
     else if (error.request) {
       // O erro cai aqui quando o servidor NÃO responde (Backend fora do ar)
       mensagem = "Não foi possível conectar ao servidor. Verifique se o backend está rodando na porta 8080.";
@@ -132,7 +132,11 @@ export const getMinhaLoja = async () => {
   return res.data;
 };
 
-export const getLojaPorId = async (id: number) => {
+export const getLojaPorId = async (id: number | string) => {
+  const lojaSalva = localStorage.getItem('loja_config');
+  if (lojaSalva) {
+    return JSON.parse(lojaSalva);
+  }
   const res = await apiService.get(`/lojas/${id}`);
   return res.data;
 };

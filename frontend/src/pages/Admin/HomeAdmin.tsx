@@ -54,8 +54,8 @@ export default function HomeAdmin() {
   });
 
   const [receitasGlobais, setReceitasGlobais] = useState<any[]>([]);
-  const [formReceita, setFormReceita] = useState({
-    titulo: '', descricao: '', imagem: '', ingredientes: '', preparo: '', tempo: '40 min', porcoes: '4 porções', dificuldade: 'Fácil'
+  const [formReceita, setFormReceita] = useState<any>({
+    id: null, titulo: '', descricao: '', imagem: '', ingredientes: '', preparo: '', tempo: '40 min', porcoes: '4 porções', dificuldade: 'Fácil'
   });
 
   // --- ESTADOS DESTAQUES HOME ---
@@ -175,14 +175,22 @@ export default function HomeAdmin() {
 
   const salvarReceita = () => {
     if (!formReceita.titulo || !formReceita.imagem || !formReceita.ingredientes) return alert("Preencha o título, imagem e ingredientes!");
-    const novaReceita = { ...formReceita, id: Date.now(), data: new Date().toLocaleDateString('pt-BR') };
-    const listaAtualizada = [novaReceita, ...receitasGlobais];
+    
+    let listaAtualizada;
+    if (formReceita.id) {
+       listaAtualizada = receitasGlobais.map(r => 
+          r.id === formReceita.id ? { ...formReceita, data: r.data } : r
+       );
+    } else {
+       const novaReceita = { ...formReceita, id: Date.now(), data: new Date().toLocaleDateString('pt-BR') };
+       listaAtualizada = [novaReceita, ...receitasGlobais];
+    }
+    
     setReceitasGlobais(listaAtualizada);
     localStorage.setItem('receitas_globais', JSON.stringify(listaAtualizada));
     window.dispatchEvent(new Event('storage'));
     setModalReceita(false);
-    setFormReceita({ titulo: '', descricao: '', imagem: '', ingredientes: '', preparo: '', tempo: '40 min', porcoes: '4 porções', dificuldade: 'Fácil' });
-    navigate('/receitas');
+    setFormReceita({ id: null, titulo: '', descricao: '', imagem: '', ingredientes: '', preparo: '', tempo: '40 min', porcoes: '4 porções', dificuldade: 'Fácil' });
   };
 
   const salvarDestaque = () => {
@@ -422,7 +430,7 @@ export default function HomeAdmin() {
                     <h2 className="text-xl font-black uppercase italic tracking-tighter text-[#394158]">Alimentar Receitas</h2>
                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Ensine a utilizar os produtos da nossa terra</p>
                  </div>
-                 <button onClick={() => setModalReceita(true)} className="w-full sm:w-auto bg-[#f9943b] text-white px-8 py-4 rounded-[1rem] font-black uppercase text-[10px] tracking-[0.2em] flex items-center justify-center gap-3 shadow-lg hover:bg-[#e88127] transition-all">
+                 <button onClick={() => { setFormReceita({ id: null, titulo: '', descricao: '', imagem: '', ingredientes: '', preparo: '', tempo: '40 min', porcoes: '4 porções', dificuldade: 'Fácil' }); setModalReceita(true); }} className="w-full sm:w-auto bg-[#f9943b] text-white px-8 py-4 rounded-[1rem] font-black uppercase text-[10px] tracking-[0.2em] flex items-center justify-center gap-3 shadow-lg hover:bg-[#e88127] transition-all">
                     <Plus size={16}/> Nova Receita
                  </button>
               </div>
@@ -444,7 +452,19 @@ export default function HomeAdmin() {
                                 <div className="flex items-center gap-1 text-gray-400"><Clock size={12}/> <span className="text-[9px] font-bold uppercase">{receita.tempo}</span></div>
                                 <div className="flex items-center gap-1 text-gray-400"><Utensils size={12}/> <span className="text-[9px] font-bold uppercase">{receita.porcoes}</span></div>
                              </div>
-                             <button onClick={() => setReceitasGlobais(receitasGlobais.filter(r => r.id !== receita.id))} className="p-2 text-gray-300 hover:text-red-500 transition-colors"><Trash2 size={16}/></button>
+                             <div className="flex items-center gap-1">
+                                <button onClick={() => { 
+                                  setFormReceita({
+                                    id: receita.id, titulo: receita.titulo, descricao: receita.descricao || '', 
+                                    imagem: receita.imagem || receita.img || '', 
+                                    ingredientes: Array.isArray(receita.ingredientes) ? receita.ingredientes.join('\n') : receita.ingredientes, 
+                                    preparo: receita.preparo || '', tempo: receita.tempo || '40 min', 
+                                    porcoes: receita.porcoes || '4 porções', dificuldade: receita.dificuldade || 'Fácil'
+                                  }); 
+                                  setModalReceita(true); 
+                                }} className="p-2 text-gray-300 hover:text-[#f9943b] transition-colors cursor-pointer"><Edit2 size={16}/></button>
+                                <button onClick={() => setReceitasGlobais(receitasGlobais.filter(r => r.id !== receita.id))} className="p-2 text-gray-300 hover:text-red-500 transition-colors"><Trash2 size={16}/></button>
+                             </div>
                           </div>
                        </div>
                     </div>
@@ -530,7 +550,7 @@ export default function HomeAdmin() {
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-[#1a1f2e]/90 backdrop-blur-md" onClick={() => setModalReceita(false)}></div>
           <div className="relative bg-white w-full max-w-2xl rounded-[1.5rem] overflow-hidden shadow-2xl animate-in zoom-in-95">
-            <header className="p-6 border-b flex justify-between items-center bg-[#F5F2ED]"><h3 className="font-black uppercase italic tracking-widest text-[#394158]">Alimentar Receitas</h3><button onClick={() => setModalReceita(false)} className="p-2 hover:bg-white rounded-full"><X size={24}/></button></header>
+            <header className="p-6 border-b flex justify-between items-center bg-[#F5F2ED]"><h3 className="font-black uppercase italic tracking-widest text-[#394158]">Alimentar Receitas</h3><button onClick={() => { setFormReceita({ id: null, titulo: '', descricao: '', imagem: '', ingredientes: '', preparo: '', tempo: '40 min', porcoes: '4 porções', dificuldade: 'Fácil' }); setModalReceita(false); }} className="p-2 hover:bg-white rounded-full"><X size={24}/></button></header>
             <div className="p-8 space-y-6 max-h-[75vh] overflow-y-auto no-scrollbar">
                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div className="col-span-2 space-y-1"><label className="text-[10px] font-black uppercase text-[#f9943b] tracking-widest ml-2">Título da Receita</label><input type="text" value={formReceita.titulo} onChange={e => setFormReceita({...formReceita, titulo: e.target.value})} placeholder="Ex: Baião de Dois Especial" className="w-full p-4 bg-[#F5F2ED]/50 text-[#394158] font-bold rounded-[1rem] outline-none border-2 border-transparent focus:border-[#f9943b]" /></div>

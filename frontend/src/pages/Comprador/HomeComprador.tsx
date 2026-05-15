@@ -142,7 +142,7 @@ export default function HomeComprador() {
             <nav className="hidden lg:flex gap-6 text-[10px] font-black uppercase tracking-widest text-[#394158]">
               <Link to="/home2" className="text-[#55833d] border-b-2 border-[#55833d] pb-1">Início</Link>
               <Link to="/receitas" className="hover:text-[#f9943b] transition-colors">Receitas</Link>
-              <Link to="/noticias" className="hover:text-[#f9943b]">Notícias</Link>
+              <Link to="/blog" className="hover:text-[#f9943b]">Notícias</Link>
             </nav>
           </div>
 
@@ -196,7 +196,7 @@ export default function HomeComprador() {
             <nav className="flex flex-col gap-5 text-sm font-black uppercase tracking-widest text-[#394158]">
               <Link to="/home2" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d]"><ChevronRight size={14} /> Início</Link>
               <Link to="/receitas" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d]"><ChevronRight size={14} /> Receitas</Link>
-              <Link to="/noticias" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d]"><ChevronRight size={14} /> Notícias</Link>
+              <Link to="/blog" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d]"><ChevronRight size={14} /> Notícias</Link>
               <hr className="border-gray-100" />
               <Link to="/notificacoes" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d]">
                 <div className="relative">
@@ -281,16 +281,16 @@ export default function HomeComprador() {
         <section className="w-full max-w-6xl mx-auto bg-gray-100/50 p-4 md:p-10 rounded-[1rem] border border-gray-200 shadow-inner mb-12">
           <div className="mb-12">
             <h2 className="text-xs md:text-xl font-black uppercase tracking-widest italic mb-10 text-[#394158]">Categorias</h2>
-            <div className="flex flex-wrap justify-center md:justify-between gap-4">
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4 md:gap-8 justify-items-center max-w-4xl mx-auto">
               {categorias.map(nome => {
                 const Icone = CATEGORIAS_ICONES[nome] || LayoutGrid;
                 return (
                   <button key={nome} onClick={() => handleCategoriaClick(nome)}
-                    className="flex flex-col items-center gap-2 w-[70px] md:w-[100px] group">
-                    <div className={`w-14 h-10 md:w-20 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center border transition-all shadow-sm ${catAtiva === nome ? 'bg-[#f9943b] border-[#f9943b] text-white scale-110' : 'bg-white border-gray-200 group-hover:border-[#394158]'}`}>
-                      <Icone size={20} />
+                    className="flex flex-col items-center gap-2 md:gap-3 w-[90px] md:w-[120px] group">
+                    <div className={`w-16 h-12 md:w-24 md:h-16 rounded-xl md:rounded-2xl flex items-center justify-center border transition-all shadow-sm ${catAtiva === nome ? 'bg-[#f9943b] border-[#f9943b] text-white scale-110' : 'bg-white border-gray-200 group-hover:border-[#394158]'}`}>
+                      <Icone className="w-5 h-5 md:w-7 md:h-7" />
                     </div>
-                    <span className={`text-[8px] font-black uppercase text-center ${catAtiva === nome ? 'text-[#394158]' : 'text-[#394158]/40'}`}>{nome}</span>
+                    <span className={`text-[9px] md:text-[11px] font-black uppercase text-center ${catAtiva === nome ? 'text-[#394158]' : 'text-[#394158]/40'}`}>{nome}</span>
                   </button>
                 );
               })}

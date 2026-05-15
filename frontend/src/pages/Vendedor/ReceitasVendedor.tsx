@@ -134,7 +134,7 @@ export default function Receitas() {
 
   const comprarIngrediente = (ingrediente: string) => {
     const termo = extrairTermoBusca(ingrediente);
-    navigate('/home2', { state: { buscaReceita: termo } });
+    navigate('/vendedor', { state: { buscaReceita: termo } });
   };
 
   return (
@@ -142,13 +142,14 @@ export default function Receitas() {
       <header className="w-full bg-white py-4 px-4 md:px-8 border-b border-gray-100 sticky top-0 z-50 shadow-sm">
         <div className="max-w-6xl mx-auto flex justify-between items-center gap-4 md:gap-8">
           <div className="flex items-center gap-4 md:gap-10 flex-shrink-0">
-            <Link to="/home2">
+            <Link to="/vendedor">
               <img src="/assets/logo-home.png" alt="Logo" className="h-10 md:h-12 w-auto object-contain" />
             </Link>
             <nav className="hidden lg:flex gap-6 text-[10px] font-black uppercase tracking-widest text-[#394158]">
-              <Link to="/home2" className="hover:text-[#55833d] transition-colors">Início</Link>
-              <Link to="/receitas" className="text-[#55833d] border-b-2 border-[#55833d] pb-1">Receitas</Link>
+              <Link to="/vendedor" className="hover:text-[#55833d] transition-colors">Início</Link>
+              <Link to="/receitasvendedor" className="text-[#55833d] border-b-2 border-[#55833d] pb-1">Receitas</Link>
               <Link to="/blog" className="hover:text-[#f9943b]">Notícias</Link>
+              <Link to="/painelvendedor" className="hover:text-[#f9943b]">Painel Vendedor</Link>
             </nav>
           </div>
 
@@ -206,7 +207,7 @@ export default function Receitas() {
                   </span>
                 )}
               </Link>
-              <Link to="/perfil" className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full transition-all duration-300 hover:bg-[#f9943b] hover:text-white text-[#394158] group">
+              <Link to="/perfilvendedor" className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full transition-all duration-300 hover:bg-[#f9943b] hover:text-white text-[#394158] group">
                 <User className="w-[18px] h-[18px] md:w-[22px] md:h-[22px]" />
               </Link>
             </div>
@@ -225,9 +226,10 @@ export default function Receitas() {
                 <X size={24} />
               </button>
               <nav className="flex flex-col gap-5 text-sm font-black uppercase tracking-widest text-[#394158]">
-                <Link to="/home2" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d]"><ChevronRight size={14}/> Início</Link>
-                <Link to="/receitas" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 text-[#55833d]"><ChevronRight size={14}/> Receitas</Link>
+                <Link to="/vendedor" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d]"><ChevronRight size={14}/> Início</Link>
+                <Link to="/receitasvendedor" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 text-[#55833d]"><ChevronRight size={14}/> Receitas</Link>
                 <Link to="/blog" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#f9943b]"><ChevronRight size={14}/> Notícias</Link>
+                <Link to="/painelvendedor" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#f9943b]"><ChevronRight size={14}/> Painel Vendedor</Link>
                 <hr className="border-gray-50 my-2" />
                 <button onClick={() => { setMenuAberto(false); setNotifAberta(true); }} className="flex items-center gap-4 hover:text-[#55833d] uppercase font-black text-sm tracking-widest">
                   <div className="relative">
@@ -244,7 +246,7 @@ export default function Receitas() {
                   </div>
                   Carrinho
                 </Link>
-                <Link to="/perfil" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d]"><User size={20}/> Meu Perfil</Link>
+                <Link to="/perfilvendedor" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d]"><User size={20}/> Meu Perfil</Link>
               </nav>
             </div>
           </div>
@@ -256,7 +258,7 @@ export default function Receitas() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-3">
-              <Link to="/home2" className="p-1.5 bg-white rounded-full shadow-sm hover:text-[#f9943b] transition-all">
+              <Link to="/vendedor" className="p-1.5 bg-white rounded-full shadow-sm hover:text-[#f9943b] transition-all">
                 <ChevronLeft size={16} />
               </Link>
               <div className="flex items-center gap-2 text-[#55833d]">

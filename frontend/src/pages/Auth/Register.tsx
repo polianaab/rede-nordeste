@@ -10,18 +10,41 @@ export default function Register() {
   const navigate = useNavigate();
   const [carregando, setCarregando] = useState(false);
   
-  // Estado inicial sincronizado com o DTO do Java (UsuarioRegistroRequest)
   const [formData, setFormData] = useState({
     nomeCompleto: '',
     cpfCnpj: '',
     telefone: '',
     email: '',
-    senha: '', // Alterado de senhaHash para senha para casar com o DTO
-    tipoPerfil: 'COMPRADOR' // Valor padrão do Enum
+    senha: '', 
+    tipoPerfil: 'COMPRADOR' 
   });
 
+  // Funções de Máscara
+  const maskCPF = (value: string) => {
+    return value
+      .replace(/\D/g, '') // Remove tudo o que não é dígito
+      .replace(/(\d{3})(\d)/, '$1.$2') // Coloca ponto após os 3 primeiros dígitos
+      .replace(/(\d{3})(\d)/, '$1.$2') // Coloca ponto após os 6 primeiros dígitos
+      .replace(/(\d{3})(\d{1,2})$/, '$1-$2') // Coloca hífen antes dos últimos 2 dígitos
+      .slice(0, 14); // Limita o tamanho
+  };
+
+  const maskPhone = (value: string) => {
+    return value
+      .replace(/\D/g, '')
+      .replace(/^(\d{2})(\d)/g, '($1) $2') // Coloca parênteses no DDD
+      .replace(/(\d{5})(\d)/, '$1-$2') // Coloca hífen no número
+      .slice(0, 15);
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    let { name, value } = e.target;
+
+    // Aplica as máscaras apenas nos campos específicos
+    if (name === 'cpfCnpj') value = maskCPF(value);
+    if (name === 'telefone') value = maskPhone(value);
+
+    setFormData({ ...formData, [name]: value });
   };
 
   const handleFinalize = async (e: React.FormEvent) => {
@@ -29,23 +52,23 @@ export default function Register() {
     setCarregando(true);
 
     try {
-
-    await registrarUsuario({
-    nomeCompleto: formData.nomeCompleto,
-    cpfCnpj: formData.cpfCnpj,
-    telefone: formData.telefone,
-    email: formData.email,
-    senha: formData.senha,
-    tipoPerfil: formData.tipoPerfil,
-});
+      // Limpa os símbolos antes de enviar para o backend (envia apenas números)
+      await registrarUsuario({
+        nomeCompleto: formData.nomeCompleto,
+        cpfCnpj: formData.cpfCnpj.replace(/\D/g, ''),
+        telefone: formData.telefone.replace(/\D/g, ''),
+        email: formData.email,
+        senha: formData.senha,
+        tipoPerfil: formData.tipoPerfil,
+      });
       
       alert("🎉 Cadastro realizado com sucesso! Faça seu login.");
       navigate('/login');
     } catch (error: any) {
-    alert("⚠️ " + (error?.message || "Erro ao cadastrar. Tente novamente."));
-    console.error("Erro detalhado:", error);
+      alert("⚠️ " + (error?.message || "Erro ao cadastrar. Tente novamente."));
+      console.error("Erro detalhado:", error);
     } finally {
-    setCarregando(false);
+      setCarregando(false);
     }
   };
 
@@ -68,7 +91,6 @@ export default function Register() {
         </header>
 
         <form onSubmit={handleFinalize} className="space-y-4">
-          {/* Nome Completo */}
           <div className="relative">
             <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
             <input 
@@ -82,13 +104,12 @@ export default function Register() {
             />
           </div>
 
-          {/* CPF ou CNPJ */}
           <div className="relative">
             <FileText className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
             <input 
               name="cpfCnpj" 
               type="text"
-              placeholder="CPF ou CNPJ (apenas números)" 
+              placeholder="CPF (000.000.000-00)" 
               className="w-full bg-[#F5F2ED]/50 py-4 pl-12 pr-4 rounded-2xl outline-none focus:ring-2 focus:ring-[#55833d] transition-all" 
               onChange={handleChange}
               value={formData.cpfCnpj}
@@ -96,13 +117,12 @@ export default function Register() {
             />
           </div>
 
-          {/* Telefone */}
           <div className="relative">
             <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
             <input 
               name="telefone" 
               type="tel"
-              placeholder="Telefone (ex: 81999998888)" 
+              placeholder="Telefone (00) 00000-0000" 
               className="w-full bg-[#F5F2ED]/50 py-4 pl-12 pr-4 rounded-2xl outline-none focus:ring-2 focus:ring-[#55833d] transition-all" 
               onChange={handleChange}
               value={formData.telefone}
@@ -110,7 +130,6 @@ export default function Register() {
             />
           </div>
 
-          {/* Email */}
           <div className="relative">
             <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
             <input 
@@ -124,7 +143,6 @@ export default function Register() {
             />
           </div>
 
-          {/* Senha */}
           <div className="relative">
             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
             <input 
@@ -138,7 +156,6 @@ export default function Register() {
             />
           </div>
 
-          {/* Tipo de Perfil */}
           <div className="relative">
             <select 
               name="tipoPerfil"

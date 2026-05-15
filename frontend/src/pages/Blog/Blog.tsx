@@ -10,6 +10,19 @@ export default function Blog() {
   const [paginaAtual, setPaginaAtual] = useState(1);
   const [posts, setPosts] = useState<any[]>([]);
 
+  const usuarioRaw = localStorage.getItem('usuarioLogado');
+  const usuarioLogado = usuarioRaw ? JSON.parse(usuarioRaw) : null;
+
+  const irParaPainel = () => {
+    if (usuarioLogado?.perfil === 'PRODUTOR') {
+      navigate('/vendedor');
+    } else if (usuarioLogado?.perfil === 'COMPRADOR') {
+      navigate('/home2');
+    } else {
+      navigate('/');
+    }
+  };
+
   useEffect(() => {
     setPaginaAtual(1);
   }, [filtroAtivo, ordem]);
@@ -64,9 +77,14 @@ export default function Blog() {
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/")}>
             <img src="/assets/logo-blog.png" alt="Logo Rede Nordeste" className="h-8 md:h-12 object-contain" />
           </div>
-          <div className="flex gap-6 md:gap-10">
+          <div className="flex gap-6 md:gap-8 items-center">
             <button onClick={() => navigate("/")} className="text-[#394158] font-bold uppercase text-[10px] md:text-xs tracking-widest hover:text-[#f9943b] transition-colors">Início</button>
             <button className="text-[#f9943b] font-black uppercase text-[10px] md:text-xs tracking-widest border-b-2 border-[#f9943b]">Blog</button>
+            {usuarioLogado && (
+              <button onClick={irParaPainel} className="bg-[#55833d] text-white px-3 py-1.5 md:px-4 md:py-2 rounded-full font-black uppercase text-[8px] md:text-[10px] tracking-widest hover:bg-[#394158] transition-colors shadow-sm cursor-pointer">
+                Meu Painel
+              </button>
+            )}
           </div>
         </div>
       </nav>
