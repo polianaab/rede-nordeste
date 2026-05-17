@@ -15,6 +15,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
@@ -27,24 +29,31 @@ public class SecurityConfig {
         public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
                 http
                                 .csrf(csrf -> csrf.disable())
-                                // Agora o .cors() busca automaticamente o Bean corsConfigurationSource() abaixo
-                                .cors(cors -> cors.configure(http))
+                                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                                 .sessionManagement(session -> session
                                                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                                 .authorizeHttpRequests(auth -> auth
                                                 // 1. PÚBLICO
-                                                .requestMatchers("/api/usuarios/registrar", "/api/usuarios/login",
+                                                .requestMatchers(
+                                                                "/api/usuarios/registrar",
+                                                                "/api/usuarios/login",
                                                                 "/api/usuarios/refresh")
                                                 .permitAll()
-                                                .requestMatchers("/api/entregadores/cadastrar", "/api/frete/simular",
+                                                .requestMatchers(
+                                                                "/api/entregadores/cadastrar",
+                                                                "/api/frete/simular",
                                                                 "/ws/**")
                                                 .permitAll()
-                                                .requestMatchers(HttpMethod.GET, "/api/produtos/**", "/api/lojas/**",
-                                                                "/api/categorias/**")
+                                                .requestMatchers(HttpMethod.GET,
+                                                                "/api/produtos/**",
+                                                                "/api/lojas/**",
+                                                                "/api/categorias/**",
+                                                                "/api/receitas/**")
                                                 .permitAll()
 
                                                 // 2. ADMIN
-                                                .requestMatchers("/api/admin/**", "/api/categorias/admin/**")
+                                                .requestMatchers("/api/admin/**",
+                                                                "/api/categorias/admin/**")
                                                 .hasAuthority("ADMIN")
 
                                                 // 3. PRODUTOR
@@ -70,11 +79,12 @@ public class SecurityConfig {
         @Bean
         public CorsConfigurationSource corsConfigurationSource() {
                 CorsConfiguration configuration = new CorsConfiguration();
-                // Permite o endereço do Front delas
-                configuration.setAllowedOrigins(List.of("http://localhost:5173"));
-                configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-                configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Requested-With"));
-                configuration.setAllowCredentials(true); // Importante para o navegador não barrar
+                // Aceita qualquer origem em desenvolvimento
+                configuration.setAllowedOriginPatterns(List.of("*"));
+                configuration.setAllowedMethods(
+                                List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+                configuration.setAllowedHeaders(List.of("*"));
+                configuration.setAllowCredentials(true);
 
                 UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
                 source.registerCorsConfiguration("/**", configuration);
@@ -82,9 +92,9 @@ public class SecurityConfig {
         }
 
         @Bean
-        public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)
-                        throws Exception {
-                return authenticationConfiguration.getAuthenticationManager();
+        public AuthenticationManager authenticationManager(
+                        AuthenticationConfiguration config) throws Exception {
+                return config.getAuthenticationManager();
         }
 
         @Bean

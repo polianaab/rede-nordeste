@@ -1,26 +1,24 @@
 package com.semeia_nordeste.backend.dto;
 
+import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
-
-import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 
 public record ProdutoRequest(
 
-        @NotNull(message = "A categoria é obrigatória") Long categoriaId,
+                @NotNull(message = "A categoria é obrigatória") Long categoriaId,
 
-        @NotBlank(message = "O nome do produto é obrigatório") @Size(max = 100) String nome,
+                @NotBlank(message = "O nome do produto é obrigatório") @Size(max = 100) String nome,
 
-        String descricao,
+                String descricao,
 
-        @NotNull @DecimalMin(value = "0.01", message = "O preço deve ser maior que zero") BigDecimal precoAtual,
+                @NotNull(message = "O preço é obrigatório") @DecimalMin(value = "0.01", message = "O preço deve ser maior que zero") BigDecimal precoAtual,
 
-        @NotBlank(message = "A unidade de medida é obrigatória") @Size(max = 20) String unidadeMedida,
+                @NotBlank(message = "A unidade de medida é obrigatória") @Size(max = 20) String unidadeMedida,
 
-        @Min(0) Integer estoqueAtual,
+                @Min(value = 0, message = "O estoque não pode ser negativo") Integer estoqueAtual,
 
-        String imagemUrl) {
+                // Peso em kg para cálculo de frete
+                @DecimalMin(value = "0.01", message = "Peso deve ser maior que zero") BigDecimal pesoKg,
+
+                String imagemUrl) {
 }
