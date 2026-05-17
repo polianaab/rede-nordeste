@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Search, ShoppingCart, User, Plus, Filter, MapPin,
   Star, LayoutGrid, Palette, Beef, Sprout, Wheat, Carrot, Milk, Bed, Utensils, Shirt,
-  MessageCircle, Heart, ChevronRight, Menu, X, BookOpen, Store, Bell, ChevronLeft
+  MessageCircle, Heart, ChevronRight, Menu, X, BookOpen, Store, Bell, ChevronLeft, HelpCircle
 } from 'lucide-react';
 import {
   buscarProdutos, getCategorias, adicionarAoCarrinho, getNaoLidas
@@ -42,9 +42,18 @@ export default function HomeComprador() {
   const [paginaAtual, setPaginaAtual] = useState(0);
   const [carrinhoCount, setCarrinhoCount] = useState(0);
   const [naoLidas, setNaoLidas] = useState(0);
+  const [tutorialAberto, setTutorialAberto] = useState(false);
 
   // ── Carrega categorias ────────────────────────────────────────────
   useEffect(() => {
+    sessionStorage.setItem('origemBlog', 'painel');
+    
+    // Tutorial
+    if (!localStorage.getItem('tutorial_visto_vendedor')) {
+      setTutorialAberto(true);
+      localStorage.setItem('tutorial_visto_vendedor', 'true');
+    }
+
     getCategorias()
       .then((data: any[]) => setCategorias(['Todos', ...data.map((c: any) => c.nome)]))
       .catch(() => setCategorias(['Todos']));
@@ -139,11 +148,11 @@ export default function HomeComprador() {
         <div className="max-w-6xl mx-auto flex justify-between items-center gap-4 md:gap-8">
           <div className="flex items-center gap-4 md:gap-10 flex-shrink-0">
             <Link to="/vendedor"><img src="/assets/logo-home.png" alt="Logo" className="h-10 md:h-12 w-auto object-contain" /></Link>
-            <nav className="hidden lg:flex gap-6 text-[10px] font-black uppercase tracking-widest text-[#394158]">
-              <Link to="/vendedor" className="text-[#55833d] border-b-2 border-[#55833d] pb-1">Início</Link>
+            <nav className="hidden lg:flex gap-6 text-xs md:text-sm font-medium text-[#394158]">
+              <Link to="/vendedor" className="text-[#55833d] font-bold border-b-2 border-[#55833d] pb-1">Início</Link>
               <Link to="/receitasvendedor" className="hover:text-[#f9943b] transition-colors">Receitas</Link>
-              <Link to="/blog" className="hover:text-[#f9943b]">Notícias</Link>
-              <Link to="/painelvendedor" className="hover:text-[#f9943b]">Painel Vendedor</Link>
+              <Link to="/blog" className="hover:text-[#f9943b] transition-colors">Notícias</Link>
+              <Link to="/painelvendedor" className="hover:text-[#f9943b] transition-colors">Painel Vendedor</Link>
             </nav>
           </div>
 
@@ -159,7 +168,10 @@ export default function HomeComprador() {
 
           <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
             <div className="hidden md:flex items-center gap-2">
-              <Link to="/notificacoes" className="relative w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full transition-all duration-300 hover:bg-[#f9943b] hover:text-white text-[#394158] group">
+              <button title="Ajuda" onClick={() => setTutorialAberto(true)} className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full transition-all duration-300 hover:bg-[#f9943b] hover:text-white text-[#394158]">
+                <HelpCircle className="w-[18px] h-[18px] md:w-[22px] md:h-[22px]" />
+              </button>
+              <Link title="Notificações" to="/notificacoes" className="relative w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full transition-all duration-300 hover:bg-[#f9943b] hover:text-white text-[#394158] group">
                 <Bell className="w-[18px] h-[18px] md:w-[22px] md:h-[22px]" />
                 {naoLidas > 0 && (
                   <span className="absolute top-0 right-0 md:top-1 md:right-1 bg-red-500 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center border-2 border-white group-hover:border-[#f9943b]">
@@ -167,10 +179,10 @@ export default function HomeComprador() {
                   </span>
                 )}
               </Link>
-              <Link to="/chat" className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full transition-all duration-300 hover:bg-[#f9943b] hover:text-white text-[#394158] group">
+              <Link title="Chat" to="/chat" className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full transition-all duration-300 hover:bg-[#f9943b] hover:text-white text-[#394158] group">
                 <MessageCircle className="w-[18px] h-[18px] md:w-[22px] md:h-[22px]" />
               </Link>
-              <Link to="/carrinho" className="relative w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full transition-all duration-300 hover:bg-[#f9943b] hover:text-white text-[#394158] group">
+              <Link title="Carrinho" to="/carrinho" className="relative w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full transition-all duration-300 hover:bg-[#f9943b] hover:text-white text-[#394158] group">
                 <ShoppingCart className="w-[18px] h-[18px] md:w-[22px] md:h-[22px]" />
                 {carrinhoCount > 0 && (
                   <span className="absolute top-0 right-0 md:top-1 md:right-1 bg-red-500 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center border-2 border-white group-hover:border-[#f9943b]">
@@ -178,11 +190,19 @@ export default function HomeComprador() {
                   </span>
                 )}
               </Link>
-              <Link to="/perfilvendedor" className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full transition-all duration-300 hover:bg-[#f9943b] hover:text-white text-[#394158] group">
+              <Link title="Meu Perfil" to="/perfilvendedor" className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full transition-all duration-300 hover:bg-[#f9943b] hover:text-white text-[#394158] group">
                 <User className="w-[18px] h-[18px] md:w-[22px] md:h-[22px]" />
               </Link>
             </div>
-            <button onClick={() => setMenuAberto(true)} className="md:hidden p-1 text-[#394158] hover:text-[#f9943b]"><Menu size={24} /></button>
+            
+            {/* Ícones apenas no Mobile/Tablet */}
+            <div className="flex lg:hidden items-center gap-3">
+              <Link to="/carrinho" className="relative text-[#394158]">
+                <ShoppingCart size={22} />
+                {carrinhoCount > 0 && <span className="absolute -top-1 -right-2 bg-red-500 text-white text-[8px] font-black w-3.5 h-3.5 rounded-full flex items-center justify-center">{carrinhoCount}</span>}
+              </Link>
+              <button onClick={() => setMenuAberto(true)} className="p-1 text-[#394158] hover:text-[#f9943b]"><Menu size={24} /></button>
+            </div>
           </div>
         </div>
       </header>
@@ -194,11 +214,12 @@ export default function HomeComprador() {
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMenuAberto(false)} />
           <div className="absolute right-0 top-0 h-full w-72 bg-white shadow-2xl p-8 flex flex-col gap-8">
             <button onClick={() => setMenuAberto(false)} className="self-end p-2 bg-[#F5F2ED] rounded-full"><X size={24} /></button>
-            <nav className="flex flex-col gap-5 text-sm font-black uppercase tracking-widest text-[#394158]">
-              <Link to="/vendedor" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d]"><ChevronRight size={14} /> Início</Link>
-              <Link to="/receitasvendedor" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d]"><ChevronRight size={14} /> Receitas</Link>
-              <Link to="/blog" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d]"><ChevronRight size={14} /> Notícias</Link>
-              <Link to="/painelvendedor" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d]"><ChevronRight size={14} /> Painel Vendedor</Link>
+            <nav className="flex flex-col gap-5 text-sm md:text-base font-medium text-[#394158]">
+              <Link to="/vendedor" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d]"><ChevronRight size={16} /> Início</Link>
+              <Link to="/receitasvendedor" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d]"><ChevronRight size={16} /> Receitas</Link>
+              <Link to="/blog" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d]"><ChevronRight size={16} /> Notícias</Link>
+              <Link to="/painelvendedor" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d]"><ChevronRight size={16} /> Painel Vendedor</Link>
+              <button onClick={() => { setMenuAberto(false); setTutorialAberto(true); }} className="flex items-center gap-4 hover:text-[#55833d] text-left"><HelpCircle size={16} /> Guia Rápido</button>
               <hr className="border-gray-100" />
               <Link to="/notificacoes" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d]">
                 <div className="relative">
@@ -217,6 +238,53 @@ export default function HomeComprador() {
               </Link>
               <Link to="/perfilvendedor" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d]"><User size={20} /> Meu Perfil</Link>
             </nav>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DO TUTORIAL */}
+      {tutorialAberto && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setTutorialAberto(false)} />
+          <div className="relative bg-white w-full max-w-lg rounded-[2rem] p-6 md:p-8 shadow-2xl flex flex-col gap-6 animate-in zoom-in-95">
+            <button onClick={() => setTutorialAberto(false)} className="absolute top-6 right-6 p-2 bg-[#F5F2ED] rounded-full hover:bg-gray-200"><X size={20} /></button>
+            
+            <div className="text-center space-y-2 mt-4 md:mt-0">
+              <h2 className="text-xl md:text-2xl font-black italic uppercase text-[#394158]">Guia Rápido</h2>
+              <p className="text-[10px] md:text-xs font-bold text-gray-400 uppercase tracking-widest">Aprenda a usar a plataforma</p>
+            </div>
+
+            <div className="space-y-3 max-h-[50vh] md:max-h-[60vh] overflow-y-auto no-scrollbar pb-4 px-2">
+              <div className="flex items-start gap-4 p-4 bg-[#F5F2ED]/50 rounded-[1.5rem] border border-gray-100">
+                <div className="p-3 bg-white text-[#f9943b] rounded-full shadow-sm shrink-0"><Search size={20}/></div>
+                <div><h4 className="font-black uppercase text-[#394158] text-[10px] md:text-xs">Busca & Filtros</h4><p className="text-[10px] text-gray-500 mt-1 leading-relaxed">Use a busca no topo ou clique nas categorias (Laticínios, Hortifruti) para achar exatamente o que precisa.</p></div>
+              </div>
+              
+              <div className="flex items-start gap-4 p-4 bg-[#F5F2ED]/50 rounded-[1.5rem] border border-gray-100">
+                <div className="p-3 bg-white text-[#55833d] rounded-full shadow-sm shrink-0"><ShoppingCart size={20}/></div>
+                <div><h4 className="font-black uppercase text-[#394158] text-[10px] md:text-xs">Carrinho</h4><p className="text-[10px] text-gray-500 mt-1 leading-relaxed">Clique no botão laranja com "+" nos produtos para adicionar ao carrinho, depois vá no ícone superior para fechar a compra.</p></div>
+              </div>
+
+              <div className="flex items-start gap-4 p-4 bg-[#F5F2ED]/50 rounded-[1.5rem] border border-gray-100">
+                <div className="p-3 bg-white text-red-500 rounded-full shadow-sm shrink-0"><Heart size={20}/></div>
+                <div><h4 className="font-black uppercase text-[#394158] text-[10px] md:text-xs">Favoritar</h4><p className="text-[10px] text-gray-500 mt-1 leading-relaxed">Gostou de algo mas não quer comprar agora? Clique no coração no canto dos produtos para salvá-lo na sua lista.</p></div>
+              </div>
+
+              <div className="flex items-start gap-4 p-4 bg-[#F5F2ED]/50 rounded-[1.5rem] border border-gray-100">
+                <div className="flex flex-col gap-2 shrink-0">
+                  <div className="flex gap-2">
+                    <div className="p-2 bg-white text-[#394158] rounded-full shadow-sm"><Bell size={14}/></div>
+                    <div className="p-2 bg-white text-[#394158] rounded-full shadow-sm"><MessageCircle size={14}/></div>
+                  </div>
+                  <div className="p-2 bg-white text-[#394158] rounded-full shadow-sm w-fit mx-auto"><User size={14}/></div>
+                </div>
+                <div><h4 className="font-black uppercase text-[#394158] text-[10px] md:text-xs">Menu Superior (PC) / Lateral (Celular)</h4><p className="text-[10px] text-gray-500 mt-1 leading-relaxed">Notificações, Chat direto com vendedores e Meu Perfil ficam sempre acessíveis nos ícones do cabeçalho ou menu.</p></div>
+              </div>
+            </div>
+            
+            <button onClick={() => setTutorialAberto(false)} className="w-full bg-[#55833d] text-white py-4 rounded-[1rem] font-black uppercase text-[10px] md:text-xs tracking-widest shadow-lg hover:bg-[#436b2f] transition-colors mt-2">
+              Entendi, Vamos Lá!
+            </button>
           </div>
         </div>
       )}
@@ -283,16 +351,16 @@ export default function HomeComprador() {
         <section className="w-full max-w-6xl mx-auto bg-gray-100/50 p-4 md:p-10 rounded-[1rem] border border-gray-200 shadow-inner mb-12">
           <div className="mb-12">
             <h2 className="text-xs md:text-xl font-black uppercase tracking-widest italic mb-10 text-[#394158]">Categorias</h2>
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4 md:gap-8 justify-items-center max-w-4xl mx-auto">
+            <div className="flex flex-wrap justify-center gap-y-5 gap-x-2 md:grid md:grid-cols-5 md:gap-8 justify-items-center max-w-4xl mx-auto px-1">
               {categorias.map(nome => {
                 const Icone = CATEGORIAS_ICONES[nome] || LayoutGrid;
                 return (
                   <button key={nome} onClick={() => handleCategoriaClick(nome)}
-                    className="flex flex-col items-center gap-2 md:gap-3 w-[90px] md:w-[120px] group">
-                    <div className={`w-16 h-12 md:w-24 md:h-16 rounded-xl md:rounded-2xl flex items-center justify-center border transition-all shadow-sm ${catAtiva === nome ? 'bg-[#f9943b] border-[#f9943b] text-white scale-110' : 'bg-white border-gray-200 group-hover:border-[#394158]'}`}>
-                      <Icone className="w-5 h-5 md:w-7 md:h-7" />
+                    className="flex flex-col items-center gap-1.5 md:gap-3 w-[78px] md:w-[120px] group">
+                    <div className={`w-[52px] h-[52px] md:w-[72px] md:h-[72px] rounded-[18px] md:rounded-[24px] flex items-center justify-center border transition-all ${catAtiva === nome ? 'bg-[#f9943b] border-[#f9943b] text-white shadow-md scale-105' : 'bg-white border-gray-100 text-[#394158] shadow-sm group-hover:border-[#f9943b] group-hover:text-[#f9943b]'}`}>
+                      <Icone className="w-[22px] h-[22px] md:w-8 md:h-8" strokeWidth={1.5} />
                     </div>
-                    <span className={`text-[9px] md:text-[11px] font-black uppercase text-center ${catAtiva === nome ? 'text-[#394158]' : 'text-[#394158]/40'}`}>{nome}</span>
+                    <span className={`text-[11px] md:text-[13px] leading-[1.1] text-center px-0.5 ${catAtiva === nome ? 'font-bold text-[#f9943b]' : 'font-medium text-gray-700'}`}>{nome}</span>
                   </button>
                 );
               })}

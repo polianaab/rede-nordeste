@@ -190,31 +190,106 @@ export const getProdutoPorId = async (id: number) => {
 };
 
 // ============================================================
-// CARRINHO
+// CARRINHO (Com fallback para localStorage)
 // ============================================================
+const getCarrinhoLocal = () => {
+  const c = localStorage.getItem('mock_carrinho');
+  return c ? JSON.parse(c) : { itens: [], totalItens: 0, valorTotal: 0 };
+};
+
+const salvarCarrinhoLocal = (carrinho: any) => {
+  let totalValor = 0;
+  let totalItens = 0;
+  carrinho.itens.forEach((i: any) => {
+    i.subtotal = i.precoUnitario * i.quantidade;
+    totalValor += i.subtotal;
+    totalItens += i.quantidade;
+  });
+  carrinho.valorTotal = totalValor;
+  carrinho.totalItens = totalItens;
+  localStorage.setItem('mock_carrinho', JSON.stringify(carrinho));
+  return carrinho;
+};
+
 export const getCarrinho = async () => {
-  const res = await apiService.get("/comprador/carrinho");
-  return res.data;
+  try {
+    const res = await apiService.get("/comprador/carrinho");
+    return res.data;
+  } catch (err) {
+    return getCarrinhoLocal();
+  }
 };
 
 export const adicionarAoCarrinho = async (
   produtoId: number,
   quantidade: number
 ) => {
-  const res = await apiService.post("/comprador/carrinho", {
-    produtoId,
-    quantidade,
-  });
-  return res.data;
+  try {
+    const res = await apiService.post("/comprador/carrinho", {
+      produtoId,
+      quantidade,
+    });
+    return res.data;
+  } catch (err) {
+    const cart = getCarrinhoLocal();
+    let itemExistente = cart.itens.find((i: any) => i.produtoId === produtoId);
+    
+    if (itemExistente) {
+      // Hack para o mock: se estivermos na página do carrinho, a quantidade enviada é a absoluta (SET).
+      // Se estivermos em outra página (Home, Detalhes), a quantidade enviada deve ser somada (ADD).
+      if (window.location.pathname.includes('carrinho')) {
+        itemExistente.quantidade = quantidade;
+      } else {
+        itemExistente.quantidade += quantidade;
+      }
+    } else {
+      let prodDetalhe: any = null;
+      try {
+        const res = await apiService.get(`/produtos/${produtoId}`);
+        prodDetalhe = res.data;
+      } catch (e) {
+        prodDetalhe = {
+          id: produtoId,
+          nome: "Produto " + produtoId,
+          precoAtual: 15.90,
+          imagemUrl: "https://via.placeholder.com/100",
+          lojaId: 1
+        };
+      }
+      
+      cart.itens.push({
+        id: Date.now(),
+        produtoId: produtoId,
+        nomeProduto: prodDetalhe.nome,
+        precoUnitario: prodDetalhe.precoAtual,
+        quantidade: quantidade,
+        imagemUrl: prodDetalhe.imagemUrl,
+        lojaId: prodDetalhe.lojaId,
+        subtotal: prodDetalhe.precoAtual * quantidade
+      });
+    }
+    
+    return salvarCarrinhoLocal(cart);
+  }
 };
 
 export const removerDoCarrinho = async (produtoId: number) => {
-  const res = await apiService.delete(`/comprador/carrinho/${produtoId}`);
-  return res.data;
+  try {
+    const res = await apiService.delete(`/comprador/carrinho/${produtoId}`);
+    return res.data;
+  } catch (err) {
+    const cart = getCarrinhoLocal();
+    cart.itens = cart.itens.filter((i: any) => i.produtoId !== produtoId);
+    return salvarCarrinhoLocal(cart);
+  }
 };
 
 export const limparCarrinho = async () => {
-  await apiService.delete("/comprador/carrinho");
+  try {
+    await apiService.delete("/comprador/carrinho");
+  } catch (err) {
+    localStorage.removeItem('mock_carrinho');
+  }
 };
 
 // ============================================================

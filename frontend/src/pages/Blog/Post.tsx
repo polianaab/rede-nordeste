@@ -11,6 +11,8 @@ export default function Post() {
 
   const usuarioRaw = localStorage.getItem('usuarioLogado');
   const usuarioLogado = usuarioRaw ? JSON.parse(usuarioRaw) : null;
+  const origemBlog = sessionStorage.getItem('origemBlog');
+  const mostrarPainel = origemBlog === 'painel' && usuarioLogado && usuarioLogado.perfil;
 
   const irParaPainel = () => {
     if (usuarioLogado?.perfil === 'PRODUTOR') {
@@ -88,13 +90,12 @@ export default function Post() {
             <img src="/assets/logo-home.png" alt="Logo" className="h-8 md:h-12 w-auto object-contain" />
           </div>
           
-          <div className="flex gap-4 md:gap-6 text-[10px] font-black uppercase tracking-widest items-center">
-            <button onClick={() => navigate('/')} className="text-[#394158] hover:text-[#55833d] transition-colors cursor-pointer">Início</button>
-            <button onClick={() => navigate('/blog')} className="text-[#f9943b] cursor-pointer">Blog</button>
-            {usuarioLogado && (
-              <button onClick={irParaPainel} className="bg-[#55833d] text-white px-3 py-1.5 md:px-4 md:py-2 rounded-full font-black uppercase text-[8px] md:text-[10px] tracking-widest hover:bg-[#394158] transition-colors shadow-sm cursor-pointer">
-                Meu Painel
-              </button>
+          <div className="flex gap-6 md:gap-8 items-center">
+            <button onClick={() => navigate('/blog')} className="text-[#f9943b] font-black uppercase text-[10px] md:text-xs tracking-widest border-b-2 border-[#f9943b]">Blog</button>
+            {!mostrarPainel ? (
+              <button onClick={() => navigate("/")} className="text-[#394158] font-bold uppercase text-[10px] md:text-xs tracking-widest hover:text-[#f9943b] transition-colors">Início</button>
+            ) : (
+              <button onClick={irParaPainel} className="text-[#394158] font-bold uppercase text-[10px] md:text-xs tracking-widest hover:text-[#f9943b] transition-colors cursor-pointer">Meu Painel</button>
             )}
           </div>
         </div>
