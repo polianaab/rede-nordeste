@@ -250,11 +250,11 @@ export default function PainelVendedor() {
         <div className="max-w-6xl mx-auto flex justify-between items-center gap-4 md:gap-8">
           <div className="flex items-center gap-4 md:gap-10 flex-shrink-0 -ml-2 md:-ml-6">
             <Link to="/vendedor"><img src="/assets/logo-home.png" alt="Logo" className="h-10 md:h-12" /></Link>
-            <nav className="hidden lg:flex gap-6 text-[10px] font-black uppercase tracking-widest text-[#394158]">
-              <Link to="/vendedor" className="hover:text-[#55833d] transition-colors">Início</Link>
+            <nav className="hidden lg:flex gap-6 text-xs md:text-sm font-medium text-[#394158]">
+              <Link to="/vendedor" className="hover:text-[#f9943b] transition-colors">Início</Link>
               <Link to="/receitasvendedor" className="hover:text-[#f9943b] transition-colors">Receitas</Link>
               <Link to="/blog" className="hover:text-[#f9943b] transition-colors">Notícias</Link>
-               <Link to="/painelvendedor" className="text-[#55833d] border-b-2 border-[#55833d] pb-1">Painel Vendedor</Link>
+               <Link to="/painelvendedor" className="text-[#f9943b] border-b-2 border-[#f9943b] pb-1">Painel Vendedor</Link>
             </nav>
           </div>
           <div className="relative flex-1 max-w-xl hidden md:block">

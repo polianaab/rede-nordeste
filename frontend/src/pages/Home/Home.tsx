@@ -54,6 +54,7 @@ export default function Home() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    sessionStorage.setItem('origemBlog', 'inicio');
     const loadDestaques = () => {
       const saved = localStorage.getItem('destaques_home');
       if (saved) {

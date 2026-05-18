@@ -12,6 +12,8 @@ export default function Blog() {
 
   const usuarioRaw = localStorage.getItem('usuarioLogado');
   const usuarioLogado = usuarioRaw ? JSON.parse(usuarioRaw) : null;
+  const origemBlog = sessionStorage.getItem('origemBlog');
+  const mostrarPainel = origemBlog === 'painel' && usuarioLogado && usuarioLogado.perfil;
 
   const irParaPainel = () => {
     if (usuarioLogado?.perfil === 'PRODUTOR') {
@@ -32,7 +34,7 @@ export default function Blog() {
       const salvas = localStorage.getItem('noticias_globais');
       if (salvas) {
         const parseadas = JSON.parse(salvas);
-        const adminPosts = parseadas.filter((n: any) => n.id > 10).map((n: any) => ({
+        const adminPosts = parseadas.map((n: any) => ({
           id: n.id,
           titulo: n.titulo,
           subtitulo: n.subtitulo,
@@ -78,12 +80,11 @@ export default function Blog() {
             <img src="/assets/logo-blog.png" alt="Logo Rede Nordeste" className="h-8 md:h-12 object-contain" />
           </div>
           <div className="flex gap-6 md:gap-8 items-center">
-            <button onClick={() => navigate("/")} className="text-[#394158] font-bold uppercase text-[10px] md:text-xs tracking-widest hover:text-[#f9943b] transition-colors">Início</button>
             <button className="text-[#f9943b] font-black uppercase text-[10px] md:text-xs tracking-widest border-b-2 border-[#f9943b]">Blog</button>
-            {usuarioLogado && (
-              <button onClick={irParaPainel} className="bg-[#55833d] text-white px-3 py-1.5 md:px-4 md:py-2 rounded-full font-black uppercase text-[8px] md:text-[10px] tracking-widest hover:bg-[#394158] transition-colors shadow-sm cursor-pointer">
-                Meu Painel
-              </button>
+            {!mostrarPainel ? (
+              <button onClick={() => navigate("/")} className="text-[#394158] font-bold uppercase text-[10px] md:text-xs tracking-widest hover:text-[#f9943b] transition-colors">Início</button>
+            ) : (
+              <button onClick={irParaPainel} className="text-[#394158] font-bold uppercase text-[10px] md:text-xs tracking-widest hover:text-[#f9943b] transition-colors cursor-pointer">Meu Painel</button>
             )}
           </div>
         </div>
@@ -117,7 +118,7 @@ export default function Blog() {
               <button
                 key={cat}
                 onClick={() => setFiltroAtivo(cat)}
-                className={`px-3 py-1.5 md:px-5 md:py-2 rounded-md font-black text-[7px] md:text-[9px] uppercase tracking-widest border transition-all ${filtroAtivo === cat ? "bg-[#55833d] text-white border-[#55833d] shadow-sm" : "bg-white text-gray-400 border-gray-100 shadow-sm hover:border-[#55833d] hover:text-[#55833d]"
+                className={`px-3 py-1.5 md:px-5 md:py-2 rounded-md font-black text-[7.5px] md:text-[9px] uppercase tracking-widest border transition-all duration-300 ${filtroAtivo === cat ? "bg-[#55833d] text-white border-[#55833d] shadow-md" : "bg-white text-[#394158] border-gray-200 shadow-sm hover:bg-[#f9943b] hover:text-white hover:border-[#f9943b] hover:-translate-y-1"
                   }`}
               >
                 {cat}
@@ -157,7 +158,7 @@ export default function Blog() {
                   <span className="text-[#f9943b] text-[8px] md:text-[10px] font-black uppercase tracking-widest">{post.data}</span>
                 </div>
 
-                <h3 className="text-[#394158] font-black text-[10px] md:text-xl mb-1 md:mb-3 uppercase italic leading-tight line-clamp-2">{post.titulo}</h3>
+                <h3 className="text-[#394158] font-black text-[8px] md:text-xl mb-1 md:mb-3 uppercase italic leading-tight line-clamp-3 md:line-clamp-2">{post.titulo}</h3>
                 <p className="hidden md:block text-gray-400 text-xs leading-relaxed mb-6 line-clamp-3">{post.subtitulo}</p>
 
                 {/* RODAPÉ DO CARD COM LER E OUVIR */}

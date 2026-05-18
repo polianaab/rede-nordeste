@@ -67,10 +67,16 @@ body {
 .video-hero {
   position: relative;
   width: 100%;
-  height: 100vh; /* ocupa toda a altura da tela */
+  height: 55vh; /* altura reduzida no mobile */
   margin: 0;
   padding: 0;
   overflow: hidden;
+}
+
+@media (min-width: 768px) {
+  .video-hero {
+    height: 100vh; /* mantém tamanho original no desktop */
+  }
 }
 
 .video-hero video {
@@ -96,15 +102,11 @@ body {
 }
 
 .video-overlay h1 {
-  font-size: 3rem;
   font-weight: 800;
-  margin-bottom: 20px;
   text-shadow: 2px 2px 8px rgba(0,0,0,0.6);
 }
 
 .video-overlay p {
-  font-size: 1.5rem;
-  margin-bottom: 30px;
   text-shadow: 1px 1px 6px rgba(0,0,0,0.6);
 }
 
