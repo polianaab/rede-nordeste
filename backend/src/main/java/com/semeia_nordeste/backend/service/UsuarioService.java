@@ -34,7 +34,7 @@ public class UsuarioService {
         usuario.setEmail(request.email());
         usuario.setSenhaHash(passwordEncoder.encode(request.senha()));
         usuario.setTipoPerfil(request.tipoPerfil());
-        usuario.setContaAtiva(false); // false em produção, ativar por e-mail futuramente
+        usuario.setContaAtiva(true); // true em produção, posteriormente false, ativar por e-mail futuramente
 
         return repository.save(usuario);
     }

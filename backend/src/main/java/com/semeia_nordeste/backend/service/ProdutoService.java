@@ -1,98 +1,144 @@
 package com.semeia_nordeste.backend.service;
 
+import java.math.BigDecimal;
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.semeia_nordeste.backend.dto.ProdutoRequest;
+import com.semeia_nordeste.backend.dto.StatusProdutoRequest;
 import com.semeia_nordeste.backend.model.Categoria;
 import com.semeia_nordeste.backend.model.Loja;
 import com.semeia_nordeste.backend.model.Produto;
-import com.semeia_nordeste.backend.model.Usuario;
+import com.semeia_nordeste.backend.model.StatusProduto;
 import com.semeia_nordeste.backend.repository.CategoriaRepository;
 import com.semeia_nordeste.backend.repository.LojaRepository;
 import com.semeia_nordeste.backend.repository.ProdutoRepository;
+import com.semeia_nordeste.backend.security.UsuarioAutenticado;
 
 @Service
 public class ProdutoService {
 
-    private final ProdutoRepository produtoRepository;
-    private final LojaRepository lojaRepository;
-    private final CategoriaRepository categoriaRepository;
+        private final ProdutoRepository produtoRepository;
+        private final LojaRepository lojaRepository;
+        private final CategoriaRepository categoriaRepository;
+        private final UsuarioAutenticado usuarioAutenticado;
 
-    public ProdutoService(ProdutoRepository produtoRepository,
-            LojaRepository lojaRepository,
-            CategoriaRepository categoriaRepository) {
-        this.produtoRepository = produtoRepository;
-        this.lojaRepository = lojaRepository;
-        this.categoriaRepository = categoriaRepository;
-    }
+        public ProdutoService(ProdutoRepository produtoRepository,
+                        LojaRepository lojaRepository,
+                        CategoriaRepository categoriaRepository,
+                        UsuarioAutenticado usuarioAutenticado) {
+                this.produtoRepository = produtoRepository;
+                this.lojaRepository = lojaRepository;
+                this.categoriaRepository = categoriaRepository;
+                this.usuarioAutenticado = usuarioAutenticado;
+        }
 
-    @Transactional
-    public Produto criar(ProdutoRequest request, Usuario usuario) {
-        Loja loja = lojaRepository.findByUsuarioId(usuario.getId())
-                .orElseThrow(() -> new RuntimeException("Você precisa ter uma loja para cadastrar produtos."));
+        @Transactional
+        public Produto criar(ProdutoRequest request) {
+                var logado = usuarioAutenticado.get();
 
-        Categoria categoria = categoriaRepository.findById(request.categoriaId())
-                .orElseThrow(() -> new RuntimeException("Categoria não encontrada."));
+                Loja loja = lojaRepository.findByUsuarioId(logado.getId())
+                                .orElseThrow(() -> new RuntimeException(
+                                                "Você precisa cadastrar uma loja antes de adicionar produtos."));
 
-        Produto produto = new Produto();
-        return salvarDados(produto, request, loja, categoria);
-    }
+                Categoria categoria = categoriaRepository.findById(request.categoriaId())
+                                .orElseThrow(() -> new RuntimeException("Categoria não encontrada."));
 
-    @Transactional
-    public Produto atualizar(Long produtoId, ProdutoRequest request, Usuario usuario) {
-        Produto produto = produtoRepository.findById(produtoId)
-                .orElseThrow(() -> new RuntimeException("Produto não encontrado."));
+                return salvarDados(new Produto(), request, loja, categoria);
+        }
 
-        // Garante que o produto pertence à loja do usuário logado
-        if (!produto.getLoja().getUsuario().getId().equals(usuario.getId()))
-            throw new RuntimeException("Você não tem permissão para editar este produto.");
+        @Transactional
+        public Produto atualizar(Long produtoId, ProdutoRequest request) {
+                var logado = usuarioAutenticado.get();
 
-        Categoria categoria = categoriaRepository.findById(request.categoriaId())
-                .orElseThrow(() -> new RuntimeException("Categoria não encontrada."));
+                Produto produto = produtoRepository.findById(produtoId)
+                                .orElseThrow(() -> new RuntimeException("Produto não encontrado."));
 
-        return salvarDados(produto, request, produto.getLoja(), categoria);
-    }
+                boolean isAdmin = usuarioAutenticado.isAdmin();
+                boolean isDono = produto.getLoja().getUsuario().getId().equals(logado.getId());
 
-    @Transactional
-    public void deletar(Long produtoId, Usuario usuario) {
-        Produto produto = produtoRepository.findById(produtoId)
-                .orElseThrow(() -> new RuntimeException("Produto não encontrado."));
+                if (!isAdmin && !isDono)
+                        throw new SecurityException("Você não tem permissão para editar este produto.");
 
-        if (!produto.getLoja().getUsuario().getId().equals(usuario.getId()))
-            throw new RuntimeException("Você não tem permissão para deletar este produto.");
+                Categoria categoria = categoriaRepository.findById(request.categoriaId())
+                                .orElseThrow(() -> new RuntimeException("Categoria não encontrada."));
 
-        produtoRepository.delete(produto);
-    }
+                return salvarDados(produto, request, produto.getLoja(), categoria);
+        }
 
-    public Page<Produto> listarPorLoja(Long lojaId, Pageable pageable) {
-        return produtoRepository.findByLojaId(lojaId, pageable);
-    }
+        @Transactional
+        public void deletar(Long produtoId) {
+                var logado = usuarioAutenticado.get();
 
-    public Page<Produto> buscar(String nome, Long categoriaId, Pageable pageable) {
-        if (categoriaId != null)
-            return produtoRepository.findByCategoriaId(categoriaId, pageable);
-        if (nome != null && !nome.isBlank())
-            return produtoRepository.findByNomeContainingIgnoreCase(nome, pageable);
-        return produtoRepository.findAll(pageable);
-    }
+                Produto produto = produtoRepository.findById(produtoId)
+                                .orElseThrow(() -> new RuntimeException("Produto não encontrado."));
 
-    public Produto buscarPorId(Long id) {
-        return produtoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Produto não encontrado."));
-    }
+                boolean isAdmin = usuarioAutenticado.isAdmin();
+                boolean isDono = produto.getLoja().getUsuario().getId().equals(logado.getId());
 
-    private Produto salvarDados(Produto produto, ProdutoRequest request, Loja loja, Categoria categoria) {
-        produto.setLoja(loja);
-        produto.setCategoria(categoria);
-        produto.setNome(request.nome());
-        produto.setDescricao(request.descricao());
-        produto.setPrecoAtual(request.precoAtual());
-        produto.setUnidadeMedida(request.unidadeMedida());
-        produto.setEstoqueAtual(request.estoqueAtual() != null ? request.estoqueAtual() : 0);
-        produto.setImagemUrl(request.imagemUrl());
-        return produtoRepository.save(produto);
-    }
+                if (!isAdmin && !isDono)
+                        throw new SecurityException("Você não tem permissão para deletar este produto.");
+
+                produtoRepository.delete(produto);
+        }
+
+        // ── Marketplace — só produtos APROVADOS ──────────────────────
+        public Page<Produto> buscar(String nome, Long categoriaId, Pageable pageable) {
+                if (categoriaId != null)
+                        return produtoRepository.findByStatusAndCategoriaId(
+                                        StatusProduto.APROVADO, categoriaId, pageable);
+                if (nome != null && !nome.isBlank())
+                        return produtoRepository.findByStatusAndNomeContainingIgnoreCase(
+                                        StatusProduto.APROVADO, nome, pageable);
+                return produtoRepository.findByStatus(StatusProduto.APROVADO, pageable);
+        }
+
+        public Page<Produto> listarPorLoja(Long lojaId, Pageable pageable) {
+                return produtoRepository.findByLojaId(lojaId, pageable);
+        }
+
+        public Produto buscarPorId(Long id) {
+                return produtoRepository.findById(id)
+                                .orElseThrow(() -> new RuntimeException("Produto não encontrado."));
+        }
+
+        // ── Home estilo Shopee ────────────────────────────────────────
+        public List<Produto> listarParaHome() {
+                return produtoRepository.findUmPorLoja();
+        }
+
+        // ── Admin — fila de moderação ─────────────────────────────────
+        public Page<Produto> listarPendentes(Pageable pageable) {
+                return produtoRepository.findByStatusOrderByDataCadastroAsc(
+                                StatusProduto.PENDENTE, pageable);
+        }
+
+        // ── Admin — aprova ou rejeita ─────────────────────────────────
+        @Transactional
+        public Produto atualizarStatus(Long produtoId, StatusProdutoRequest request) {
+                Produto produto = produtoRepository.findById(produtoId)
+                                .orElseThrow(() -> new RuntimeException("Produto não encontrado."));
+
+                produto.setStatus(request.status());
+                return produtoRepository.save(produto);
+        }
+
+        private Produto salvarDados(Produto p, ProdutoRequest r, Loja loja, Categoria cat) {
+                p.setLoja(loja);
+                p.setCategoria(cat);
+                p.setNome(r.nome());
+                p.setDescricao(r.descricao());
+                p.setPrecoAtual(r.precoAtual());
+                p.setUnidadeMedida(r.unidadeMedida());
+                p.setEstoqueAtual(r.estoqueAtual() != null ? r.estoqueAtual() : 0);
+                p.setPesoKg(r.pesoKg() != null ? r.pesoKg() : BigDecimal.valueOf(0.5));
+                p.setImagemUrl(r.imagemUrl());
+                if (p.getId() == null)
+                        p.setStatus(StatusProduto.PENDENTE);
+                return produtoRepository.save(p);
+        }
 }
