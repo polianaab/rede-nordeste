@@ -609,7 +609,7 @@ export default function Perfil() {
           <div className="flex-1 flex justify-start">
             <button onClick={() => telaAtual === 'perfil' ? navigate('/home2') : setTelaAtual('perfil')} className="p-3 active:scale-90 transition-all"><ArrowLeft size={20} className="text-[#802D44]" /></button>
           </div>
-          <h2 className="absolute left-1/2 -translate-x-1/2 text-[24px] md:text-[32px] font-bold font-poppins uppercase text-[#394158]">PERFIL</h2>
+          <h2 className="absolute left-1/2 -translate-x-1/2 text-[24px] md:text-[30px] font-bold font-poppins uppercase text-[#394158]">PERFIL</h2>
           <div className="flex-1 flex items-center justify-end gap-2">
             {telaAtual === 'perfil' && <button onClick={() => setTelaAtual('configuracoes')} className="p-3 active:scale-90 transition-all"><Settings size={20} /></button>}
             <button onClick={() => navigate('/')} className="p-3 text-red-500 active:scale-90 transition-all"><LogOut size={20} /></button>
@@ -626,13 +626,13 @@ export default function Perfil() {
                 <div className="w-24 h-24 rounded-full border-4 border-[#f9943b] overflow-hidden shadow-inner bg-white/20"><img src={fotoPerfil} className="w-full h-full object-cover" alt="User"/></div>
                 <button onClick={() => fileInputRef.current?.click()} className="absolute bottom-0 right-0 bg-[#55833d] p-2.5 rounded-full border-2 border-[#f9943b] shadow-lg active:scale-90 transition-all"><Camera size={14} className="text-white" /></button>
               </div>
-              <div className="text-center md:text-left z-10"><h3 className="text-2xl font-black font-poppins italic uppercase leading-none mb-2 tracking-tight">{dadosUsuario.nome}</h3><span className="text-[10px] font-black uppercase bg-white px-4 py-1.5 rounded-full inline-flex w-max items-center justify-center gap-1.5 text-[#55833d] shadow-sm"><CheckCircle size={12} className="text-[#4ade80]" /> Comprador Verificado</span></div>
+              <div className="text-center md:text-left z-10"><h3 className="text-2xl font-black font-poppins leading-none mb-2 tracking-tight">{dadosUsuario.nome}</h3><span className="text-[10px] font-black uppercase bg-white px-4 py-1.5 rounded-full inline-flex w-max items-center justify-center gap-1.5 text-[#55833d] shadow-sm"><CheckCircle size={12} className="text-[#4ade80]" /> Comprador Verificado</span></div>
             </div>
 
             <section className="bg-white rounded-[1rem] p-8 shadow-xl border border-white">
               <div className="flex justify-between items-center mb-8 px-2">
-                <h4 className="text-[10px] font-black font-montserrat uppercase tracking-[0.2em] text-gray-400">Minhas Compras</h4>
-                <button onClick={() => { setAbaAtiva('finalizados'); setTelaAtual('compras'); }} className="text-[9px] font-black uppercase text-[#394158] bg-[#802D44]/5 px-4 py-2 rounded-full active:scale-95 transition-all">Histórico</button>
+                <h4 className="uppercase tracking-[0.2em] text-gray-400 text-[11px] md:text-[12px] font-normal font-inter">Minhas Compras</h4>
+                <button onClick={() => { setAbaAtiva('finalizados'); setTelaAtual('compras'); }} className="uppercase text-[#394158] bg-[#802D44]/5 px-4 py-2 rounded-full active:scale-95 transition-all text-[11px] md:text-[12px] font-normal font-inter">Histórico</button>
               </div>
               <div className="grid grid-cols-4 gap-4">
                 {[
@@ -641,14 +641,14 @@ export default function Perfil() {
                 ].map((item) => (
                   <div key={item.t} onClick={() => { setAbaAtiva(item.id as any); setTelaAtual('compras'); }} className="flex flex-col items-center gap-3 group cursor-pointer active:scale-90 transition-all">
                     <div className="w-14 h-14 bg-[#F5F2ED] rounded-2xl flex items-center justify-center text-[#394158] group-hover:bg-[#55833d] group-hover:text-white transition-all duration-300 shadow-sm"><item.i size={22} /></div>
-                    <span className="text-[9px] font-black uppercase text-center tracking-tighter opacity-60">{item.t}</span>
+                    <span className="text-[12px] font-poppins font-semibold text-center tracking-tighter">{item.t}</span>
                   </div>
                 ))}
               </div>
             </section>
 
             <section className="bg-white rounded-[1rem] p-4 md:p-8 shadow-xl border border-white">
-              <div className="flex justify-center items-center mb-4 md:mb-8 px-2"><h4 className="text-[10px] font-black font-montserrat uppercase tracking-[0.2em] text-gray-400">Atividades</h4></div>
+              <div className="flex justify-center items-center mb-4 md:mb-8 px-2"><h4 className="uppercase tracking-[0.2em] text-gray-400 text-[11px] md:text-[12px] font-normal font-inter">Atividades</h4></div>
               <div className="grid grid-cols-1 md:grid-cols-3 w-full divide-y divide-gray-100 md:divide-y-0">
                 <div className="flex justify-center w-full py-4 md:py-0">
                   <button onClick={() => setTelaAtual('favoritos')} className="flex flex-col items-center justify-center p-4 hover:bg-[#F5F2ED] rounded-[1rem] active:scale-[0.98] group transition-all w-full md:w-32 gap-3 text-center">

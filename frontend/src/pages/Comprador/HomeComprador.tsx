@@ -148,8 +148,8 @@ export default function HomeComprador() {
         <div className="max-w-6xl mx-auto flex justify-between items-center gap-4 md:gap-8">
           <div className="flex items-center gap-4 md:gap-10 flex-shrink-0">
             <Link to="/home2"><img src="/assets/logo-home.png" alt="Logo" className="h-10 md:h-12 w-auto object-contain" /></Link>
-            <nav className="hidden lg:flex gap-6 text-[10px] font-black uppercase tracking-widest text-[#394158]">
-              <Link to="/home2" className="text-[#55833d] border-b-2 border-[#55833d] pb-1">Início</Link>
+            <nav className="hidden lg:flex gap-6 text-xs md:text-sm font-medium text-[#394158]">
+              <Link to="/home2" className="text-[#f9943b] border-b-2 border-[#f9943b] pb-1">Início</Link>
               <Link to="/receitas" className="hover:text-[#f9943b] transition-colors">Receitas</Link>
               <Link to="/blog" className="hover:text-[#f9943b]">Notícias</Link>
             </nav>

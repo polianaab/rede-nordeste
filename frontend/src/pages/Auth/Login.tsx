@@ -19,10 +19,14 @@ export default function Login() {
     e.preventDefault();
     setCarregando(true);
     try {
+      // Chamada real para o seu backend Java com banco de dados
       const dadosUsuario = await login(email, senha);
       localStorage.setItem('usuarioLogado', JSON.stringify(dadosUsuario));
 
-      if (dadosUsuario.perfil === 'PRODUTOR') {
+      // Verificação do perfil vindo direto do banco de dados
+      if (dadosUsuario.perfil === 'ADMIN') {
+        navigate('/admin');
+      } else if (dadosUsuario.perfil === 'PRODUTOR') {
         navigate('/vendedor');
       } else if (dadosUsuario.perfil === 'COMPRADOR') {
         navigate('/home2');

@@ -43,8 +43,6 @@ function App() {
           <Route path="/cadastro" element={<Register />} />
           <Route path="/blog" element={<Blog />} />
           <Route path="/blog/:id" element={<Post />} />
-
-          <Route path="/admin-teste" element={<HomeAdmin />} />
           
 
           {/* Rotas Privadas - Comprador */}
@@ -85,6 +83,11 @@ function App() {
           } />
           <Route path="/receitasvendedor" element={
             <RotaPrivada><ReceitasVendedor /></RotaPrivada>
+          } />
+
+          {/* Rota Privada - Admin (ADICIONADA AQUI) */}
+          <Route path="/admin" element={
+            <RotaPrivada><HomeAdmin /></RotaPrivada>
           } />
 
           {/* Rota de Fallback (Página não encontrada) */}
