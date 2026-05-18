@@ -50,6 +50,15 @@ public class SecurityConfig {
                                                                 "/api/categorias/**",
                                                                 "/api/receitas/**")
                                                 .permitAll()
+                                                // Adicione junto com as outras rotas GET públicas:
+                                                .requestMatchers(HttpMethod.GET,
+                                                                "/api/produtos/**",
+                                                                "/api/produtos/home", // ← já coberto por produtos/**,
+                                                                                      // mas explícito
+                                                                "/api/lojas/**",
+                                                                "/api/categorias/**",
+                                                                "/api/receitas/**")
+                                                .permitAll()
 
                                                 // 2. ADMIN
                                                 .requestMatchers("/api/admin/**",

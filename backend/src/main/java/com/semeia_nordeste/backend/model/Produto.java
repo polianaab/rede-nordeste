@@ -5,6 +5,8 @@ import java.time.OffsetDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -58,6 +60,10 @@ public class Produto {
     @Min(value = 0, message = "O estoque não pode ser negativo")
     @Column(name = "estoque_atual")
     private Integer estoqueAtual = 0;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private StatusProduto status = StatusProduto.PENDENTE;
 
     @Column(name = "imagem_url", columnDefinition = "TEXT")
     private String imagemUrl;

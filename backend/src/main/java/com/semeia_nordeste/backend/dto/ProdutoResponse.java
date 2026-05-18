@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
 import com.semeia_nordeste.backend.model.Produto;
+import com.semeia_nordeste.backend.model.StatusProduto;
 
 public record ProdutoResponse(
         Long id,
@@ -17,7 +18,8 @@ public record ProdutoResponse(
         String unidadeMedida,
         Integer estoqueAtual,
         String imagemUrl,
-        OffsetDateTime dataCadastro) {
+        OffsetDateTime dataCadastro,
+        StatusProduto status) {
     public static ProdutoResponse fromEntity(Produto p) {
         return new ProdutoResponse(
                 p.getId(),
@@ -31,6 +33,7 @@ public record ProdutoResponse(
                 p.getUnidadeMedida(),
                 p.getEstoqueAtual(),
                 p.getImagemUrl(),
-                p.getDataCadastro());
+                p.getDataCadastro(),
+                p.getStatus());
     }
 }
