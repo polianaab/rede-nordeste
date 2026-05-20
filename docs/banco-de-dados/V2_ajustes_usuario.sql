@@ -1,0 +1,11 @@
+ALTER TABLE usuarios 
+ALTER COLUMN tipo_perfil SET NOT NULL;
+
+ALTER TABLE usuarios 
+ALTER COLUMN conta_ativa SET NOT NULL;
+
+ALTER TABLE usuarios 
+ALTER COLUMN data_criacao SET NOT NULL;
+
+ALTER TABLE usuarios 
+ALTER COLUMN cpf_cnpj TYPE VARCHAR(18);

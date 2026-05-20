@@ -1,0 +1,444 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  X, Trash2, Minus, Plus, Truck, Store, ChevronRight,
+  ShoppingBag, CreditCard, Barcode, Landmark, ArrowLeft, MapPin, PlusCircle, CheckCircle, Copy, Square, CheckSquare
+} from 'lucide-react';
+import {
+  getCarrinho, adicionarAoCarrinho, removerDoCarrinho, checkout, simularFrete
+} from '../../services/api';
+
+export default function CarrinhoVendedor() {
+  const navigate = useNavigate();
+  const [step, setStep] = useState(1);
+  const [carrinho, setCarrinho] = useState<any>({ itens: [], totalItens: 0, valorTotal: 0 });
+  const [carregando, setCarregando] = useState(true);
+  const [processando, setProcessando] = useState(false);
+
+  // Etapa 1: Seleção
+  const [itensSelecionados, setItensSelecionados] = useState<number[]>([]);
+
+  // Etapa 2: Entrega
+  const [metodoEntrega, setMetodoEntrega] = useState<'entrega' | 'retirada'>('entrega');
+  const [valorFrete, setValorFrete] = useState(0);
+  const [enderecoSelecionado, setEnderecoSelecionado] = useState(0);
+  const [mudarEndereco, setMudarEndereco] = useState(false);
+  const [exibirFormNovoEndereco, setExibirFormNovoEndereco] = useState(false);
+  const [meusEnderecos, setMeusEnderecos] = useState<any[]>(() => {
+    const saved = localStorage.getItem('meus_enderecos');
+    return saved ? JSON.parse(saved) : [
+      { destinatario: 'Usuário Padrão', telefone: '(79) 99999-9999', rua: 'Rua das Palmeiras', numero: '450', complemento: 'Apto 102', bairro: 'Atalaia', estadoCidade: 'Sergipe - Aracaju', cep: '49000-000', latitudeDestino: -10.9850, longitudeDestino: -37.0490 }
+    ];
+  });
+  const [novoEndereco, setNovoEndereco] = useState({ destinatario: '', telefone: '', cep: '', estadoCidade: '', bairro: '', rua: '', numero: '', complemento: '' });
+
+  // Etapa 3: Pagamento
+  const [metodoPagamento, setMetodoPagamento] = useState<'CARTAO' | 'PIX' | 'BOLETO'>('CARTAO');
+  const [cartaoSelecionado, setCartaoSelecionado] = useState(0);
+  const [exibirFormNovoCartao, setExibirFormNovoCartao] = useState(false);
+  const [meusCartoes, setMeusCartoes] = useState<any[]>([
+    { id: 1, final: '4321', bandeira: 'Mastercard', nome: 'USUARIO MOCK' }
+  ]);
+  const [novoCartao, setNovoCartao] = useState({ numero: '', nome: '', validade: '', cvv: '' });
+
+  // ── Carrega carrinho da API ───────────────────────────────────────
+  useEffect(() => {
+    getCarrinho()
+      .then((data) => {
+        setCarrinho(data);
+        setItensSelecionados(data.itens.map((i: any) => i.produtoId));
+      })
+      .catch(() => setCarrinho({ itens: [], totalItens: 0, valorTotal: 0 }))
+      .finally(() => setCarregando(false));
+  }, []);
+
+  // ── Simula frete quando muda endereço ou modo ─────────────────────
+  useEffect(() => {
+    if (metodoEntrega !== 'entrega') { setValorFrete(0); return; }
+    const end = meusEnderecos[enderecoSelecionado];
+    if (!end?.latitudeDestino || carrinho.itens.length === 0) return;
+
+    const itemSel = carrinho.itens.find((i: any) => itensSelecionados.includes(i.produtoId));
+    if (!itemSel) return;
+
+    simularFrete(itemSel.lojaId, end.latitudeDestino, end.longitudeDestino)
+      .then((data: any) => setValorFrete(Number(data.valorFrete)))
+      .catch(() => setValorFrete(0));
+  }, [metodoEntrega, enderecoSelecionado, carrinho.itens, itensSelecionados, meusEnderecos]);
+
+  const atualizarQtd = async (produtoId: number, novaQtd: number) => {
+    if (novaQtd < 1) return;
+    try {
+      const atualizado = await adicionarAoCarrinho(produtoId, novaQtd);
+      setCarrinho(atualizado);
+      if (!itensSelecionados.includes(produtoId)) {
+        setItensSelecionados([...itensSelecionados, produtoId]);
+      }
+    } catch (err: any) { alert(err.message); }
+  };
+
+  const remover = async (produtoId: number) => {
+    try {
+      const atualizado = await removerDoCarrinho(produtoId);
+      setCarrinho(atualizado);
+      setItensSelecionados(prev => prev.filter(id => id !== produtoId));
+    } catch (err: any) { alert(err.message); }
+  };
+
+  const toggleSelecao = (produtoId: number) => {
+    setItensSelecionados(prev => 
+      prev.includes(produtoId) ? prev.filter(id => id !== produtoId) : [...prev, produtoId]
+    );
+  };
+
+  const handleFinalizarPedido = async () => {
+    if (itensSelecionados.length === 0) { alert('Selecione pelo menos um item para comprar!'); return; }
+    setProcessando(true);
+    try {
+      const end = meusEnderecos[enderecoSelecionado];
+      await checkout({
+        metodoPagamento,
+        retiradaNaLoja: metodoEntrega === 'retirada',
+        enderecoEntrega: metodoEntrega === 'entrega'
+          ? `${end.rua}, ${end.numero} ${end.complemento ? `(${end.complemento})` : ''} - ${end.bairro}, ${end.estadoCidade}`
+          : undefined,
+        cidadeDestino: metodoEntrega === 'entrega' ? (end.estadoCidade?.split(' - ')[1] || '') : undefined,
+        latitudeDestino: metodoEntrega === 'entrega' ? end.latitudeDestino : undefined,
+        longitudeDestino: metodoEntrega === 'entrega' ? end.longitudeDestino : undefined,
+      });
+      alert('Pedido realizado com sucesso!');
+      setCarrinho({ itens: [], totalItens: 0, valorTotal: 0 });
+      setItensSelecionados([]);
+      navigate('/perfilvendedor'); // Fix navigation to go to vendedor profile
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setProcessando(false);
+    }
+  };
+
+  const itensParaComprar = carrinho.itens.filter((i: any) => itensSelecionados.includes(i.produtoId));
+  const subtotal = itensParaComprar.reduce((acc: number, item: any) => acc + Number(item.subtotal), 0);
+  const total = metodoEntrega === 'entrega' ? subtotal + valorFrete : subtotal;
+
+  if (carregando) return (
+    <div className="min-h-screen flex items-center justify-center font-black uppercase text-sm opacity-30">
+      Carregando carrinho...
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex justify-center items-start py-10 px-4 font-sans text-[#394158]">
+      <div className="bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col border border-gray-100">
+
+        <header className="p-8 border-b border-gray-50 flex items-center justify-between bg-white">
+          <button onClick={() => step === 1 ? navigate(-1) : setStep(step - 1)} className="p-2 hover:bg-gray-100 rounded-full">
+            {step === 1 ? <X size={24} /> : <ArrowLeft size={24} />}
+          </button>
+          <h2 className="text-lg font-black uppercase italic tracking-tighter">
+            {step === 1 ? `Minha Cesta (${carrinho.totalItens})` : step === 2 ? 'Opções de Entrega' : 'Pagamento e Revisão'}
+          </h2>
+          <div className="w-10" />
+        </header>
+
+        <div className="p-8 space-y-8 max-h-[550px] overflow-y-auto no-scrollbar">
+          {/* ETAPA 1: Seleção de Produtos */}
+          {step === 1 && (
+            <div className="space-y-6">
+              {carrinho.itens.length > 0 ? carrinho.itens.map((item: any) => {
+                const isSelected = itensSelecionados.includes(item.produtoId);
+                return (
+                  <div key={item.id} className={`flex gap-4 items-center p-3 rounded-2xl border-2 transition-all ${isSelected ? 'border-[#55833d] bg-white shadow-sm' : 'border-gray-100 bg-gray-50 opacity-70'}`}>
+                    <button onClick={() => toggleSelecao(item.produtoId)} className="text-[#55833d] flex-shrink-0">
+                      {isSelected ? <CheckSquare size={24} /> : <Square size={24} className="text-gray-300" />}
+                    </button>
+                    <img src={item.imagemUrl || 'https://via.placeholder.com/100'} className="w-16 h-16 rounded-2xl object-cover" alt="" />
+                    <div className="flex-1">
+                      <div className="flex justify-between items-start">
+                        <h3 className="font-bold text-sm leading-tight">{item.nomeProduto}</h3>
+                        <button onClick={() => remover(item.produtoId)} className="text-gray-300 hover:text-red-500">
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                      <div className="flex items-center justify-between mt-3">
+                        <div className="flex items-center border border-gray-200 rounded-lg px-2 py-1 gap-3 bg-white">
+                          <button onClick={() => atualizarQtd(item.produtoId, item.quantidade - 1)} className="hover:text-[#55833d]"><Minus size={12} /></button>
+                          <span className="text-xs font-black">{item.quantidade}</span>
+                          <button onClick={() => atualizarQtd(item.produtoId, item.quantidade + 1)} className="hover:text-[#55833d]"><Plus size={12} /></button>
+                        </div>
+                        <span className="font-black text-sm">R$ {Number(item.subtotal).toFixed(2)}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }) : (
+                <div className="text-center py-20 flex flex-col items-center gap-4">
+                  <ShoppingBag size={48} className="opacity-10" />
+                  <div className="opacity-30 font-black uppercase italic">Cesta Vazia</div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ETAPA 2: Entrega */}
+          {step === 2 && (
+            <div className="space-y-8 animate-in slide-in-from-right duration-300">
+              <div className="space-y-4">
+                <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-400">Como você quer receber?</h4>
+                <div className="flex gap-3">
+                  <button onClick={() => setMetodoEntrega('entrega')}
+                    className={`flex-1 p-5 rounded-2xl border-2 flex flex-col items-center gap-3 transition-all ${metodoEntrega === 'entrega' ? 'border-[#55833d] bg-white shadow-md' : 'border-transparent bg-gray-50 opacity-50'}`}>
+                    <Truck size={24} /><span className="text-xs font-black uppercase tracking-widest">Entrega</span>
+                  </button>
+                  <button onClick={() => setMetodoEntrega('retirada')}
+                    className={`flex-1 p-5 rounded-2xl border-2 flex flex-col items-center gap-3 transition-all ${metodoEntrega === 'retirada' ? 'border-[#55833d] bg-white shadow-md' : 'border-transparent bg-gray-50 opacity-50'}`}>
+                    <Store size={24} /><span className="text-xs font-black uppercase tracking-widest">Retirada</span>
+                  </button>
+                </div>
+              </div>
+
+              {metodoEntrega === 'entrega' ? (
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-400">Endereço de Entrega</h4>
+                    {!exibirFormNovoEndereco && (
+                      <button onClick={() => setMudarEndereco(!mudarEndereco)} className="text-[10px] font-black uppercase text-[#55833d] hover:underline">
+                        {mudarEndereco ? 'Fechar' : 'Mudar Endereço'}
+                      </button>
+                    )}
+                  </div>
+
+                  {exibirFormNovoEndereco ? (
+                    <div className="space-y-3 bg-gray-50 p-5 rounded-3xl border border-gray-100">
+                      <h4 className="font-black text-sm uppercase italic mb-2">Novo Endereço</h4>
+                      <input type="text" placeholder="Quem vai receber? (Destinatário)" className="w-full text-xs font-bold bg-white p-3 rounded-xl outline-none" value={novoEndereco.destinatario} onChange={e => setNovoEndereco({...novoEndereco, destinatario: e.target.value})} />
+                      <input type="text" placeholder="Telefone para contato" className="w-full text-xs font-bold bg-white p-3 rounded-xl outline-none" value={novoEndereco.telefone} onChange={e => setNovoEndereco({...novoEndereco, telefone: e.target.value})} />
+                      <div className="flex gap-2">
+                        <input type="text" placeholder="CEP" className="w-1/2 text-xs font-bold bg-white p-3 rounded-xl outline-none" value={novoEndereco.cep} onChange={e => setNovoEndereco({...novoEndereco, cep: e.target.value})} />
+                        <input type="text" placeholder="Cidade - UF" className="w-1/2 text-xs font-bold bg-white p-3 rounded-xl outline-none" value={novoEndereco.estadoCidade} onChange={e => setNovoEndereco({...novoEndereco, estadoCidade: e.target.value})} />
+                      </div>
+                      <input type="text" placeholder="Bairro" className="w-full text-xs font-bold bg-white p-3 rounded-xl outline-none" value={novoEndereco.bairro} onChange={e => setNovoEndereco({...novoEndereco, bairro: e.target.value})} />
+                      <div className="flex gap-2">
+                        <input type="text" placeholder="Rua / Avenida" className="w-2/3 text-xs font-bold bg-white p-3 rounded-xl outline-none" value={novoEndereco.rua} onChange={e => setNovoEndereco({...novoEndereco, rua: e.target.value})} />
+                        <input type="text" placeholder="Número" className="w-1/3 text-xs font-bold bg-white p-3 rounded-xl outline-none" value={novoEndereco.numero} onChange={e => setNovoEndereco({...novoEndereco, numero: e.target.value})} />
+                      </div>
+                      <input type="text" placeholder="Complemento (Apt, Bloco, Casa)" className="w-full text-xs font-bold bg-white p-3 rounded-xl outline-none" value={novoEndereco.complemento} onChange={e => setNovoEndereco({...novoEndereco, complemento: e.target.value})} />
+                      <div className="flex gap-2 mt-4">
+                        <button onClick={() => setExibirFormNovoEndereco(false)} className="flex-1 p-3 text-[10px] font-black uppercase text-gray-500 bg-gray-200 rounded-xl">Cancelar</button>
+                        <button onClick={() => {
+                          const novos = [...meusEnderecos, { ...novoEndereco, latitudeDestino: -10.9850, longitudeDestino: -37.0490 }];
+                          setMeusEnderecos(novos);
+                          localStorage.setItem('meus_enderecos', JSON.stringify(novos));
+                          setEnderecoSelecionado(novos.length - 1);
+                          setExibirFormNovoEndereco(false);
+                          setMudarEndereco(false);
+                        }} className="flex-1 p-3 text-[10px] font-black uppercase text-white bg-[#55833d] rounded-xl">Salvar e Usar</button>
+                      </div>
+                    </div>
+                  ) : mudarEndereco ? (
+                    <div className="space-y-3">
+                      {meusEnderecos.map((end, idx) => (
+                        <button key={idx} onClick={() => { setEnderecoSelecionado(idx); setMudarEndereco(false); }}
+                          className={`w-full text-left p-4 rounded-2xl border-2 transition-all flex gap-3 items-start ${enderecoSelecionado === idx ? 'border-[#55833d] bg-white' : 'border-transparent bg-gray-50 opacity-60'}`}>
+                          <div className={`mt-1 w-4 h-4 rounded-full border-2 flex items-center justify-center ${enderecoSelecionado === idx ? 'border-[#55833d]' : 'border-gray-300'}`}>
+                            {enderecoSelecionado === idx && <div className="w-2 h-2 bg-[#55833d] rounded-full" />}
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-[11px] font-black">{end.destinatario} • {end.telefone}</p>
+                            <p className="text-[10px] font-bold text-gray-500 mt-1">{end.rua}, {end.numero} {end.complemento && `(${end.complemento})`} - {end.bairro}</p>
+                            <p className="text-[9px] font-bold text-gray-400">{end.cep} • {end.estadoCidade}</p>
+                          </div>
+                        </button>
+                      ))}
+                      <button onClick={() => setExibirFormNovoEndereco(true)}
+                        className="w-full flex items-center justify-center gap-2 p-4 border-2 border-dashed border-gray-200 rounded-2xl text-[10px] font-black uppercase text-gray-400 hover:text-[#55833d] hover:border-[#55833d] transition-colors">
+                        <PlusCircle size={16} /> Adicionar novo endereço
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="p-5 bg-white rounded-3xl border-2 border-[#55833d] flex gap-4 items-center">
+                      <div className="p-3 bg-[#55833d]/10 rounded-2xl text-[#55833d]"><MapPin size={24} /></div>
+                      <div className="flex-1">
+                        <p className="text-[10px] font-black uppercase text-[#55833d] mb-1">Entregar para {meusEnderecos[enderecoSelecionado]?.destinatario}</p>
+                        <p className="text-xs font-bold leading-tight">{meusEnderecos[enderecoSelecionado]?.rua}, {meusEnderecos[enderecoSelecionado]?.numero} {meusEnderecos[enderecoSelecionado]?.complemento && `(${meusEnderecos[enderecoSelecionado]?.complemento})`}</p>
+                        <p className="text-[10px] opacity-60 font-bold mt-1">{meusEnderecos[enderecoSelecionado]?.bairro} - {meusEnderecos[enderecoSelecionado]?.estadoCidade}</p>
+                      </div>
+                      <CheckCircle size={20} className="text-[#55833d]" />
+                    </div>
+                  )}
+                  
+                  {!mudarEndereco && !exibirFormNovoEndereco && (
+                    <div className="bg-[#55833d]/5 p-4 rounded-2xl flex flex-col border border-[#55833d]/20">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[10px] font-black uppercase text-[#55833d]">Frete calculado para este CEP:</span>
+                        <span className="font-black text-[#55833d] text-sm">{valorFrete > 0 ? `R$ ${valorFrete.toFixed(2)}` : 'Calculando...'}</span>
+                      </div>
+                      {valorFrete > 0 && (
+                        <p className="text-[9px] font-bold text-[#55833d]/70 mt-2 border-t border-[#55833d]/10 pt-2">
+                          Estimativa de entrega: Entre 2 a 4 dias úteis após a confirmação.
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-400">Local de Retirada</h4>
+                  <div className="p-5 bg-white rounded-3xl border-2 border-[#55833d] flex gap-4 items-center">
+                    <div className="p-3 bg-[#55833d]/10 rounded-2xl text-[#55833d]"><Store size={24} /></div>
+                    <div className="flex-1">
+                      <p className="text-[10px] font-black uppercase text-[#55833d] mb-1">Retirar na Loja do Produtor</p>
+                      <p className="text-xs font-bold leading-tight">Mercado Municipal de Aracaju, Box 42</p>
+                      <p className="text-[10px] opacity-60 font-bold mt-1">Centro - Aracaju, SE</p>
+                      <p className="text-[9px] font-black uppercase text-[#f9943b] mt-2 mb-1">Frete Grátis</p>
+                      <p className="text-[9px] font-bold text-gray-500 border-t border-gray-100 pt-2 mt-1">Disponível para retirada em até 24 horas úteis após confirmação.</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ETAPA 3: Pagamento e Revisão */}
+          {step === 3 && (
+            <div className="space-y-8 animate-in slide-in-from-right duration-300">
+              
+              <div className="space-y-4">
+                <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-400">Produtos Selecionados</h4>
+                <div className="bg-gray-50 p-4 rounded-3xl border border-gray-100 space-y-3">
+                  {itensParaComprar.map((item: any) => (
+                    <div key={item.id} className="flex items-center gap-3 bg-white p-2 rounded-2xl shadow-sm">
+                      <img src={item.imagemUrl || 'https://via.placeholder.com/100'} className="w-10 h-10 rounded-xl object-cover" alt="" />
+                      <div className="flex-1">
+                        <p className="text-[11px] font-bold leading-tight line-clamp-1">{item.nomeProduto}</p>
+                        <p className="text-[9px] text-gray-400 font-bold">{item.quantidade} un.</p>
+                      </div>
+                      <span className="text-[11px] font-black text-[#55833d] pr-2">R$ {Number(item.subtotal).toFixed(2)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-400">Método de Pagamento</h4>
+                <div className="grid grid-cols-3 gap-2">
+                  {['CARTAO', 'PIX', 'BOLETO'].map(m => (
+                    <button key={m} onClick={() => setMetodoPagamento(m as any)}
+                      className={`p-3 rounded-2xl border-2 flex flex-col items-center justify-center gap-2 transition-all ${metodoPagamento === m ? 'border-[#f9943b] bg-[#f9943b]/10 text-[#f9943b]' : 'border-gray-100 bg-white text-gray-400'}`}>
+                      {m === 'CARTAO' && <CreditCard size={20} />}
+                      {m === 'PIX' && <Landmark size={20} />}
+                      {m === 'BOLETO' && <Barcode size={20} />}
+                      <span className="text-[8px] font-black uppercase">{m === 'CARTAO' ? 'Cartão' : m}</span>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Sub-telas de Pagamento */}
+                <div className="mt-4">
+                  {metodoPagamento === 'CARTAO' && (
+                    <div className="space-y-3 animate-in fade-in">
+                      {exibirFormNovoCartao ? (
+                         <div className="bg-gray-50 p-5 rounded-3xl border border-gray-100 space-y-3">
+                           <h4 className="font-black text-sm uppercase italic mb-2">Novo Cartão</h4>
+                           <input type="text" placeholder="Número do Cartão" className="w-full text-xs font-bold bg-white p-3 rounded-xl outline-none" value={novoCartao.numero} onChange={e => setNovoCartao({...novoCartao, numero: e.target.value})} />
+                           <input type="text" placeholder="Nome impresso" className="w-full text-xs font-bold bg-white p-3 rounded-xl outline-none uppercase" value={novoCartao.nome} onChange={e => setNovoCartao({...novoCartao, nome: e.target.value})} />
+                           <div className="flex gap-2">
+                             <input type="text" placeholder="Validade (MM/AA)" className="w-1/2 text-xs font-bold bg-white p-3 rounded-xl outline-none" value={novoCartao.validade} onChange={e => setNovoCartao({...novoCartao, validade: e.target.value})} />
+                             <input type="text" placeholder="CVV" className="w-1/2 text-xs font-bold bg-white p-3 rounded-xl outline-none" value={novoCartao.cvv} onChange={e => setNovoCartao({...novoCartao, cvv: e.target.value})} />
+                           </div>
+                           <div className="flex gap-2 mt-4">
+                             <button onClick={() => setExibirFormNovoCartao(false)} className="flex-1 p-3 text-[10px] font-black uppercase text-gray-500 bg-gray-200 rounded-xl">Cancelar</button>
+                             <button onClick={() => {
+                               const ultimos = novoCartao.numero.slice(-4);
+                               setMeusCartoes([...meusCartoes, { id: Date.now(), final: ultimos || '0000', bandeira: 'Novo Cartão', nome: novoCartao.nome }]);
+                               setCartaoSelecionado(meusCartoes.length);
+                               setExibirFormNovoCartao(false);
+                             }} className="flex-1 p-3 text-[10px] font-black uppercase text-white bg-[#394158] rounded-xl">Adicionar</button>
+                           </div>
+                         </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {meusCartoes.map((cartao, idx) => (
+                            <button key={cartao.id} onClick={() => setCartaoSelecionado(idx)}
+                              className={`w-full text-left p-4 rounded-2xl border-2 transition-all flex gap-3 items-center ${cartaoSelecionado === idx ? 'border-[#394158] bg-white' : 'border-gray-100 bg-gray-50 opacity-60'}`}>
+                              <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${cartaoSelecionado === idx ? 'border-[#394158]' : 'border-gray-300'}`}>
+                                {cartaoSelecionado === idx && <div className="w-2 h-2 bg-[#394158] rounded-full" />}
+                              </div>
+                              <div className="flex flex-col flex-1">
+                                <span className="text-[11px] font-black uppercase">{cartao.bandeira} final {cartao.final}</span>
+                                <span className="text-[9px] font-bold text-gray-400">{cartao.nome}</span>
+                              </div>
+                            </button>
+                          ))}
+                          <button onClick={() => setExibirFormNovoCartao(true)}
+                            className="w-full flex items-center justify-center gap-2 p-3 border-2 border-dashed border-gray-200 rounded-2xl text-[10px] font-black uppercase text-gray-400 hover:text-[#394158]">
+                            <PlusCircle size={14} /> Adicionar outro cartão
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {metodoPagamento === 'PIX' && (
+                    <div className="bg-gray-50 p-6 rounded-3xl border border-gray-100 flex flex-col items-center animate-in fade-in">
+                      <div className="w-32 h-32 bg-white rounded-xl mb-4 flex items-center justify-center border-4 border-[#55833d] overflow-hidden">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg" className="w-full h-full opacity-80" alt="QR Code PIX" />
+                      </div>
+                      <p className="text-[10px] font-bold text-gray-500 text-center mb-4">Escaneie o QR Code ou copie o código abaixo para pagar no seu banco.</p>
+                      <button className="flex items-center gap-2 bg-[#55833d] text-white px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest active:scale-95 transition-transform">
+                        <Copy size={14} /> Copiar Código Pix
+                      </button>
+                    </div>
+                  )}
+
+                  {metodoPagamento === 'BOLETO' && (
+                    <div className="bg-gray-50 p-6 rounded-3xl border border-gray-100 text-center animate-in fade-in">
+                      <Barcode size={48} className="mx-auto text-gray-300 mb-3" />
+                      <p className="text-xs font-bold text-gray-500">O boleto será gerado após a confirmação da compra. A aprovação pode levar até 2 dias úteis.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+            </div>
+          )}
+        </div>
+
+        {carrinho.itens.length > 0 && itensSelecionados.length > 0 && (
+          <footer className="p-8 border-t border-gray-50 bg-white shadow-[0_-10px_30px_rgba(0,0,0,0.02)] z-10">
+            <div className="space-y-3 mb-6">
+              <div className="flex justify-between text-xs font-bold text-gray-500">
+                <span>Produtos ({itensSelecionados.length})</span><span>R$ {subtotal.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-xs font-bold text-gray-500">
+                <span>Frete</span>
+                <span>{metodoEntrega === 'entrega' ? `R$ ${valorFrete.toFixed(2)}` : 'Grátis'}</span>
+              </div>
+              <div className="flex justify-between items-baseline pt-4 border-t border-gray-100">
+                <span className="text-sm font-black uppercase">Total a Pagar</span>
+                <span className="text-3xl font-black text-[#55833d] italic">R$ {total.toFixed(2)}</span>
+              </div>
+            </div>
+
+            <button onClick={() => {
+              if (step === 1) setStep(2);
+              else if (step === 2) setStep(3);
+              else handleFinalizarPedido();
+            }}
+              disabled={processando}
+              className={`w-full py-5 rounded-full font-black uppercase text-xs tracking-widest flex items-center justify-center gap-3 transition-all ${
+                processando ? 'bg-gray-300 text-gray-400 cursor-not-allowed'
+                : 'bg-[#f9943b] hover:bg-[#ff8a23] hover:shadow-lg hover:shadow-[#f9943b]/30 text-white active:scale-95'
+              }`}>
+              {processando ? 'Processando...'
+                : step === 1 ? 'Avançar para Entrega'
+                : step === 2 ? 'Avançar para Pagamento'
+                : 'Concluir Compra'}
+              {!processando && <ChevronRight size={18} />}
+            </button>
+          </footer>
+        )}
+      </div>
+    </div>
+  );
+}

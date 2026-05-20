@@ -24,4 +24,10 @@
 hs_err_pid*
 replay_pid*
 
+# Node / Web
 node_modules/
+dist/
+.vite/
+
+#
+    
