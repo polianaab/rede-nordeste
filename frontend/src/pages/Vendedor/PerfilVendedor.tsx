@@ -69,6 +69,11 @@ export default function Perfil() {
     };
   });
 
+  const handleLogout = () => {
+    localStorage.removeItem('usuarioLogado'); // Mata a sessão do Java
+    navigate('/login'); // Chuta de volta pro login
+  };
+
   const PRODUTOS_DATA = [
     { id: 1, nome: 'Tomate Cereja Orgânico', preco: 8.90, img: 'https://cdn.shoppub.io/cdn-cgi/image/w=1000,h=1000,q=80,f=auto/beirario/media/uploads/produtos/foto/b3fd841dfd2c3file.png' },
     { id: 2, nome: 'Ovos Caipira (Dúzia)', preco: 14.50, img: 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?auto=format&fit=crop&w=400&q=80' },
@@ -698,7 +703,7 @@ export default function Perfil() {
           <h2 className="absolute left-1/2 -translate-x-1/2 text-[24px] md:text-[30px] font-bold font-poppins uppercase text-[#394158]">PERFIL</h2>
           <div className="flex-1 flex items-center justify-end gap-2">
             {telaAtual === 'perfil' && <button onClick={() => setTelaAtual('configuracoes')} className="p-3 active:scale-90 transition-all"><Settings size={20} /></button>}
-            <button onClick={() => navigate('/')} className="p-3 text-red-500 active:scale-90 transition-all"><LogOut size={20} /></button>
+            <button onClick={handleLogout} className="p-3 text-red-500 active:scale-90 transition-all"><LogOut size={20} /></button>
           </div>
         </div>
       </header>

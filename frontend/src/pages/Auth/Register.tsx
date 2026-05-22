@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   User, Mail, Lock, FileText, Phone, 
   ArrowRight, ChevronLeft 
@@ -9,15 +9,17 @@ import { registrarUsuario } from '../../services/api';
 export default function Register() {
   const navigate = useNavigate();
   const [carregando, setCarregando] = useState(false);
+  const location = useLocation();
+  const perfilInicial = (location.state as any)?.tipoPerfil || 'COMPRADOR';
   
   const [formData, setFormData] = useState({
-    nomeCompleto: '',
-    cpfCnpj: '',
-    telefone: '',
-    email: '',
-    senha: '', 
-    tipoPerfil: 'COMPRADOR' 
-  });
+  nomeCompleto: '',
+  cpfCnpj: '',
+  telefone: '',
+  email: '',
+  senha: '',
+  tipoPerfil: perfilInicial  
+});
 
   // Funções de Máscara
   const maskCPF = (value: string) => {

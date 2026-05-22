@@ -126,18 +126,25 @@ export default function Home() {
 
         {/* BOTÕES DE ACESSO */}
         <div className="flex flex-wrap justify-center gap-6 mb-24 px-6">
-          <Link to="/cadastro" className="flex flex-col items-center bg-[#55833d] text-white p-8 w-64 rounded-[2.5rem] hover:scale-105 transition-all shadow-lg text-center group">
-            <Store size={24} className="mb-2" />
-            <span className="font-black uppercase text-sm tracking-widest">Sou vendedor</span>
-            <span className="text-[9px] font-bold opacity-70 italic">Quero anunciar meus produtos</span>
-          </Link>
-          <Link to="/cadastro" className="flex flex-col items-center bg-[#f9943b] text-white p-8 w-64 rounded-[2.5rem] hover:scale-105 transition-all shadow-lg text-center group">
-            <ShoppingBag size={24} className="mb-2" />
-            <span className="font-black uppercase text-sm tracking-widest">Sou comprador</span>
-            <span className="text-[9px] font-bold opacity-70 italic">Procuro produtos da região</span>
-          </Link>
-        </div>
-
+         <Link
+          to="/cadastro"
+          state={{ tipoPerfil: 'PRODUTOR' }}
+          className="flex flex-col items-center bg-[#55833d] text-white p-8 w-64 rounded-[2.5rem] hover:scale-105 transition-all shadow-lg text-center group"
+      >
+          <Store size={24} className="mb-2" />
+          <span className="font-black uppercase text-sm tracking-widest">Sou vendedor</span>
+          <span className="text-[9px] font-bold opacity-70 italic">Quero anunciar meus produtos</span>
+     </Link>
+    <Link
+          to="/cadastro"
+          state={{ tipoPerfil: 'COMPRADOR' }}
+          className="flex flex-col items-center bg-[#f9943b] text-white p-8 w-64 rounded-[2.5rem] hover:scale-105 transition-all shadow-lg text-center group"
+      >
+        <ShoppingBag size={24} className="mb-2" />
+        <span className="font-black uppercase text-sm tracking-widest">Sou comprador</span>
+        <span className="text-[9px] font-bold opacity-70 italic">Procuro produtos da região</span>
+   </Link>
+  </div>
         {/* MISSÃO - FUNDO BRANCO CORRIGIDO */}
         <section className="w-full bg-white flex justify-center py-24 border-y border-gray-100">
           <div className="w-full max-w-7xl px-8 grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
