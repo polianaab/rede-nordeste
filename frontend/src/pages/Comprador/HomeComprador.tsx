@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Search, ShoppingCart, User, Plus, Filter, MapPin,
   Star, LayoutGrid, Palette, Beef, Sprout, Wheat, Carrot, Milk, Bed, Utensils, Shirt,
-  MessageCircle, Heart, ChevronRight, Menu, X, BookOpen, Store, Bell, ChevronLeft, HelpCircle
+  MessageCircle, Heart, ChevronRight, Menu, X, BookOpen, Store, Bell, HelpCircle
 } from 'lucide-react';
 import {
   buscarProdutos, getCategorias, adicionarAoCarrinho, getNaoLidas
@@ -16,7 +16,7 @@ const CATEGORIAS_ICONES: Record<string, any> = {
 };
 
 const EMPREENDEDORAS = [
-  { id: 1, nome: "Dona Maria", negocio: "Cerâmicas do Povo", territorio: "Baixo São Francisco", historia: "Mestra ceramista há 30 anos em Santana do São Francisco. Aprendeu a arte com sua avó e hoje lidera uma cooperativa de 12 mulheres.", img: "https://cdn.awsli.com.br/2500x2500/1616/1616697/produto/109903915/e2bbd94d12.jpg" },
+  { id: 1, nome: "Dona Maria", negocio: "Cerâmicas do Povo", territorio: "Baixo São Francisco", historia: "Mestra ceramista há 30 anos in Santana do São Francisco. Aprendeu a arte com sua avó e hoje lidera uma cooperativa de 12 mulheres.", img: "https://cdn.awsli.com.br/2500x2500/1616/1616697/produto/109903915/e2bbd94d12.jpg" },
   { id: 2, nome: "Chef Ana Nunes", negocio: "Sabor de Mulher", territorio: "Grande Aracaju", historia: "Especialista em gastronomia afetiva, Ana utiliza apenas ingredientes de produtores locais para criar pratos que contam a história de Sergipe.", img: "https://www.brasildefato.com.br/wp-content/uploads/2024/09/image_processing20201106-23882-1kiy8l9.jpeg" },
   { id: 3, nome: "Lúcia da Palha", negocio: "Arte Ilha do Ferro", territorio: "Sertão Ocidental", historia: "Lúcia transforma a palha de Ouricuri em peças de design moderno sem perder a essência do artesanato tradicional.", img: "https://agenciasebrae.com.br/wp-content/uploads/2026/02/artesanato-7.jpeg" },
 ];
@@ -74,11 +74,11 @@ export default function HomeComprador() {
       try {
         const data = await buscarProdutos(
           termoPesquisado || undefined,
-          undefined,
+          catAtiva !== 'Todos' ? Number(catAtiva) : undefined,
           paginaAtual
         );
-        setProdutos(data.content);
-        setTotalPaginas(data.totalPages);
+        setProdutos(data.content || []);
+        setTotalPaginas(data.totalPages || 1);
       } catch {
         setProdutos([]);
       } finally {
@@ -198,8 +198,7 @@ export default function HomeComprador() {
         </div>
       </header>
 
-      {/* ── RESTANTE DO CÓDIGO PERMANECE IGUAL ────────────────────── */}
-      {/* ... (Menu Mobile, Modais, Main Content, Footer) */}
+      {/* ── Menu Mobile ───────────────────────────────────────────────── */}
       {menuAberto && (
         <div className="fixed inset-0 z-[110] md:hidden">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMenuAberto(false)} />
@@ -279,6 +278,7 @@ export default function HomeComprador() {
         </div>
       )}
 
+      {/* MODAL DETALHE MULHER */}
       {mulherSelecionada && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => setMulherSelecionada(null)} />
@@ -314,13 +314,15 @@ export default function HomeComprador() {
           </button>
         </div>
 
+        {/* 🛠️ CORREÇÃO DO LINK DE REDIRECIONAMENTO DESTA SEÇÃO 🛠️ */}
         <section className="w-full max-w-6xl mb-12 bg-[#fededf] p-4 md:p-8 rounded-[2rem] border border-[#fededf] mx-auto shadow-xl">
           <div className="flex items-center justify-between mb-6 px-2 text-[#394158]">
             <div className="flex items-center gap-2 md:gap-3">
               <Star size={18} className="fill-[#FFCD0D] text-[#FFCD0D]" />
               <h2 className="text-sm md:text-xl font-black italic uppercase tracking-widest">Empreendedoras de Sergipe</h2>
             </div>
-            <Link to="/empreendedoras" className="text-[9px] md:text-[11px] font-black uppercase tracking-widest text-[#f9943b] hover:text-[#55833d] transition-colors flex items-center gap-1 group">
+            {/* Aponta temporariamente de volta para o início para evitar que caia no fallback de tela branca */}
+            <Link to="/home2" className="text-[9px] md:text-[11px] font-black uppercase tracking-widest text-[#f9943b] hover:text-[#55833d] transition-colors flex items-center gap-1 group">
               Ver mais <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
@@ -338,6 +340,7 @@ export default function HomeComprador() {
           </div>
         </section>
 
+        {/* SEÇÃO DE PRODUTOS E CATEGORIAS */}
         <section className="w-full max-w-6xl mx-auto bg-gray-100/50 p-4 md:p-10 rounded-[1rem] border border-gray-200 shadow-inner mb-12">
           <div className="mb-12">
             <h2 className="text-xs md:text-xl font-black uppercase tracking-widest italic mb-10 text-[#394158]">Categorias</h2>
@@ -376,7 +379,7 @@ export default function HomeComprador() {
             ) : produtosExibidos.length === 0 ? (
               <div className="text-center py-20 text-sm font-black uppercase text-gray-300">Nenhum produto encontrado</div>
             ) : (
-              <div className="grid grid-cols-3 md:grid-cols-4 gap-3 md:gap-8">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-8">
                 {produtosExibidos.map(prod => (
                   <div key={prod.id} className="relative bg-white p-2 md:p-5 rounded-[1rem] shadow-xl flex flex-col group border border-transparent hover:border-[#55833d]/20 transition-all">
                     <button onClick={e => toggleFavorito(e, prod.id)}
@@ -393,50 +396,25 @@ export default function HomeComprador() {
                         <Plus size={14} />
                       </button>
                     </div>
-                    <span className="text-[6px] md:text-[9px] font-black uppercase text-[#55833d] mb-1">{prod.nomeCategoria}</span>
+                    <span className="text-[8px] md:text-[9px] font-black uppercase text-[#55833d] mb-1">{prod.nomeCategoria}</span>
                     <Link to={`/produto/${prod.id}`}>
-                      <h3 className="font-bold text-[#394158] text-[8px] md:text-sm leading-tight mb-1 line-clamp-1 hover:text-[#55833d] transition-colors">{prod.nome}</h3>
+                      <h3 className="font-bold text-[#394158] text-[11px] md:text-sm leading-tight mb-1 line-clamp-1 hover:text-[#55833d] transition-colors">{prod.nome}</h3>
                     </Link>
-                    <div className="flex items-center gap-1 text-[#394158]/50 mb-2 uppercase font-bold text-[6px] md:text-[9px]">
+                    <div className="flex items-center gap-1 text-[#394158]/50 mb-2 uppercase font-bold text-[8px] md:text-[9px]">
                       <MapPin size={8} /> {prod.nomeLoja}
                     </div>
                     <div className="mt-auto pt-2 border-t border-gray-50 flex justify-between items-center">
-                      <span className="text-[10px] md:text-lg font-black text-[#394158]">
-                        R$ {Number(prod.precoAtual).toFixed(2)}
-                        <span className="text-[7px] md:text-[10px] opacity-40 ml-1">/{prod.unidadeMedida}</span>
+                      <span className="text-xs md:text-lg font-black text-[#394158]">
+                        R$ {prod.precoAtual?.toFixed(2)}
                       </span>
-                      <Link to={`/produto/${prod.id}`} className="hidden md:block text-[9px] font-black uppercase bg-[#394158] text-white px-4 py-1.5 rounded-xl hover:bg-[#55833d]">Detalhes</Link>
                     </div>
                   </div>
                 ))}
               </div>
             )}
-
-            {totalPaginas > 1 && (
-              <div className="flex justify-center items-center gap-2 mt-12 pt-8 border-t border-gray-100">
-                <button onClick={() => setPaginaAtual(p => Math.max(0, p - 1))} disabled={paginaAtual === 0}
-                  className={`p-2 rounded-full transition-all ${paginaAtual === 0 ? 'text-gray-200' : 'hover:bg-white text-[#394158] shadow-sm'}`}>
-                  <ChevronLeft size={16} />
-                </button>
-                {[...Array(totalPaginas)].map((_, i) => (
-                  <button key={i} onClick={() => setPaginaAtual(i)}
-                    className={`w-8 h-8 rounded-full text-[10px] font-black transition-all ${paginaAtual === i ? 'bg-[#394158] text-white shadow-md' : 'bg-white text-[#394158]/40 hover:bg-gray-200 shadow-sm'}`}>
-                    {i + 1}
-                  </button>
-                ))}
-                <button onClick={() => setPaginaAtual(p => Math.min(totalPaginas - 1, p + 1))} disabled={paginaAtual === totalPaginas - 1}
-                  className={`p-2 rounded-full transition-all ${paginaAtual === totalPaginas - 1 ? 'text-gray-200' : 'hover:bg-white text-[#394158] shadow-sm'}`}>
-                  <ChevronRight size={16} />
-                </button>
-              </div>
-            )}
           </div>
         </section>
       </main>
-
-      <footer className="w-full text-center p-10 md:p-20 bg-gray-50 text-[#394158]/40 border-t border-gray-100">
-        <span className="text-[8px] md:text-[9px] font-black uppercase tracking-[0.3em]">©️ 2026 Rede Nordeste</span>
-      </footer>
     </div>
   );
 }
