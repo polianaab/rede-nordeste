@@ -76,4 +76,16 @@ public class Loja {
 
     @Column(name = "longitude_loja")
     private Double longitudeLoja;
+
+    @Column(name = "verificada", nullable = false)
+    private Boolean verificada = false;
+
+    @Column(name = "suspensa", nullable = false)
+    private Boolean suspensa = false;
+
+    @Column(name = "data_verificacao")
+    private OffsetDateTime dataVerificacao;
+
+    @Column(name = "motivo_suspensao", columnDefinition = "TEXT")
+    private String motivoSuspensao;
 }

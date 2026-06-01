@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Store, MapPin, Star, ShoppingCart, Info } from 'lucide-react';
+import { Store, MapPin, Star, ShoppingCart, Info, MessageCircle } from 'lucide-react';
+import { PageHeader } from '../../components/ui/PageHeader';
 
 export default function Loja() {
   const { id } = useParams();
@@ -33,22 +34,13 @@ export default function Loja() {
   }, [loja.nomeLoja]);
 
   return (
-    <div className="min-h-screen bg-[#F5F2ED] text-[#394158] antialiased">
-      
-      {/* HEADER SIMPLES */}
-      <header className="w-full bg-white py-4 px-4 md:px-8 border-b border-gray-100 sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto flex items-center gap-4">
-          <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-            <ArrowLeft size={24} />
-          </button>
-          <div className="flex flex-col">
-             <h1 className="text-[12px] font-black uppercase tracking-[0.2em]">{loja.nomeLoja}</h1>
-             <span className="text-[10px] text-[#55833d] font-bold uppercase tracking-widest">Loja Parceira</span>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-6xl mx-auto px-4 md:px-8 py-8 md:py-12 space-y-12">
+    <div className="min-h-screen bg-[#F5F2ED] text-[#394158] antialiased pb-10">
+      <main className="max-w-6xl mx-auto px-4 md:px-8 py-6 md:py-12 space-y-8 md:space-y-12 page-enter">
+        <PageHeader
+          titulo={loja.nomeLoja}
+          subtitulo="Loja Parceira"
+          voltarPara="back"
+        />
         
         {/* BANNER DA LOJA */}
         <section className="bg-white rounded-[2rem] p-6 md:p-10 shadow-sm border border-gray-100 flex flex-col md:flex-row items-center md:items-start gap-8 text-center md:text-left relative overflow-hidden">
@@ -78,6 +70,15 @@ export default function Loja() {
                 <div className="bg-[#F5F2ED]/50 p-4 rounded-2xl border border-[#55833d]/10 max-w-2xl">
                    <p className="text-sm font-medium leading-relaxed opacity-80 italic">"{loja.descricao}"</p>
                 </div>
+              )}
+
+              {id && (
+                <button
+                  onClick={() => navigate('/chat', { state: { lojaId: Number(id) } })}
+                  className="mt-4 self-center md:self-start inline-flex items-center gap-2 bg-[#55833d] text-white px-6 py-3 rounded-full font-black uppercase text-[10px] tracking-widest hover:bg-[#394158] transition-colors active:scale-95"
+                >
+                  <MessageCircle size={14} /> Conversar com esta loja
+                </button>
               )}
            </div>
         </section>

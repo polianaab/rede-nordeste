@@ -8,6 +8,7 @@ import com.semeia_nordeste.backend.model.Usuario;
 public record UsuarioResponse(
         Long id,
         String nomeCompleto,
+        String cpfCnpj,
         String email,
         String telefone,
         TipoPerfil tipoPerfil,
@@ -18,6 +19,7 @@ public record UsuarioResponse(
         return new UsuarioResponse(
                 u.getId(),
                 u.getNomeCompleto(),
+                u.getCpfCnpj(),
                 u.getEmail(),
                 u.getTelefone(),
                 u.getTipoPerfil(),

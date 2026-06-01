@@ -4,6 +4,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.semeia_nordeste.backend.dto.LojaRequest;
+import com.semeia_nordeste.backend.exception.BusinessException;
+import com.semeia_nordeste.backend.exception.NotFoundException;
 import com.semeia_nordeste.backend.model.Loja;
 import com.semeia_nordeste.backend.model.Usuario;
 import com.semeia_nordeste.backend.repository.LojaRepository;
@@ -20,30 +22,32 @@ public class LojaService {
     @Transactional
     public Loja criar(LojaRequest request, Usuario usuario) {
         if (lojaRepository.existsByUsuarioId(usuario.getId()))
-            throw new RuntimeException("Você já possui uma loja cadastrada.");
+            throw new BusinessException("Você já possui uma loja cadastrada.");
 
         if (lojaRepository.existsByNomeLoja(request.nomeLoja()))
-            throw new RuntimeException("Já existe uma loja com esse nome.");
+            throw new BusinessException("Já existe uma loja com esse nome.");
 
         Loja loja = new Loja();
+        loja.setVerificada(false);
+        loja.setSuspensa(false);
         return salvarDados(loja, request, usuario);
     }
 
     @Transactional
     public Loja atualizar(LojaRequest request, Usuario usuario) {
         Loja loja = lojaRepository.findByUsuarioId(usuario.getId())
-                .orElseThrow(() -> new RuntimeException("Loja não encontrada."));
+                .orElseThrow(() -> new NotFoundException("Loja não encontrada."));
         return salvarDados(loja, request, usuario);
     }
 
     public Loja buscarPorUsuario(Usuario usuario) {
         return lojaRepository.findByUsuarioId(usuario.getId())
-                .orElseThrow(() -> new RuntimeException("Loja não encontrada."));
+                .orElseThrow(() -> new NotFoundException("Loja não encontrada."));
     }
 
     public Loja buscarPorId(Long id) {
         return lojaRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Loja não encontrada."));
+                .orElseThrow(() -> new NotFoundException("Loja não encontrada."));
     }
 
     private Loja salvarDados(Loja loja, LojaRequest request, Usuario usuario) {
@@ -60,6 +64,8 @@ public class LojaService {
         loja.setValorMinimoPedido(request.valorMinimoPedido());
         loja.setTaxaEntregaFixa(request.taxaEntregaFixa());
         loja.setLogoUrl(request.logoUrl());
+        if (request.latitudeLoja() != null) loja.setLatitudeLoja(request.latitudeLoja());
+        if (request.longitudeLoja() != null) loja.setLongitudeLoja(request.longitudeLoja());
         return lojaRepository.save(loja);
     }
 }

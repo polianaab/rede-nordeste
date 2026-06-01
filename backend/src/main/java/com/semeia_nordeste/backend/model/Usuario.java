@@ -53,4 +53,10 @@ public class Usuario {
 
     @Column(name = "data_criacao", updatable = false)
     private OffsetDateTime dataCriacao = OffsetDateTime.now();
+
+    @Column(name = "data_ultimo_login")
+    private OffsetDateTime dataUltimoLogin;
+
+    @Column(name = "motivo_suspensao", columnDefinition = "TEXT")
+    private String motivoSuspensao;
 }

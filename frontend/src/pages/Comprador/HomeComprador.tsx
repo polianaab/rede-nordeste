@@ -3,11 +3,13 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Search, ShoppingCart, User, Plus, Filter, MapPin,
   Star, LayoutGrid, Palette, Beef, Sprout, Wheat, Carrot, Milk, Bed, Utensils, Shirt,
-  MessageCircle, Heart, ChevronRight, Menu, X, BookOpen, Store, Bell, HelpCircle
+  MessageCircle, Heart, ChevronRight, Menu, X, BookOpen, Store, Bell, HelpCircle, Home as HomeIcon
 } from 'lucide-react';
 import {
   buscarProdutos, getCategorias, adicionarAoCarrinho, getNaoLidas
 } from '../../services/api';
+import { UserMenu } from '../../components/ui/UserMenu';
+import { BottomTabBar } from '../../components/ui/BottomTabBar';
 
 const CATEGORIAS_ICONES: Record<string, any> = {
   'Todos': LayoutGrid, 'Artesanato': Palette, 'Carnes': Beef,
@@ -26,13 +28,18 @@ export default function HomeComprador() {
   const navigate = useNavigate();
 
   // ── Dados da API ─────────────────────────────────────────────────
+  type CategoriaAPI = { id: number; nome: string };
   const [produtos, setProdutos] = useState<any[]>([]);
-  const [categorias, setCategorias] = useState<string[]>(['Todos']);
+  const [categorias, setCategorias] = useState<CategoriaAPI[]>([{ id: 0, nome: 'Todos' }]);
   const [totalPaginas, setTotalPaginas] = useState(1);
   const [carregando, setCarregando] = useState(false);
+  const [erroCarregamento, setErroCarregamento] = useState<string | null>(null);
+  const [tentativa, setTentativa] = useState(0); // incrementar força re-fetch
 
   // ── Filtros e UI ─────────────────────────────────────────────────
+  // catAtiva guarda o NOME para destacar o chip; catAtivaId guarda o ID para filtrar
   const [catAtiva, setCatAtiva] = useState('Todos');
+  const [catAtivaId, setCatAtivaId] = useState<number | undefined>(undefined);
   const [busca, setBusca] = useState('');
   const [termoPesquisado, setTermoPesquisado] = useState('');
   const [ordenacao, setOrdenacao] = useState('recomendados');
@@ -55,8 +62,11 @@ export default function HomeComprador() {
     }
 
     getCategorias()
-      .then((data: any[]) => setCategorias(['Todos', ...data.map((c: any) => c.nome)]))
-      .catch(() => setCategorias(['Todos']));
+      .then((data: any[]) => setCategorias([
+        { id: 0, nome: 'Todos' },
+        ...data.map((c: any) => ({ id: c.id, nome: c.nome })),
+      ]))
+      .catch(() => setCategorias([{ id: 0, nome: 'Todos' }]));
 
     const raw = localStorage.getItem('usuarioLogado');
     if (raw) {
@@ -71,22 +81,25 @@ export default function HomeComprador() {
   useEffect(() => {
     const carregar = async () => {
       setCarregando(true);
+      setErroCarregamento(null);
       try {
         const data = await buscarProdutos(
           termoPesquisado || undefined,
-          catAtiva !== 'Todos' ? Number(catAtiva) : undefined,
+          catAtivaId, // ID real da categoria (undefined quando "Todos")
           paginaAtual
         );
         setProdutos(data.content || []);
         setTotalPaginas(data.totalPages || 1);
-      } catch {
+      } catch (err: any) {
+        // Não esconder o erro: distinguir "falha de carregamento" de "vitrine vazia".
         setProdutos([]);
+        setErroCarregamento(err?.message || 'Erro ao carregar produtos.');
       } finally {
         setCarregando(false);
       }
     };
     carregar();
-  }, [termoPesquisado, catAtiva, paginaAtual]);
+  }, [termoPesquisado, catAtivaId, paginaAtual, tentativa]);
 
   // ── Redirect de receitas ──────────────────────────────────────────
   useEffect(() => {
@@ -122,6 +135,7 @@ export default function HomeComprador() {
   const handlePesquisa = () => {
     setTermoPesquisado(busca);
     setCatAtiva('Todos');
+    setCatAtivaId(undefined);
     setPaginaAtual(0);
   };
 
@@ -129,8 +143,9 @@ export default function HomeComprador() {
     if (e.key === 'Enter') handlePesquisa();
   };
 
-  const handleCategoriaClick = (nome: string) => {
-    setCatAtiva(nome);
+  const handleCategoriaClick = (cat: { id: number; nome: string }) => {
+    setCatAtiva(cat.nome);
+    setCatAtivaId(cat.nome === 'Todos' ? undefined : cat.id);
     setTermoPesquisado('');
     setBusca('');
     setPaginaAtual(0);
@@ -189,9 +204,7 @@ export default function HomeComprador() {
                   </span>
                 )}
               </Link>
-              <Link title="Meu Perfil" to="/perfil" className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full transition-all duration-300 hover:bg-[#f9943b] hover:text-white text-[#394158] group">
-                <User className="w-[18px] h-[18px] md:w-[22px] md:h-[22px]" />
-              </Link>
+              <UserMenu perfilPath="/perfil" />
             </div>
             <button onClick={() => setMenuAberto(true)} className="md:hidden p-1 text-[#394158] hover:text-[#f9943b]"><Menu size={24} /></button>
           </div>
@@ -345,15 +358,16 @@ export default function HomeComprador() {
           <div className="mb-12">
             <h2 className="text-xs md:text-xl font-black uppercase tracking-widest italic mb-10 text-[#394158]">Categorias</h2>
             <div className="flex flex-wrap justify-center gap-y-5 gap-x-2 md:grid md:grid-cols-5 md:gap-8 justify-items-center max-w-4xl mx-auto px-1">
-              {categorias.map(nome => {
-                const Icone = CATEGORIAS_ICONES[nome] || LayoutGrid;
+              {categorias.map(cat => {
+                const Icone = CATEGORIAS_ICONES[cat.nome] || LayoutGrid;
+                const ativo = catAtiva === cat.nome;
                 return (
-                  <button key={nome} onClick={() => handleCategoriaClick(nome)}
+                  <button key={cat.id || cat.nome} onClick={() => handleCategoriaClick(cat)}
                     className="flex flex-col items-center gap-1.5 md:gap-3 w-[78px] md:w-[120px] group">
-                    <div className={`w-[52px] h-[52px] md:w-[72px] md:h-[72px] rounded-[18px] md:rounded-[24px] flex items-center justify-center border transition-all ${catAtiva === nome ? 'bg-[#f9943b] border-[#f9943b] text-white shadow-md scale-105' : 'bg-white border-gray-100 text-[#394158] shadow-sm group-hover:border-[#f9943b] group-hover:text-[#f9943b]'}`}>
+                    <div className={`w-[52px] h-[52px] md:w-[72px] md:h-[72px] rounded-[18px] md:rounded-[24px] flex items-center justify-center border transition-all ${ativo ? 'bg-[#f9943b] border-[#f9943b] text-white shadow-md scale-105' : 'bg-white border-gray-100 text-[#394158] shadow-sm group-hover:border-[#f9943b] group-hover:text-[#f9943b]'}`}>
                       <Icone className="w-[22px] h-[22px] md:w-8 md:h-8" strokeWidth={1.5} />
                     </div>
-                    <span className={`text-[11px] md:text-[13px] leading-[1.1] text-center px-0.5 ${catAtiva === nome ? 'font-bold text-[#f9943b]' : 'font-medium text-gray-700'}`}>{nome}</span>
+                    <span className={`text-[11px] md:text-[13px] leading-[1.1] text-center px-0.5 ${ativo ? 'font-bold text-[#f9943b]' : 'font-medium text-gray-700'}`}>{cat.nome}</span>
                   </button>
                 );
               })}
@@ -376,6 +390,17 @@ export default function HomeComprador() {
 
             {carregando ? (
               <div className="text-center py-20 text-sm font-black uppercase text-gray-300">Carregando...</div>
+            ) : erroCarregamento ? (
+              <div className="text-center py-20 flex flex-col items-center gap-4">
+                <p className="text-sm font-black uppercase text-red-400">Erro ao carregar produtos</p>
+                <p className="text-xs font-medium text-gray-400 max-w-md">{erroCarregamento}</p>
+                <button
+                  onClick={() => setTentativa(t => t + 1)}
+                  className="bg-[#55833d] text-white px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest active:scale-95 transition-transform"
+                >
+                  Tentar novamente
+                </button>
+              </div>
             ) : produtosExibidos.length === 0 ? (
               <div className="text-center py-20 text-sm font-black uppercase text-gray-300">Nenhum produto encontrado</div>
             ) : (
@@ -415,6 +440,16 @@ export default function HomeComprador() {
           </div>
         </section>
       </main>
+
+      <BottomTabBar
+        tabs={[
+          { to: '/home2',        label: 'Início',     Icon: HomeIcon },
+          { to: '/receitas',     label: 'Receitas',   Icon: BookOpen },
+          { to: '/carrinho',     label: 'Carrinho',   Icon: ShoppingCart, badge: carrinhoCount },
+          { to: '/chat',         label: 'Chat',       Icon: MessageCircle, badge: naoLidas },
+          { to: '/perfil',       label: 'Perfil',     Icon: User },
+        ]}
+      />
     </div>
   );
 }

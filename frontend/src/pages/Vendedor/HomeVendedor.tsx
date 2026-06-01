@@ -3,11 +3,14 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Search, ShoppingCart, User, Plus, Filter, MapPin,
   Star, LayoutGrid, Palette, Beef, Sprout, Wheat, Carrot, Milk, Bed, Utensils, Shirt,
-  MessageCircle, Heart, ChevronRight, Menu, X, BookOpen, Store, Bell, ChevronLeft, HelpCircle
+  MessageCircle, Heart, ChevronRight, Menu, X, BookOpen, Store, Bell, ChevronLeft, HelpCircle,
+  Home as HomeIcon, LayoutDashboard
 } from 'lucide-react';
 import {
   buscarProdutos, getCategorias, adicionarAoCarrinho, getNaoLidas
 } from '../../services/api';
+import { UserMenu } from '../../components/ui/UserMenu';
+import { BottomTabBar } from '../../components/ui/BottomTabBar';
 
 const CATEGORIAS_ICONES: Record<string, any> = {
   'Todos': LayoutGrid, 'Artesanato': Palette, 'Carnes': Beef,
@@ -190,17 +193,12 @@ export default function HomeComprador() {
                   </span>
                 )}
               </Link>
-              <Link title="Meu Perfil" to="/perfilvendedor" className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full transition-all duration-300 hover:bg-[#f9943b] hover:text-white text-[#394158] group">
-                <User className="w-[18px] h-[18px] md:w-[22px] md:h-[22px]" />
-              </Link>
+              <UserMenu perfilPath="/perfilvendedor" />
             </div>
-            
-            {/* Ícones apenas no Mobile/Tablet */}
+
+            {/* Mobile: só o menu hambúrguer + UserMenu compacto */}
             <div className="flex lg:hidden items-center gap-3">
-              <Link to="/carrinho" className="relative text-[#394158]">
-                <ShoppingCart size={22} />
-                {carrinhoCount > 0 && <span className="absolute -top-1 -right-2 bg-red-500 text-white text-[8px] font-black w-3.5 h-3.5 rounded-full flex items-center justify-center">{carrinhoCount}</span>}
-              </Link>
+              <UserMenu perfilPath="/perfilvendedor" />
               <button onClick={() => setMenuAberto(true)} className="p-1 text-[#394158] hover:text-[#f9943b]"><Menu size={24} /></button>
             </div>
           </div>
@@ -444,9 +442,19 @@ export default function HomeComprador() {
         </section>
       </main>
 
-      <footer className="w-full text-center p-10 md:p-20 bg-gray-50 text-[#394158]/40 border-t border-gray-100">
+      <footer className="w-full text-center p-10 md:p-20 bg-gray-50 text-[#394158]/40 border-t border-gray-100 mb-16 md:mb-0">
         <span className="text-[8px] md:text-[9px] font-black uppercase tracking-[0.3em]">©️ 2026 Rede Nordeste</span>
       </footer>
+
+      <BottomTabBar
+        tabs={[
+          { to: '/vendedor',         label: 'Vitrine',  Icon: HomeIcon },
+          { to: '/painelvendedor',   label: 'Painel',   Icon: LayoutDashboard },
+          { to: '/receitasvendedor', label: 'Receitas', Icon: BookOpen },
+          { to: '/chat',             label: 'Chat',     Icon: MessageCircle, badge: naoLidas },
+          { to: '/perfilvendedor',   label: 'Perfil',   Icon: User },
+        ]}
+      />
     </div>
   );
 }

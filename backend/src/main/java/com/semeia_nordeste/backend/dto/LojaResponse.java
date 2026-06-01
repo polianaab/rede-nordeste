@@ -20,11 +20,15 @@ public record LojaResponse(
         BigDecimal valorMinimoPedido,
         BigDecimal taxaEntregaFixa,
         String logoUrl,
-        OffsetDateTime dataAbertura) {
+        OffsetDateTime dataAbertura,
+        Double latitudeLoja,
+        Double longitudeLoja,
+        Boolean verificada,
+        Boolean suspensa) {
     public static LojaResponse fromEntity(Loja l) {
         return new LojaResponse(
                 l.getId(),
-                l.getUsuario().getId(),
+                l.getUsuario() != null ? l.getUsuario().getId() : null,
                 l.getNomeLoja(),
                 l.getDescricaoBio(),
                 l.getLogradouro(),
@@ -37,6 +41,10 @@ public record LojaResponse(
                 l.getValorMinimoPedido(),
                 l.getTaxaEntregaFixa(),
                 l.getLogoUrl(),
-                l.getDataAbertura());
+                l.getDataAbertura(),
+                l.getLatitudeLoja(),
+                l.getLongitudeLoja(),
+                l.getVerificada(),
+                l.getSuspensa());
     }
 }

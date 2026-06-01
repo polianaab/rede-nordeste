@@ -1,8 +1,18 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useEffect, useRef } from 'react';
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+} from 'react-router-dom';
+
+import { useAuth } from './context/AuthContext';
+import type { Perfil as TipoPerfil } from './context/AuthContext';
+import { useToast } from './context/ToastContext';
 
 import Home            from './pages/Home/Home';
-import Home2           from './pages/Comprador/HomeComprador';
+import HomeComprador   from './pages/Comprador/HomeComprador';
 import Login           from './pages/Auth/Login';
 import Register        from './pages/Auth/Register';
 import Receitas        from './pages/Comprador/Receitas';
@@ -20,58 +30,79 @@ import HomeAdmin       from './pages/Admin/HomeAdmin';
 import PerfilVendedor  from './pages/Vendedor/PerfilVendedor';
 import ReceitasVendedor from './pages/Vendedor/ReceitasVendedor';
 
-// ── Helpers ───────────────────────────────────────────────────
-const getUsuario = () => {
-  try {
-    const raw = localStorage.getItem('usuarioLogado');
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    localStorage.removeItem('usuarioLogado');
-    return null;
+// ── Helpers ───────────────────────────────────────────────────────
+const HOME_POR_PERFIL: Record<TipoPerfil, string> = {
+  ADMIN:     '/admin',
+  PRODUTOR:  '/vendedor',
+  COMPRADOR: '/home2',
+};
+
+// ── Loading splash ────────────────────────────────────────────────
+const Splash = () => (
+  <div className="min-h-screen flex items-center justify-center bg-[#F5F2ED]">
+    <div className="flex flex-col items-center gap-4">
+      <div className="w-12 h-12 border-4 border-[#55833d] border-t-transparent rounded-full animate-spin" />
+      <p className="text-[10px] font-black uppercase tracking-widest text-[#394158]/60">
+        Carregando...
+      </p>
+    </div>
+  </div>
+);
+
+// ── Guard genérico: exige perfil(s) específico(s) ─────────────────
+// ADMIN tem acesso a tudo (modo impersonate, conforme decisão da Rodada 1).
+//
+// Detalhe importante: `permitidos` é array literal recriado a cada render
+// do componente pai. Se usássemos ele como dep do useEffect, o efeito
+// dispararia em loop — toast aparecendo dezenas de vezes. Por isso
+// guardamos a chave do array como string e usamos `useRef` para garantir
+// que o warning seja exibido apenas UMA VEZ por mudança de rota.
+const RotaProtegida: React.FC<{
+  permitidos: TipoPerfil[];
+  children: React.ReactNode;
+}> = ({ permitidos, children }) => {
+  const { estaLogado, perfil, carregando } = useAuth();
+  const { warning } = useToast();
+  const location = useLocation();
+
+  const chavePermissoes = permitidos.join(',');
+  const jaAvisado = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (carregando || !estaLogado || !perfil) return;
+    if (perfil === 'ADMIN') return;
+    if (permitidos.includes(perfil)) return;
+
+    // Só avisa uma vez por combinação rota+perfil — evita toast em loop
+    const chave = `${location.pathname}|${perfil}|${chavePermissoes}`;
+    if (jaAvisado.current === chave) return;
+    jaAvisado.current = chave;
+
+    warning(`Essa área é exclusiva para ${permitidos.join(' ou ')}.`);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [carregando, estaLogado, perfil, chavePermissoes, location.pathname]);
+
+  if (carregando) return <Splash />;
+  if (!estaLogado) return <Navigate to="/login" state={{ from: location }} replace />;
+
+  // ADMIN passa em qualquer rota (impersonate)
+  if (perfil === 'ADMIN') return <>{children}</>;
+
+  if (!perfil || !permitidos.includes(perfil)) {
+    return <Navigate to={HOME_POR_PERFIL[perfil ?? 'COMPRADOR']} replace />;
   }
-};
-
-const getPerfil = (): string | null => getUsuario()?.perfil ?? null;
-
-// ── Guardas ───────────────────────────────────────────────────
-const RotaComprador = ({ children }: { children: React.ReactNode }) => {
-  if (!getUsuario()) return <Navigate to="/login" replace />;
-  const p = getPerfil();
-  if (p === 'PRODUTOR') return <Navigate to="/vendedor" replace />;
-  if (p === 'ADMIN')    return <Navigate to="/admin"   replace />;
   return <>{children}</>;
 };
 
-const RotaProdutor = ({ children }: { children: React.ReactNode }) => {
-  if (!getUsuario()) return <Navigate to="/login" replace />;
-  const p = getPerfil();
-  if (p === 'COMPRADOR') return <Navigate to="/home2"   replace />;
-  if (p === 'ADMIN')     return <Navigate to="/admin"   replace />;
+// ── Rota /login e /cadastro: se já logado, redireciona pra home ──
+const RotaAuth: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { estaLogado, perfil, carregando } = useAuth();
+  if (carregando) return <Splash />;
+  if (estaLogado && perfil) return <Navigate to={HOME_POR_PERFIL[perfil]} replace />;
   return <>{children}</>;
 };
 
-const RotaAdmin = ({ children }: { children: React.ReactNode }) => {
-  if (!getUsuario()) return <Navigate to="/login" replace />;
-  const p = getPerfil();
-  if (p === 'PRODUTOR')  return <Navigate to="/vendedor" replace />;
-  if (p === 'COMPRADOR') return <Navigate to="/home2"    replace />;
-  return <>{children}</>;
-};
-
-// Chat acessível para qualquer perfil logado
-const RotaChat = ({ children }: { children: React.ReactNode }) => {
-  if (!getUsuario()) return <Navigate to="/login" replace />;
-  return <>{children}</>;
-};
-
-const RotaAuth = ({ children }: { children: React.ReactNode }) => {
-  const p = getPerfil();
-  if (p === 'ADMIN')     return <Navigate to="/admin"    replace />;
-  if (p === 'PRODUTOR')  return <Navigate to="/vendedor" replace />;
-  if (p === 'COMPRADOR') return <Navigate to="/home2"    replace />;
-  return <>{children}</>;
-};
-
+// ── App ───────────────────────────────────────────────────────────
 function App() {
   return (
     <Router>
@@ -85,30 +116,32 @@ function App() {
           <Route path="/login"    element={<RotaAuth><Login /></RotaAuth>} />
           <Route path="/cadastro" element={<RotaAuth><Register /></RotaAuth>} />
 
-          {/* ── COMPRADOR ────────────────────────────────────── */}
-          <Route path="/home2"        element={<RotaComprador><Home2 /></RotaComprador>} />
-          <Route path="/receitas"     element={<RotaComprador><Receitas /></RotaComprador>} />
-          <Route path="/produto/:id"  element={<RotaComprador><ProdutoDetalhes /></RotaComprador>} />
-          <Route path="/loja/:id"     element={<RotaComprador><Loja /></RotaComprador>} />
-          <Route path="/carrinho"     element={<RotaComprador><Carrinho /></RotaComprador>} />
-          <Route path="/notificacoes" element={<RotaComprador><Notificacao /></RotaComprador>} />
-          <Route path="/perfil"       element={<RotaComprador><Perfil /></RotaComprador>} />
+          {/* ── MARKETPLACE — qualquer logado pode comprar ─────────
+             Regra: COMPRADOR só compra; PRODUTOR vende E também pode
+             comprar de outras lojas. Por isso todas as rotas de "área
+             de compra" aceitam ambos. ADMIN passa em qualquer rota. */}
+          <Route path="/home2"        element={<RotaProtegida permitidos={['COMPRADOR', 'PRODUTOR']}><HomeComprador /></RotaProtegida>} />
+          <Route path="/receitas"     element={<RotaProtegida permitidos={['COMPRADOR', 'PRODUTOR']}><Receitas /></RotaProtegida>} />
+          <Route path="/produto/:id"  element={<RotaProtegida permitidos={['COMPRADOR', 'PRODUTOR']}><ProdutoDetalhes /></RotaProtegida>} />
+          <Route path="/loja/:id"     element={<RotaProtegida permitidos={['COMPRADOR', 'PRODUTOR']}><Loja /></RotaProtegida>} />
+          <Route path="/carrinho"     element={<RotaProtegida permitidos={['COMPRADOR', 'PRODUTOR']}><Carrinho /></RotaProtegida>} />
+          <Route path="/notificacoes" element={<RotaProtegida permitidos={['COMPRADOR', 'PRODUTOR']}><Notificacao /></RotaProtegida>} />
+          <Route path="/perfil"       element={<RotaProtegida permitidos={['COMPRADOR', 'PRODUTOR']}><Perfil /></RotaProtegida>} />
 
-          {/* ── CHAT — qualquer perfil logado acessa ─────────── */}
-          <Route path="/chat" element={<RotaChat><Chat /></RotaChat>} />
+          {/* ── CHAT — comprador ou vendedor ─────────────────── */}
+          <Route path="/chat" element={<RotaProtegida permitidos={['COMPRADOR', 'PRODUTOR']}><Chat /></RotaProtegida>} />
 
-          {/* ── EMPREENDEDORAS — redireciona para home2 ──────── */}
-          {/* FIX BUG 3: rota /empreendedoras não existia, caía no fallback */}
-          <Route path="/empreendedoras" element={<RotaComprador><Home2 /></RotaComprador>} />
+          {/* ── EMPREENDEDORAS ───────────────────────────────── */}
+          <Route path="/empreendedoras" element={<RotaProtegida permitidos={['COMPRADOR', 'PRODUTOR']}><HomeComprador /></RotaProtegida>} />
 
-          {/* ── PRODUTOR ─────────────────────────────────────── */}
-          <Route path="/vendedor"         element={<RotaProdutor><HomeVendedor /></RotaProdutor>} />
-          <Route path="/painelvendedor"   element={<RotaProdutor><PainelVendedor /></RotaProdutor>} />
-          <Route path="/perfilvendedor"   element={<RotaProdutor><PerfilVendedor /></RotaProdutor>} />
-          <Route path="/receitasvendedor" element={<RotaProdutor><ReceitasVendedor /></RotaProdutor>} />
+          {/* ── VENDEDOR ─────────────────────────────────────── */}
+          <Route path="/vendedor"         element={<RotaProtegida permitidos={['PRODUTOR']}><HomeVendedor /></RotaProtegida>} />
+          <Route path="/painelvendedor"   element={<RotaProtegida permitidos={['PRODUTOR']}><PainelVendedor /></RotaProtegida>} />
+          <Route path="/perfilvendedor"   element={<RotaProtegida permitidos={['PRODUTOR']}><PerfilVendedor /></RotaProtegida>} />
+          <Route path="/receitasvendedor" element={<RotaProtegida permitidos={['PRODUTOR']}><ReceitasVendedor /></RotaProtegida>} />
 
           {/* ── ADMIN ────────────────────────────────────────── */}
-          <Route path="/admin" element={<RotaAdmin><HomeAdmin /></RotaAdmin>} />
+          <Route path="/admin" element={<RotaProtegida permitidos={['ADMIN']}><HomeAdmin /></RotaProtegida>} />
 
           {/* ── FALLBACK ─────────────────────────────────────── */}
           <Route path="*" element={<Navigate to="/" replace />} />

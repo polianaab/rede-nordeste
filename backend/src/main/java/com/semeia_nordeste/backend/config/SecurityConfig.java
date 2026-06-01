@@ -3,6 +3,7 @@ package com.semeia_nordeste.backend.config;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -25,59 +26,73 @@ public class SecurityConfig {
         @Autowired
         private SecurityFilter securityFilter;
 
+        @Autowired
+        private RateLimitFilter rateLimitFilter;
+
+        @Value("${cors.allowed-origins:http://localhost:5173,http://127.0.0.1:5173}")
+        private String allowedOrigins;
+
         @Bean
         public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
                 http
                                 .csrf(csrf -> csrf.disable())
                                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                                .sessionManagement(session -> session
-                                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                                .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                                 .authorizeHttpRequests(auth -> auth
-                                                // 1. PÚBLICO
-                                                .requestMatchers(
+                                                // 1 — PÚBLICO (auth)
+                                                .requestMatchers(HttpMethod.POST,
                                                                 "/api/usuarios/registrar",
                                                                 "/api/usuarios/login",
                                                                 "/api/usuarios/refresh")
                                                 .permitAll()
-                                                .requestMatchers(
+
+                                                // 2 — PÚBLICO (utilitários)
+                                                .requestMatchers(HttpMethod.POST,
                                                                 "/api/entregadores/cadastrar",
-                                                                "/api/frete/simular",
-                                                                "/ws/**")
-                                                .permitAll()
-                                                .requestMatchers(HttpMethod.GET,
-                                                                "/api/produtos/**",
-                                                                "/api/lojas/**",
-                                                                "/api/categorias/**",
-                                                                "/api/receitas/**")
-                                                .permitAll()
-                                                // Adicione junto com as outras rotas GET públicas:
-                                                .requestMatchers(HttpMethod.GET,
-                                                                "/api/produtos/**",
-                                                                "/api/produtos/home", // ← já coberto por produtos/**,
-                                                                                      // mas explícito
-                                                                "/api/lojas/**",
-                                                                "/api/categorias/**",
-                                                                "/api/receitas/**")
+                                                                "/api/frete/simular")
                                                 .permitAll()
 
-                                                // 2. ADMIN
+                                                // 3 — WebSocket handshake (token validado no STOMP CONNECT)
+                                                .requestMatchers("/ws/**").permitAll()
+
+                                                // 4 — PÚBLICO (leitura — catálogo + conteúdo)
+                                                .requestMatchers(HttpMethod.GET,
+                                                                "/api/produtos/**",
+                                                                "/api/lojas/**",
+                                                                "/api/categorias",
+                                                                "/api/receitas/**",
+                                                                "/api/banners",
+                                                                "/api/banners/**",
+                                                                "/api/noticias",
+                                                                "/api/noticias/**")
+                                                .permitAll()
+
+                                                // 5 — ADMIN
                                                 .requestMatchers("/api/admin/**",
                                                                 "/api/categorias/admin/**")
                                                 .hasAuthority("ADMIN")
 
-                                                // 3. PRODUTOR
+                                                // 6 — PRODUTOR
                                                 .requestMatchers("/api/produtor/chats/**").hasAuthority("PRODUTOR")
                                                 .requestMatchers("/api/produtor/**")
                                                 .hasAnyAuthority("PRODUTOR", "ADMIN")
 
-                                                // 4. COMPRADOR
-                                                .requestMatchers("/api/comprador/chats/**").hasAuthority("COMPRADOR")
+                                                // 7 — COMPRADOR (e PRODUTOR também pode comprar)
+                                                // Regra de negócio: PRODUTOR vende E pode comprar de outras lojas.
+                                                // Por isso liberamos carrinho/checkout/pedidos/chats para ambos.
+                                                .requestMatchers("/api/comprador/chats/**")
+                                                .hasAnyAuthority("COMPRADOR", "PRODUTOR")
                                                 .requestMatchers("/api/comprador/**")
-                                                .hasAnyAuthority("COMPRADOR", "ADMIN")
+                                                .hasAnyAuthority("COMPRADOR", "PRODUTOR", "ADMIN")
 
-                                                // 5. GERAL
+                                                // 8 — Chat genérico (participantes validados no service)
                                                 .requestMatchers("/api/chats/**").authenticated()
+
+                                                // 9 — fallback
                                                 .anyRequest().authenticated())
+                                // RateLimitFilter ANTES do SecurityFilter — bloqueia brute-force
+                                // sem nem chegar na validação de senha (que é cara).
+                                .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
                                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
                                 .httpBasic(basic -> basic.disable())
                                 .formLogin(form -> form.disable());
@@ -88,8 +103,7 @@ public class SecurityConfig {
         @Bean
         public CorsConfigurationSource corsConfigurationSource() {
                 CorsConfiguration configuration = new CorsConfiguration();
-                // Aceita qualquer origem em desenvolvimento
-                configuration.setAllowedOriginPatterns(List.of("*"));
+                configuration.setAllowedOriginPatterns(List.of(allowedOrigins.split(",")));
                 configuration.setAllowedMethods(
                                 List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
                 configuration.setAllowedHeaders(List.of("*"));

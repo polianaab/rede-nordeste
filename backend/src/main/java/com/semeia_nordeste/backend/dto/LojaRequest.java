@@ -27,5 +27,8 @@ public record LojaRequest(
 
         @DecimalMin(value = "0.0") BigDecimal taxaEntregaFixa,
 
-        String logoUrl) {
+        String logoUrl,
+
+        Double latitudeLoja,
+        Double longitudeLoja) {
 }

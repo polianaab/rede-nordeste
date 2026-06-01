@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -13,14 +14,12 @@ import java.util.List;
 @Repository
 public interface ProdutoRepository extends JpaRepository<Produto, Long> {
 
-    // ── Queries existentes — agora filtram por status ─────────────
     Page<Produto> findByLojaId(Long lojaId, Pageable pageable);
 
     Page<Produto> findByCategoriaId(Long categoriaId, Pageable pageable);
 
     Page<Produto> findByNomeContainingIgnoreCase(String nome, Pageable pageable);
 
-    // ── Marketplace — só aprovados ────────────────────────────────
     Page<Produto> findByStatus(StatusProduto status, Pageable pageable);
 
     Page<Produto> findByStatusAndNomeContainingIgnoreCase(
@@ -29,16 +28,46 @@ public interface ProdutoRepository extends JpaRepository<Produto, Long> {
     Page<Produto> findByStatusAndCategoriaId(
             StatusProduto status, Long categoriaId, Pageable pageable);
 
-    // ── Painel admin — pendentes aguardando aprovação ─────────────
+    // Painel admin — pendentes aguardando aprovação
     Page<Produto> findByStatusOrderByDataCadastroAsc(
             StatusProduto status, Pageable pageable);
 
-    // ── Home estilo Shopee ────────────────────────────────────────
-    // Retorna o produto mais recente de cada loja (apenas APROVADOS)
+    /**
+     * Busca de marketplace que combina status + nome (opcional) + categoria (opcional)
+     * num único filtro. Só retorna produtos de lojas verificadas e não suspensas.
+     *
+     * IMPORTANTE: o filtro de nome usa `:nome = ''` (string vazia) em vez de
+     * `:nome IS NULL`. Motivo: no PostgreSQL, um bind `null` "solto" dentro de
+     * LOWER(CONCAT(...)) faz o planner inferir o tipo como `bytea`, gerando o
+     * erro `function lower(bytea) does not exist` ao PREPARAR o statement
+     * (mesmo com o short-circuit `IS NULL`). Passando sempre uma String (vazia
+     * quando não há busca), o tipo é inferido como `text` e a query funciona.
+     * O service garante que `nome` nunca chega null (ver ProdutoService.buscar).
+     */
+    @Query("""
+            SELECT p FROM Produto p
+            WHERE p.status = :status
+              AND p.loja.verificada = true
+              AND p.loja.suspensa = false
+              AND (:nome = '' OR LOWER(p.nome) LIKE LOWER(CONCAT('%', :nome, '%')))
+              AND (:categoriaId IS NULL OR p.categoria.id = :categoriaId)
+            """)
+    Page<Produto> buscarMarketplace(
+            @Param("status") StatusProduto status,
+            @Param("nome") String nome,
+            @Param("categoriaId") Long categoriaId,
+            Pageable pageable);
+
+    /**
+     * Home estilo Shopee — um produto APROVADO por loja verificada, o mais recente.
+     */
     @Query(value = """
             SELECT DISTINCT ON (p.loja_id) p.*
             FROM produtos p
+            JOIN lojas l ON l.id = p.loja_id
             WHERE p.status = 'APROVADO'
+              AND l.verificada = TRUE
+              AND l.suspensa = FALSE
             ORDER BY p.loja_id, p.data_cadastro DESC
             """, nativeQuery = true)
     List<Produto> findUmPorLoja();

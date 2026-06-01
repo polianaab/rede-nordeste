@@ -16,6 +16,7 @@ import com.semeia_nordeste.backend.dto.NotificacaoDTO;
 import com.semeia_nordeste.backend.model.Chat;
 import com.semeia_nordeste.backend.model.Loja;
 import com.semeia_nordeste.backend.model.Mensagem;
+import com.semeia_nordeste.backend.model.TipoNotificacao;
 import com.semeia_nordeste.backend.model.Usuario;
 import com.semeia_nordeste.backend.repository.ChatRepository;
 import com.semeia_nordeste.backend.repository.LojaRepository;
@@ -30,23 +31,22 @@ public class ChatService {
         private final UsuarioRepository usuarioRepository;
         private final LojaRepository lojaRepository;
         private final SimpMessagingTemplate messagingTemplate;
+        private final NotificacaoService notificacaoService;
 
         public ChatService(ChatRepository chatRepository,
                         MensagemRepository mensagemRepository,
                         UsuarioRepository usuarioRepository,
                         LojaRepository lojaRepository,
-                        SimpMessagingTemplate messagingTemplate) {
+                        SimpMessagingTemplate messagingTemplate,
+                        NotificacaoService notificacaoService) {
                 this.chatRepository = chatRepository;
                 this.mensagemRepository = mensagemRepository;
                 this.usuarioRepository = usuarioRepository;
                 this.lojaRepository = lojaRepository;
                 this.messagingTemplate = messagingTemplate;
+                this.notificacaoService = notificacaoService;
         }
 
-        /**
-         * Abre ou retorna um chat existente entre comprador e loja.
-         * Idempotente — chamadas repetidas retornam o mesmo chat.
-         */
         @Transactional
         public Chat abrirOuRetornarChat(Long compradorId, Long lojaId) {
                 return chatRepository
@@ -85,25 +85,32 @@ public class ChatService {
                 Mensagem salva = mensagemRepository.save(mensagem);
                 MensagemResponse response = MensagemResponse.fromEntity(salva);
 
-                // ── Notifica via WebSocket ──────────────────────────────────
-                // Todos os participantes do chat recebem em /topic/chat/{chatId}
+                // Push em tempo real para quem estiver com o chat aberto
                 messagingTemplate.convertAndSend(
                                 "/topic/chat/" + chatId,
                                 response);
 
-                // Notificação de badge para o destinatário
-                Long destinatarioId = resolverDestinatario(chat, remetente);
+                // Persistência + push de notificação para o destinatário —
+                // garante que mensagem chega mesmo se ele estava offline.
+                Usuario destinatario = resolverDestinatarioUsuario(chat, remetente);
+                String preview = request.conteudo().length() > 80
+                                ? request.conteudo().substring(0, 80) + "…"
+                                : request.conteudo();
+                notificacaoService.notificar(
+                                destinatario,
+                                TipoNotificacao.CHAT,
+                                "Nova mensagem de " + remetente.getNomeCompleto(),
+                                preview,
+                                "/chat?chatId=" + chatId);
+
                 messagingTemplate.convertAndSendToUser(
-                                destinatarioId.toString(),
+                                destinatario.getId().toString(),
                                 "/queue/notificacoes",
                                 new NotificacaoDTO(chatId, remetente.getNomeCompleto(), request.conteudo()));
 
                 return response;
         }
 
-        /**
-         * Lista mensagens de um chat com paginação.
-         */
         @Transactional
         public Page<MensagemResponse> listarMensagens(Long chatId,
                         Usuario usuario,
@@ -120,33 +127,26 @@ public class ChatService {
                                 .map(MensagemResponse::fromEntity);
         }
 
-        /**
-         * Lista todos os chats do comprador com badge de não lidas.
-         */
         public List<ChatResponse> listarChatsDoComprador(Usuario usuario) {
                 return chatRepository
                                 .findByCompradorIdOrderByDataInicioDesc(usuario.getId())
                                 .stream()
                                 .map(c -> ChatResponse.fromEntity(c,
-                                                chatRepository.contarNaoLidas(c.getId(), usuario.getId())))
+                                                chatRepository.contarNaoLidas(c.getId(), usuario.getId()),
+                                                mensagemRepository.findFirstByChatIdOrderByDataEnvioDesc(c.getId())))
                                 .toList();
         }
 
-        /**
-         * Lista todos os chats da loja do produtor.
-         */
         public List<ChatResponse> listarChatsDaLoja(Usuario produtor) {
                 return chatRepository
                                 .findByLoja_Usuario_IdOrderByDataInicioDesc(produtor.getId())
                                 .stream()
                                 .map(c -> ChatResponse.fromEntity(c,
-                                                chatRepository.contarNaoLidas(c.getId(), produtor.getId())))
+                                                chatRepository.contarNaoLidas(c.getId(), produtor.getId()),
+                                                mensagemRepository.findFirstByChatIdOrderByDataEnvioDesc(c.getId())))
                                 .toList();
         }
 
-        /**
-         * Total de mensagens não lidas — usado para badge global no header.
-         */
         public long totalNaoLidas(Usuario usuario) {
                 return mensagemRepository.totalNaoLidasDoUsuario(usuario.getId());
         }
@@ -158,9 +158,9 @@ public class ChatService {
                         throw new RuntimeException("Você não participa deste chat.");
         }
 
-        private Long resolverDestinatario(Chat chat, Usuario remetente) {
+        private Usuario resolverDestinatarioUsuario(Chat chat, Usuario remetente) {
                 if (chat.getComprador().getId().equals(remetente.getId()))
-                        return chat.getLoja().getUsuario().getId();
-                return chat.getComprador().getId();
+                        return chat.getLoja().getUsuario();
+                return chat.getComprador();
         }
 }

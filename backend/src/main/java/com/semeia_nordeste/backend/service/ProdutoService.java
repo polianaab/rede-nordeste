@@ -10,6 +10,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.semeia_nordeste.backend.dto.ProdutoRequest;
 import com.semeia_nordeste.backend.dto.StatusProdutoRequest;
+import com.semeia_nordeste.backend.exception.BusinessException;
+import com.semeia_nordeste.backend.exception.ForbiddenException;
+import com.semeia_nordeste.backend.exception.NotFoundException;
 import com.semeia_nordeste.backend.model.Categoria;
 import com.semeia_nordeste.backend.model.Loja;
 import com.semeia_nordeste.backend.model.Produto;
@@ -42,11 +45,11 @@ public class ProdutoService {
                 var logado = usuarioAutenticado.get();
 
                 Loja loja = lojaRepository.findByUsuarioId(logado.getId())
-                                .orElseThrow(() -> new RuntimeException(
+                                .orElseThrow(() -> new BusinessException(
                                                 "Você precisa cadastrar uma loja antes de adicionar produtos."));
 
                 Categoria categoria = categoriaRepository.findById(request.categoriaId())
-                                .orElseThrow(() -> new RuntimeException("Categoria não encontrada."));
+                                .orElseThrow(() -> new NotFoundException("Categoria não encontrada."));
 
                 return salvarDados(new Produto(), request, loja, categoria);
         }
@@ -56,16 +59,16 @@ public class ProdutoService {
                 var logado = usuarioAutenticado.get();
 
                 Produto produto = produtoRepository.findById(produtoId)
-                                .orElseThrow(() -> new RuntimeException("Produto não encontrado."));
+                                .orElseThrow(() -> new NotFoundException("Produto não encontrado."));
 
                 boolean isAdmin = usuarioAutenticado.isAdmin();
                 boolean isDono = produto.getLoja().getUsuario().getId().equals(logado.getId());
 
                 if (!isAdmin && !isDono)
-                        throw new SecurityException("Você não tem permissão para editar este produto.");
+                        throw new ForbiddenException("Você não tem permissão para editar este produto.");
 
                 Categoria categoria = categoriaRepository.findById(request.categoriaId())
-                                .orElseThrow(() -> new RuntimeException("Categoria não encontrada."));
+                                .orElseThrow(() -> new NotFoundException("Categoria não encontrada."));
 
                 return salvarDados(produto, request, produto.getLoja(), categoria);
         }
@@ -75,26 +78,23 @@ public class ProdutoService {
                 var logado = usuarioAutenticado.get();
 
                 Produto produto = produtoRepository.findById(produtoId)
-                                .orElseThrow(() -> new RuntimeException("Produto não encontrado."));
+                                .orElseThrow(() -> new NotFoundException("Produto não encontrado."));
 
                 boolean isAdmin = usuarioAutenticado.isAdmin();
                 boolean isDono = produto.getLoja().getUsuario().getId().equals(logado.getId());
 
                 if (!isAdmin && !isDono)
-                        throw new SecurityException("Você não tem permissão para deletar este produto.");
+                        throw new ForbiddenException("Você não tem permissão para deletar este produto.");
 
                 produtoRepository.delete(produto);
         }
 
-        // ── Marketplace — só produtos APROVADOS ──────────────────────
+        // Marketplace — combina nome + categoriaId. Sempre filtra por status APROVADO.
+        // termo é "" (nunca null) quando não há busca — evita o erro lower(bytea) no
+        // PostgreSQL. Ver javadoc de ProdutoRepository.buscarMarketplace.
         public Page<Produto> buscar(String nome, Long categoriaId, Pageable pageable) {
-                if (categoriaId != null)
-                        return produtoRepository.findByStatusAndCategoriaId(
-                                        StatusProduto.APROVADO, categoriaId, pageable);
-                if (nome != null && !nome.isBlank())
-                        return produtoRepository.findByStatusAndNomeContainingIgnoreCase(
-                                        StatusProduto.APROVADO, nome, pageable);
-                return produtoRepository.findByStatus(StatusProduto.APROVADO, pageable);
+                String termo = (nome != null && !nome.isBlank()) ? nome.trim() : "";
+                return produtoRepository.buscarMarketplace(StatusProduto.APROVADO, termo, categoriaId, pageable);
         }
 
         public Page<Produto> listarPorLoja(Long lojaId, Pageable pageable) {
@@ -103,25 +103,22 @@ public class ProdutoService {
 
         public Produto buscarPorId(Long id) {
                 return produtoRepository.findById(id)
-                                .orElseThrow(() -> new RuntimeException("Produto não encontrado."));
+                                .orElseThrow(() -> new NotFoundException("Produto não encontrado."));
         }
 
-        // ── Home estilo Shopee ────────────────────────────────────────
         public List<Produto> listarParaHome() {
                 return produtoRepository.findUmPorLoja();
         }
 
-        // ── Admin — fila de moderação ─────────────────────────────────
         public Page<Produto> listarPendentes(Pageable pageable) {
                 return produtoRepository.findByStatusOrderByDataCadastroAsc(
                                 StatusProduto.PENDENTE, pageable);
         }
 
-        // ── Admin — aprova ou rejeita ─────────────────────────────────
         @Transactional
         public Produto atualizarStatus(Long produtoId, StatusProdutoRequest request) {
                 Produto produto = produtoRepository.findById(produtoId)
-                                .orElseThrow(() -> new RuntimeException("Produto não encontrado."));
+                                .orElseThrow(() -> new NotFoundException("Produto não encontrado."));
 
                 produto.setStatus(request.status());
                 return produtoRepository.save(produto);
@@ -138,7 +135,9 @@ public class ProdutoService {
                 p.setPesoKg(r.pesoKg() != null ? r.pesoKg() : BigDecimal.valueOf(0.5));
                 p.setImagemUrl(r.imagemUrl());
                 if (p.getId() == null)
-                        p.setStatus(StatusProduto.PENDENTE);
+                        // Decisão de produto: novo produto nasce APROVADO para destravar a vitrine.
+                        // ADMIN ainda pode REJEITAR a posteriori via PATCH /admin/produtos/{id}/status.
+                        p.setStatus(StatusProduto.APROVADO);
                 return produtoRepository.save(p);
         }
 }

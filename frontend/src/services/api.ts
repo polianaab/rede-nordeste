@@ -2,11 +2,20 @@ import axios from "axios";
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 
+const STORAGE_KEY = "usuarioLogado";
+const STORAGE_LIXOS = [
+  "user_role",
+  "mock_carrinho",
+  "tutorial_visto_comprador",
+  "tutorial_visto_vendedor",
+  "favoritos_itens",
+];
+
 // ============================================================
 // INSTÂNCIA BASE
 // ============================================================
 export const apiService = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:8080/api",
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:8090/api",
   headers: { "Content-Type": "application/json" },
 });
 
@@ -14,7 +23,7 @@ export const apiService = axios.create({
 // INTERCEPTOR — injeta token em toda requisição
 // ============================================================
 apiService.interceptors.request.use((config) => {
-  const raw = localStorage.getItem("usuarioLogado");
+  const raw = localStorage.getItem(STORAGE_KEY);
   if (raw) {
     try {
       const dados = JSON.parse(raw);
@@ -22,11 +31,27 @@ apiService.interceptors.request.use((config) => {
         config.headers.Authorization = `Bearer ${dados.accessToken}`;
       }
     } catch {
-      localStorage.removeItem("usuarioLogado");
+      localStorage.removeItem(STORAGE_KEY);
     }
   }
   return config;
 });
+
+const limparSessaoLocal = () => {
+  localStorage.removeItem(STORAGE_KEY);
+  STORAGE_LIXOS.forEach((k) => localStorage.removeItem(k));
+};
+
+// Endpoints públicos de auth NUNCA disparam refresh automático.
+// Why: se /login retorna 401 (senha errada), tentar refresh mascara a
+// mensagem real ("E-mail ou senha incorretos") como "Sessão expirada".
+const AUTH_PUBLIC_PATHS = [
+  "/usuarios/login",
+  "/usuarios/registrar",
+  "/usuarios/refresh",
+];
+const isAuthPublic = (url?: string) =>
+  !!url && AUTH_PUBLIC_PATHS.some((p) => url.includes(p));
 
 // ============================================================
 // INTERCEPTOR — trata erros e faz refresh automático
@@ -36,25 +61,34 @@ apiService.interceptors.response.use(
   async (error) => {
     const original = error.config;
 
-    if (error.response?.status === 401 && !original._retry) {
+    if (
+      error.response?.status === 401 &&
+      !original._retry &&
+      !isAuthPublic(original?.url)
+    ) {
       original._retry = true;
       try {
-        const raw = localStorage.getItem("usuarioLogado");
+        const raw = localStorage.getItem(STORAGE_KEY);
         if (!raw) throw new Error("Sem sessão");
 
         const dados = JSON.parse(raw);
-        const baseURL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
+        const baseURL = import.meta.env.VITE_API_URL || "http://localhost:8090/api";
         const res = await axios.post(`${baseURL}/usuarios/refresh`, {
           refreshToken: dados.refreshToken,
         });
 
         const novos = { ...dados, ...res.data };
-        localStorage.setItem("usuarioLogado", JSON.stringify(novos));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(novos));
+        // Notifica AuthContext (StorageEvent só dispara em outras abas; dispatch manual cobre a mesma aba)
+        window.dispatchEvent(new StorageEvent("storage", { key: STORAGE_KEY }));
         original.headers.Authorization = `Bearer ${res.data.accessToken}`;
         return apiService(original);
       } catch {
-        localStorage.removeItem("usuarioLogado");
-        window.location.href = "/login";
+        limparSessaoLocal();
+        window.dispatchEvent(new StorageEvent("storage", { key: STORAGE_KEY }));
+        if (!window.location.pathname.startsWith("/login")) {
+          window.location.href = "/login";
+        }
         return Promise.reject(new Error("Sessão expirada. Faça login novamente."));
       }
     }
@@ -106,9 +140,111 @@ export const refresh = async (refreshToken: string) => {
   return res.data;
 };
 
+export const logoutBackend = async (refreshToken: string) => {
+  await apiService.post("/usuarios/logout", { refreshToken });
+};
+
 export const getMeuPerfil = async () => {
   const res = await apiService.get("/usuarios/me");
   return res.data;
+};
+
+export const atualizarMeuPerfil = async (dados: {
+  nomeCompleto?: string;
+  email?: string;
+  telefone?: string;
+  fotoPerfilUrl?: string;
+  senhaAtual?: string;
+  novaSenha?: string;
+}) => {
+  const res = await apiService.patch("/usuarios/me", dados);
+  return res.data;
+};
+
+// ============================================================
+// ENDEREÇOS (do usuário logado) — antes em localStorage
+// ============================================================
+export const getMeusEnderecos = async () => {
+  const res = await apiService.get("/usuarios/enderecos");
+  return res.data;
+};
+
+export const criarEndereco = async (dados: {
+  destinatario: string;
+  telefone?: string;
+  cep: string;
+  estadoCidade: string;
+  bairro: string;
+  rua: string;
+  numero: string;
+  complemento?: string;
+  latitudeDestino?: number;
+  longitudeDestino?: number;
+  principal?: boolean;
+}) => {
+  const res = await apiService.post("/usuarios/enderecos", dados);
+  return res.data;
+};
+
+export const atualizarEndereco = async (id: number, dados: any) => {
+  const res = await apiService.put(`/usuarios/enderecos/${id}`, dados);
+  return res.data;
+};
+
+export const deletarEndereco = async (id: number) => {
+  await apiService.delete(`/usuarios/enderecos/${id}`);
+};
+
+// ============================================================
+// CARTÕES (do usuário logado, PCI-aware: backend só guarda os finais)
+// ============================================================
+export const getMeusCartoes = async () => {
+  const res = await apiService.get("/usuarios/cartoes");
+  return res.data;
+};
+
+export const criarCartao = async (dados: {
+  titular: string;
+  numero: string;
+  validade: string;
+  cvv: string;
+}) => {
+  const res = await apiService.post("/usuarios/cartoes", dados);
+  return res.data;
+};
+
+export const deletarCartao = async (id: number) => {
+  await apiService.delete(`/usuarios/cartoes/${id}`);
+};
+
+// ============================================================
+// NOTIFICAÇÕES (do usuário logado, isolamento por usuario_id)
+// ============================================================
+export const getMinhasNotificacoes = async () => {
+  const res = await apiService.get("/usuarios/notificacoes");
+  return res.data;
+};
+
+export const contarNotificacoesNaoLidas = async () => {
+  const res = await apiService.get("/usuarios/notificacoes/contagem-nao-lidas");
+  return res.data;
+};
+
+export const marcarNotificacaoComoLida = async (id: number) => {
+  const res = await apiService.patch(`/usuarios/notificacoes/${id}/lida`);
+  return res.data;
+};
+
+export const marcarTodasNotificacoesComoLidas = async () => {
+  await apiService.patch("/usuarios/notificacoes/todas-lidas");
+};
+
+export const deletarNotificacao = async (id: number) => {
+  await apiService.delete(`/usuarios/notificacoes/${id}`);
+};
+
+export const limparTodasNotificacoes = async () => {
+  await apiService.delete("/usuarios/notificacoes");
 };
 
 // ============================================================
@@ -204,101 +340,34 @@ export const aprovarOuRejeitarProduto = async (
 };
 
 // ============================================================
-// CARRINHO (com fallback para localStorage)
+// CARRINHO — sempre via backend (fonte de verdade).
+// O fallback antigo para localStorage foi removido: mascarava
+// erros de autenticação e quebrava o checkout (carrinho local
+// nunca chegava ao servidor). Ver raMemory.md §3.6.
 // ============================================================
-const getCarrinhoLocal = () => {
-  const c = localStorage.getItem("mock_carrinho");
-  return c ? JSON.parse(c) : { itens: [], totalItens: 0, valorTotal: 0 };
-};
-
-const salvarCarrinhoLocal = (carrinho: any) => {
-  let totalValor = 0;
-  let totalItens = 0;
-  carrinho.itens.forEach((i: any) => {
-    i.subtotal = i.precoUnitario * i.quantidade;
-    totalValor += i.subtotal;
-    totalItens += i.quantidade;
-  });
-  carrinho.valorTotal = totalValor;
-  carrinho.totalItens = totalItens;
-  localStorage.setItem("mock_carrinho", JSON.stringify(carrinho));
-  return carrinho;
-};
-
 export const getCarrinho = async () => {
-  try {
-    const res = await apiService.get("/comprador/carrinho");
-    return res.data;
-  } catch {
-    return getCarrinhoLocal();
-  }
+  const res = await apiService.get("/comprador/carrinho");
+  return res.data;
 };
 
 export const adicionarAoCarrinho = async (
   produtoId: number,
   quantidade: number
 ) => {
-  try {
-    const res = await apiService.post("/comprador/carrinho", {
-      produtoId,
-      quantidade,
-    });
-    return res.data;
-  } catch {
-    const cart = getCarrinhoLocal();
-    const itemExistente = cart.itens.find((i: any) => i.produtoId === produtoId);
-    if (itemExistente) {
-      if (window.location.pathname.includes("carrinho")) {
-        itemExistente.quantidade = quantidade;
-      } else {
-        itemExistente.quantidade += quantidade;
-      }
-    } else {
-      let prodDetalhe: any = null;
-      try {
-        const res = await apiService.get(`/produtos/${produtoId}`);
-        prodDetalhe = res.data;
-      } catch {
-        prodDetalhe = {
-          id: produtoId,
-          nome: "Produto " + produtoId,
-          precoAtual: 15.9,
-          imagemUrl: "https://via.placeholder.com/100",
-          lojaId: 1,
-        };
-      }
-      cart.itens.push({
-        id: Date.now(),
-        produtoId,
-        nomeProduto: prodDetalhe.nome,
-        precoUnitario: prodDetalhe.precoAtual,
-        quantidade,
-        imagemUrl: prodDetalhe.imagemUrl,
-        lojaId: prodDetalhe.lojaId,
-        subtotal: prodDetalhe.precoAtual * quantidade,
-      });
-    }
-    return salvarCarrinhoLocal(cart);
-  }
+  const res = await apiService.post("/comprador/carrinho", {
+    produtoId,
+    quantidade,
+  });
+  return res.data;
 };
 
 export const removerDoCarrinho = async (produtoId: number) => {
-  try {
-    const res = await apiService.delete(`/comprador/carrinho/${produtoId}`);
-    return res.data;
-  } catch {
-    const cart = getCarrinhoLocal();
-    cart.itens = cart.itens.filter((i: any) => i.produtoId !== produtoId);
-    return salvarCarrinhoLocal(cart);
-  }
+  const res = await apiService.delete(`/comprador/carrinho/${produtoId}`);
+  return res.data;
 };
 
 export const limparCarrinho = async () => {
-  try {
-    await apiService.delete("/comprador/carrinho");
-  } catch {
-    localStorage.removeItem("mock_carrinho");
-  }
+  await apiService.delete("/comprador/carrinho");
 };
 
 // ============================================================
@@ -425,19 +494,33 @@ export const getNaoLidas = async () => {
 // ============================================================
 let stompClient: Client | null = null;
 
+const lerTokenAtual = (): string | null => {
+  const raw = localStorage.getItem("usuarioLogado");
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw)?.accessToken ?? null;
+  } catch {
+    return null;
+  }
+};
+
 export const conectarWebSocket = (
   chatId: number,
   onMensagem: (msg: any) => void,
   onNotificacao?: (notif: any) => void
 ) => {
-  const raw = localStorage.getItem("usuarioLogado");
-  const token = raw ? JSON.parse(raw).accessToken : null;
   const wsBase =
-    import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:8080";
+    import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:8090";
 
   stompClient = new Client({
     webSocketFactory: () => new SockJS(`${wsBase}/ws/chat`) as WebSocket,
-    connectHeaders: { Authorization: `Bearer ${token}` },
+    // beforeConnect roda a cada (re)conexão — relê o token atualizado pelo interceptor de refresh
+    beforeConnect: () => {
+      const token = lerTokenAtual();
+      if (stompClient && token) {
+        stompClient.connectHeaders = { Authorization: `Bearer ${token}` };
+      }
+    },
     onConnect: () => {
       stompClient?.subscribe(`/topic/chat/${chatId}`, (frame) => {
         onMensagem(JSON.parse(frame.body));
@@ -471,6 +554,126 @@ export const enviarMensagemWS = (chatId: number, conteudo: string) => {
 export const desconectarWebSocket = () => {
   stompClient?.deactivate();
   stompClient = null;
+};
+
+// ============================================================
+// BANNERS (público GET + admin CRUD)
+// ============================================================
+export const getBanners = async () => {
+  const res = await apiService.get("/banners");
+  return res.data;
+};
+
+export const adminListarBanners = async () => {
+  const res = await apiService.get("/admin/banners");
+  return res.data;
+};
+
+export const adminCriarBanner = async (dados: any) => {
+  const res = await apiService.post("/admin/banners", dados);
+  return res.data;
+};
+
+export const adminAtualizarBanner = async (id: number, dados: any) => {
+  const res = await apiService.put(`/admin/banners/${id}`, dados);
+  return res.data;
+};
+
+export const adminDeletarBanner = async (id: number) => {
+  await apiService.delete(`/admin/banners/${id}`);
+};
+
+// ============================================================
+// NOTÍCIAS (público GET + admin CRUD)
+// ============================================================
+export const getNoticias = async (page = 0) => {
+  const res = await apiService.get(`/noticias?page=${page}`);
+  return res.data;
+};
+
+export const getNoticiaPorId = async (id: number) => {
+  const res = await apiService.get(`/noticias/${id}`);
+  return res.data;
+};
+
+export const adminListarNoticias = async (page = 0) => {
+  const res = await apiService.get(`/admin/noticias?page=${page}`);
+  return res.data;
+};
+
+export const adminCriarNoticia = async (dados: any) => {
+  const res = await apiService.post("/admin/noticias", dados);
+  return res.data;
+};
+
+export const adminAtualizarNoticia = async (id: number, dados: any) => {
+  const res = await apiService.put(`/admin/noticias/${id}`, dados);
+  return res.data;
+};
+
+export const adminDeletarNoticia = async (id: number) => {
+  await apiService.delete(`/admin/noticias/${id}`);
+};
+
+// ============================================================
+// ADMIN — Métricas, Usuários, Lojas, Categorias
+// ============================================================
+export const adminGetMetricas = async () => {
+  const res = await apiService.get("/admin/metricas");
+  return res.data;
+};
+
+export const adminListarUsuarios = async (page = 0) => {
+  const res = await apiService.get(`/admin/usuarios?page=${page}`);
+  return res.data;
+};
+
+export const adminAtualizarUsuario = async (
+  id: number,
+  dados: { contaAtiva?: boolean; tipoPerfil?: string; motivoSuspensao?: string; novaSenha?: string }
+) => {
+  const res = await apiService.patch(`/admin/usuarios/${id}`, dados);
+  return res.data;
+};
+
+export const adminListarLojas = async (page = 0) => {
+  const res = await apiService.get(`/admin/lojas?page=${page}`);
+  return res.data;
+};
+
+export const adminListarLojasPendentes = async (page = 0) => {
+  const res = await apiService.get(`/admin/lojas/pendentes?page=${page}`);
+  return res.data;
+};
+
+export const adminVerificarLoja = async (id: number) => {
+  const res = await apiService.patch(`/admin/lojas/${id}/verificar`);
+  return res.data;
+};
+
+export const adminSuspenderLoja = async (id: number, motivo?: string) => {
+  const params = motivo ? `?motivo=${encodeURIComponent(motivo)}` : "";
+  const res = await apiService.patch(`/admin/lojas/${id}/suspender${params}`);
+  return res.data;
+};
+
+export const adminReativarLoja = async (id: number) => {
+  const res = await apiService.patch(`/admin/lojas/${id}/reativar`);
+  return res.data;
+};
+
+export const adminCriarCategoria = async (dados: { nome: string; descricao?: string; imagemIconeUrl?: string }) => {
+  const res = await apiService.post("/admin/categorias", dados);
+  return res.data;
+};
+
+export const adminAtualizarCategoria = async (id: number, dados: any) => {
+  const res = await apiService.put(`/admin/categorias/${id}`, dados);
+  return res.data;
+};
+
+export const adminDeletarCategoria = async (id: number) => {
+  await apiService.delete(`/admin/categorias/${id}`);
 };
 
 export default apiService;

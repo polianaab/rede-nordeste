@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ShoppingCart, MapPin, Store, Info, Minus, Plus, CheckCircle2, Star, ChevronRight } from 'lucide-react';
+import { ShoppingCart, MapPin, Store, Info, Minus, Plus, CheckCircle2, Star, ChevronRight, MessageCircle } from 'lucide-react';
+import { PageHeader } from '../../components/ui/PageHeader';
 import { getProdutoPorId, adicionarAoCarrinho, getLojaPorId } from '../../services/api';
 
 export default function ProdutoDetalhes() {
@@ -108,17 +109,14 @@ export default function ProdutoDetalhes() {
   );
 
   return (
-    <div className="min-h-screen bg-[#F5F2ED] text-[#394158] antialiased">
-      <header className="w-full bg-white py-6 px-8 border-b border-gray-100 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto flex items-center gap-4">
-          <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-            <ArrowLeft size={24} />
-          </button>
-          <h1 className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40">Detalhes do Produto</h1>
-        </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-8 py-12 grid grid-cols-1 lg:grid-cols-2 gap-16">
+    <div className="min-h-screen bg-[#F5F2ED] text-[#394158] antialiased pb-10">
+      <main className="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-12 page-enter">
+        <PageHeader
+          titulo="Detalhes do Produto"
+          subtitulo={produto?.nome}
+          voltarPara="back"
+        />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-16">
         <section className="relative">
           <div className="sticky top-32">
             <div className="aspect-square rounded-[3rem] overflow-hidden shadow-2xl border-8 border-white">
@@ -201,6 +199,15 @@ export default function ProdutoDetalhes() {
                 : feedbackCompra ? <><CheckCircle2 size={18} /> Adicionado!</>
                 : <><ShoppingCart size={18} /> Adicionar ao Carrinho</>}
             </button>
+
+            {produto.lojaId && (
+              <button
+                onClick={() => navigate('/chat', { state: { lojaId: produto.lojaId } })}
+                className="w-full py-4 rounded-[2rem] font-black uppercase text-xs tracking-[0.2em] flex items-center justify-center gap-3 transition-all active:scale-95 bg-white border-2 border-[#55833d] text-[#55833d] hover:bg-[#55833d] hover:text-white"
+              >
+                <MessageCircle size={16} /> Falar com a loja
+              </button>
+            )}
           </div>
         </section>
 
@@ -264,6 +271,7 @@ export default function ProdutoDetalhes() {
              </div>
           </div>
         </section>
+        </div>
       </main>
     </div>
   );

@@ -14,6 +14,9 @@ public interface MensagemRepository extends JpaRepository<Mensagem, Long> {
     // Mensagens paginadas de um chat (mais antigas primeiro)
     Page<Mensagem> findByChatIdOrderByDataEnvioAsc(Long chatId, Pageable pageable);
 
+    // Última mensagem do chat — usada para preview na lista de conversas
+    Mensagem findFirstByChatIdOrderByDataEnvioDesc(Long chatId);
+
     // Marca todas as mensagens de outro remetente como lidas
     @Modifying
     @Query("""

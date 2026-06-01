@@ -1,659 +1,657 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { 
-  Search, ShoppingCart, User, Plus, Filter, MapPin, 
-  MessageCircle, ChevronRight, Menu, X, Bell, Trash2, 
-  Package, Info, DollarSign, TrendingUp, Clock, Edit2, 
-  CheckCircle, Store, Tag, Image as ImageIcon, Settings
+import { Link } from 'react-router-dom';
+import {
+  Plus, Package, DollarSign, ShoppingBag, Store,
+  Edit2, Trash2, Image as ImageIcon, CheckCircle,
+  AlertTriangle, Home as HomeIcon, LayoutDashboard,
+  MessageCircle, User, BookOpen, ShieldOff,
 } from 'lucide-react';
+import {
+  getMinhaLoja, criarLoja, atualizarLoja,
+  getProdutosPorLoja, criarProduto, atualizarProduto, deletarProduto,
+  getCategorias, getPedidosDaLoja, atualizarStatusEntrega,
+} from '../../services/api';
+import { useToast } from '../../context/ToastContext';
+import { UserMenu } from '../../components/ui/UserMenu';
+import { BottomTabBar } from '../../components/ui/BottomTabBar';
+import { PageHeader } from '../../components/ui/PageHeader';
+import { Button } from '../../components/ui/Button';
+import { FormField } from '../../components/ui/Input';
+import { Modal } from '../../components/ui/Modal';
+import { Card } from '../../components/ui/Card';
 
-// --- DADOS INICIAIS MOCKADOS ---
-const PRODUTOS_INICIAIS = [
-  { id: 1, categoria: 'Hortifruti', nome: 'Tomate Cereja Orgânico', local: 'Sítio Alvorada, SE', preco: 8.90, un: 'kg', estoque: 45, vendas: 120, img: 'https://cdn.shoppub.io/cdn-cgi/image/w=1000,h=1000,q=80,f=auto/beirario/media/uploads/produtos/foto/b3fd841dfd2c3file.png' },
-  { id: 2, categoria: 'Laticínios', nome: 'Ovos Caipira (Dúzia)', local: 'Granja Girassol, BA', preco: 14.50, un: 'dz', estoque: 12, vendas: 85, img: 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?auto=format&fit=crop&w=400&q=80' },
-  { id: 5, categoria: 'Laticínios', nome: 'Queijo Coalho Tradicional', local: 'Fazenda Alvorada, SE', preco: 38.00, un: 'kg', estoque: 12, vendas: 85, img: 'https://api.ootimista.com.br/wp-content/uploads/2023/02/queijo-coalho-embrapa.jpg' },
-  { id: 4, categoria: 'Artesanato', nome: 'Cesto de Palha Ouricuri', local: 'Ilha do Ferro, AL', preco: 120.00, un: 'un', estoque: 5, vendas: 12, img: 'https://img.elo7.com.br/product/zoom/3996150/cesto-de-palha-com-alca-40cm-cesto-de-palha.jpg' },
-  { id: 7, categoria: 'Grãos', nome: 'Feijão Verde Fresco', local: 'Fazenda Alvorada, SE', preco: 15.00, un: 'kg', estoque: 30, vendas: 40, img: 'https://receitadaboa.com.br/wp-content/uploads/2024/09/Feijao-verde-nordestino.jpg' },
-];
+type Aba = 'dashboard' | 'produtos' | 'pedidos' | 'loja';
 
-const NOTIFICACOES_DATA = [
-  { id: 1, titulo: 'Venda Realizada! 🎉', mensagem: 'Novo pedido #4582 para preparar.', tempo: 'Há 2 horas', lida: false, icone: Package, cor: 'text-[#f9943b]', bg: 'bg-[#f9943b]/10' },
-  { id: 2, titulo: 'Estoque Baixo ⚠️', mensagem: 'Seu Queijo Coalho está com apenas 2kg.', tempo: 'Há 5 horas', lida: false, icone: Info, cor: 'text-red-500', bg: 'bg-red-500/10' },
-];
-
-const ULTIMOS_PEDIDOS = [
-  { id: '#4582', cliente: 'João Silva', total: 45.90, status: 'Preparando', data: 'Hoje, 09:20' },
-  { id: '#4581', cliente: 'Maria Oliveira', total: 120.00, status: 'Pendente', data: 'Hoje, 08:15' },
-  { id: '#4579', cliente: 'Carlos Santos', total: 89.00, status: 'Enviado', data: 'Ontem, 17:40' },
-];
+const STATUS_PEDIDO_PROXIMO: Record<string, string | null> = {
+  PEDIDO_RECEBIDO: 'PEDIDO_EM_COLETA',
+  AGUARDANDO_ENTREGADOR: 'PEDIDO_EM_COLETA',
+  PEDIDO_EM_COLETA: 'SAIU_PARA_ENTREGA',
+  SAIU_PARA_ENTREGA: 'ENTREGUE',
+  RETIRADA_DISPONIVEL: 'ENTREGUE',
+};
 
 export default function PainelVendedor() {
-  const navigate = useNavigate();
-  const [busca, setBusca] = useState('');
-  const [menuAberto, setMenuAberto] = useState(false);
-  const [notifAberta, setNotifAberta] = useState(false); 
-  const [modalProduto, setModalProduto] = useState(false); 
+  const { success, error: toastError } = useToast();
+  const [abaAtiva, setAbaAtiva] = useState<Aba>('dashboard');
+
+  // ── Loja ──────────────────────────────────────────────────────
+  const [loja, setLoja] = useState<any>(null);
+  const [carregandoLoja, setCarregandoLoja] = useState(true);
   const [modalLoja, setModalLoja] = useState(false);
-  const [formLoja, setFormLoja] = useState({
-    nomeLoja: 'Fazenda Alvorada',
-    descricao: '',
-    cidade: 'Aracaju',
-    estado: 'SE',
-    logoUrl: ''
-  });
-  
-  // --- ESTADO GLOBAL DOS PRODUTOS ---
-  const [produtosGlobais, setProdutosGlobais] = useState<any[]>([]);
-
-  // Estados do Formulário de Cadastro COM SUPORTE A FOTOS
-  const [formProduto, setFormProduto] = useState({
-    nome: '',
-    categoria: '',
-    preco: '',
-    estoque: '',
-    unidade: 'un',
-    descricao: '',
-    imagens: [] as string[] // Array para guardar as fotos
+  const [formLoja, setFormLoja] = useState<any>({
+    nomeLoja: '', descricaoBio: '', cidade: '', estado: 'SE', cep: '',
+    logradouro: '', bairro: '', logoUrl: '',
+    aceitaRetirada: true, fazEntrega: false,
+    valorMinimoPedido: 0, taxaEntregaFixa: 0,
+    latitudeLoja: null, longitudeLoja: null,
   });
 
-  const [ordenacaoProd, setOrdenacaoProd] = useState('a_z');
-  const [notificacoes, setNotificacoes] = useState(NOTIFICACOES_DATA); 
-  const [carrinhoCount, setCarrinhoCount] = useState(() => {
-    const salvo = localStorage.getItem('carrinho_count');
-    return salvo ? parseInt(salvo) : 0;
+  // ── Produtos ──────────────────────────────────────────────────
+  const [produtos, setProdutos] = useState<any[]>([]);
+  const [categorias, setCategorias] = useState<any[]>([]);
+  const [modalProduto, setModalProduto] = useState(false);
+  const [formProduto, setFormProduto] = useState<any>({
+    id: null, nome: '', descricao: '', precoAtual: 0, unidadeMedida: 'kg',
+    estoqueAtual: 0, pesoKg: 0.5, imagemUrl: '', categoriaId: null,
   });
+  const [confirmarDelete, setConfirmarDelete] = useState<{aberto: boolean; id: number | null}>({ aberto: false, id: null });
 
-  const [pedidosGlobais, setPedidosGlobais] = useState<any[]>([]);
+  // ── Pedidos ───────────────────────────────────────────────────
+  const [pedidos, setPedidos] = useState<any[]>([]);
 
+  // ── Boot: tenta carregar loja do usuário ──────────────────────
   useEffect(() => {
-    localStorage.setItem('user_role', 'vendedor');
-    
-    const carregarProdutos = () => {
-      const salvos = localStorage.getItem('produtos_globais');
-      if (salvos) {
-        setProdutosGlobais(JSON.parse(salvos));
-      } else {
-        localStorage.setItem('produtos_globais', JSON.stringify(PRODUTOS_INICIAIS));
-        setProdutosGlobais(PRODUTOS_INICIAIS);
+    (async () => {
+      try {
+        const minhaLoja = await getMinhaLoja();
+        setLoja(minhaLoja);
+        setFormLoja({ ...formLoja, ...minhaLoja });
+      } catch {
+        setLoja(null); // sem loja
+      } finally {
+        setCarregandoLoja(false);
       }
-    };
-    
-    const carregarPedidos = () => {
-      const salvos = localStorage.getItem('pedidos_globais');
-      if (salvos) setPedidosGlobais(JSON.parse(salvos));
-    };
 
-    const carregarLoja = () => {
-      const lojaSalva = localStorage.getItem('loja_config');
-      if (lojaSalva) setFormLoja(JSON.parse(lojaSalva));
-    };
-
-    carregarProdutos();
-    carregarPedidos();
-    carregarLoja();
-
-    const atualizarUI = () => {
-      const c = localStorage.getItem('carrinho_count');
-      setCarrinhoCount(c ? parseInt(c) : 0);
-      carregarProdutos(); 
-      carregarPedidos();
-    };
-    atualizarUI();
-    window.addEventListener('storage', atualizarUI);
-    return () => window.removeEventListener('storage', atualizarUI);
+      try {
+        setCategorias(await getCategorias());
+      } catch {
+        setCategorias([]);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const atualizarEstoque = (id: number, delta: number) => {
-    const novaLista = produtosGlobais.map(p => {
-      if (p.id === id) return { ...p, estoque: Math.max(0, p.estoque + delta) };
-      return p;
-    });
-    setProdutosGlobais(novaLista);
-    localStorage.setItem('produtos_globais', JSON.stringify(novaLista));
-    window.dispatchEvent(new Event('storage'));
-  };
+  // ── Carrega produtos e pedidos quando trocar de aba ───────────
+  useEffect(() => {
+    if (!loja) return;
+    if (abaAtiva === 'produtos' || abaAtiva === 'dashboard') carregarProdutos();
+    if (abaAtiva === 'pedidos' || abaAtiva === 'dashboard') carregarPedidos();
+  }, [abaAtiva, loja]);
 
-  const deletarProdutoLocal = (id: number) => {
-    if (confirm("Tem certeza que deseja excluir este produto?")) {
-      const novaLista = produtosGlobais.filter(p => p.id !== id);
-      setProdutosGlobais(novaLista);
-      localStorage.setItem('produtos_globais', JSON.stringify(novaLista));
-      window.dispatchEvent(new Event('storage'));
+  const carregarProdutos = async () => {
+    if (!loja?.id) return;
+    try {
+      const data = await getProdutosPorLoja(loja.id);
+      setProdutos(data.content || []);
+    } catch {
+      setProdutos([]);
     }
   };
 
-  const atualizarStatusPedido = (id: string, novoStatus: string) => {
-    const novaLista = pedidosGlobais.map(p => {
-      if (p.id === id) return { ...p, status: novoStatus };
-      return p;
-    });
-    setPedidosGlobais(novaLista);
-    localStorage.setItem('pedidos_globais', JSON.stringify(novaLista));
-    window.dispatchEvent(new Event('storage'));
+  const carregarPedidos = async () => {
+    try {
+      const data = await getPedidosDaLoja();
+      setPedidos(data.content || []);
+    } catch {
+      setPedidos([]);
+    }
   };
 
-  // --- LÓGICA DE UPLOAD DE IMAGEM ---
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    
-    // Verifica se vai ultrapassar 5 fotos
-    if (formProduto.imagens.length + files.length > 5) {
-      alert("Você só pode adicionar no máximo 5 fotos por produto.");
+  // ── Helpers ───────────────────────────────────────────────────
+  const usarMinhaLocalizacao = () => {
+    if (!navigator.geolocation) {
+      toastError('Geolocalização não disponível');
       return;
     }
-
-    // Converte os arquivos para Base64 para podermos mostrar no preview e salvar localmente
-    Promise.all(files.map(file => {
-      return new Promise<string>((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.readAsDataURL(file);
-      });
-    })).then(base64Images => {
-       setFormProduto(prev => ({...prev, imagens: [...prev.imagens, ...base64Images]}));
-    });
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setFormLoja({
+          ...formLoja,
+          latitudeLoja: pos.coords.latitude,
+          longitudeLoja: pos.coords.longitude,
+        });
+        success('Localização capturada');
+      },
+      () => toastError('Não foi possível obter sua localização')
+    );
   };
 
-  const removerImagem = (indexParaRemover: number) => {
-    setFormProduto(prev => ({
-      ...prev,
-      imagens: prev.imagens.filter((_, index) => index !== indexParaRemover)
-    }));
-  };
-
-  // --- LÓGICA DA LOJINHA ---
-  const salvarLoja = () => {
-    if (!formLoja.nomeLoja) {
-      alert("O Nome da Loja é obrigatório.");
-      return;
-    }
-    localStorage.setItem('loja_config', JSON.stringify(formLoja));
-    setModalLoja(false);
-    alert('Configurações da loja salvas com sucesso!');
-    window.dispatchEvent(new Event('storage'));
-  };
-
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const lerImagemBase64 = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    setter: (url: string) => void
+  ) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormLoja({...formLoja, logoUrl: reader.result as string});
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  // --- LÓGICA PARA SALVAR O NOVO PRODUTO ---
-  const cadastrarProduto = () => {
-    if (!formProduto.nome || !formProduto.preco || !formProduto.categoria) {
-      alert("Preencha os campos obrigatórios (Nome, Preço e Categoria)!");
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      toastError('Imagem muito grande (máx 2MB)');
       return;
     }
-
-    const novoId = Date.now(); 
-    const precoFormatado = parseFloat(formProduto.preco.replace(',', '.'));
-    
-    // Pega a primeira foto ou uma genérica se ele não colocar nada
-    const fotoPrincipal = formProduto.imagens.length > 0 
-      ? formProduto.imagens[0] 
-      : 'https://images.unsplash.com/photo-1595858718919-6126a11e89ce?auto=format&fit=crop&w=400&q=80';
-
-    const novoProduto = {
-      id: novoId,
-      nome: formProduto.nome,
-      categoria: formProduto.categoria,
-      preco: isNaN(precoFormatado) ? 0 : precoFormatado,
-      estoque: parseInt(formProduto.estoque) || 0,
-      descricao: formProduto.descricao,
-      local: 'Fazenda Alvorada, SE', 
-      un: formProduto.unidade,
-      vendas: 0,
-      img: fotoPrincipal,
-      galeria: formProduto.imagens // Salva todas as fotos se precisarmos para a página de Detalhes depois
-    };
-
-    const novaLista = [novoProduto, ...produtosGlobais];
-    setProdutosGlobais(novaLista);
-    localStorage.setItem('produtos_globais', JSON.stringify(novaLista));
-    
-    window.dispatchEvent(new Event('storage'));
-
-    // Limpa o formulário e fecha o modal
-    setFormProduto({ nome: '', categoria: '', preco: '', estoque: '', unidade: 'un', descricao: '', imagens: [] });
-    setModalProduto(false);
-    alert("Produto cadastrado com sucesso!");
+    const reader = new FileReader();
+    reader.onloadend = () => setter(reader.result as string);
+    reader.readAsDataURL(file);
   };
 
-  const meusProdutos = produtosGlobais.filter(p => p.local === 'Fazenda Alvorada, SE');
-
-  const getMeusProdutosOrdenados = () => {
-    let filtrados = [...meusProdutos];
-    if (busca) filtrados = filtrados.filter(p => p.nome.toLowerCase().includes(busca.toLowerCase()));
-    
-    if (ordenacaoProd === 'a_z') filtrados.sort((a, b) => a.nome.localeCompare(b.nome));
-    else if (ordenacaoProd === 'z_a') filtrados.sort((a, b) => b.nome.localeCompare(a.nome));
-    else if (ordenacaoProd === 'menor_preco') filtrados.sort((a, b) => a.preco - b.preco);
-    else if (ordenacaoProd === 'maior_preco') filtrados.sort((a, b) => b.preco - a.preco);
-    return filtrados;
+  // ── Salvar loja (cria ou atualiza) ────────────────────────────
+  const salvarLoja = async () => {
+    if (!formLoja.nomeLoja || !formLoja.cidade) {
+      toastError('Nome da loja e cidade são obrigatórios');
+      return;
+    }
+    try {
+      const dadosCorrigidos = {
+        ...formLoja,
+        cep: formLoja.cep ? formLoja.cep.replace(/\D/g, '') : null,
+        valorMinimoPedido: Number(formLoja.valorMinimoPedido || 0),
+        taxaEntregaFixa: Number(formLoja.taxaEntregaFixa || 0),
+      };
+      const salva = loja
+        ? await atualizarLoja(dadosCorrigidos)
+        : await criarLoja(dadosCorrigidos);
+      setLoja(salva);
+      setModalLoja(false);
+      success(loja ? 'Loja atualizada' : 'Loja criada! Aguarde a verificação do admin');
+    } catch (err: any) {
+      toastError(err?.message || 'Erro ao salvar loja');
+    }
   };
 
-  const produtosExibidos = getMeusProdutosOrdenados();
+  // ── Salvar produto ────────────────────────────────────────────
+  const salvarProduto = async () => {
+    if (!formProduto.nome || !formProduto.categoriaId || !formProduto.precoAtual) {
+      toastError('Nome, categoria e preço são obrigatórios');
+      return;
+    }
+    try {
+      const dados = {
+        nome: formProduto.nome,
+        descricao: formProduto.descricao,
+        precoAtual: Number(formProduto.precoAtual),
+        unidadeMedida: formProduto.unidadeMedida,
+        estoqueAtual: Number(formProduto.estoqueAtual || 0),
+        pesoKg: Number(formProduto.pesoKg || 0.5),
+        imagemUrl: formProduto.imagemUrl,
+        categoriaId: Number(formProduto.categoriaId),
+      };
+      if (formProduto.id) {
+        await atualizarProduto(formProduto.id, dados);
+        success('Produto atualizado');
+      } else {
+        await criarProduto(dados);
+        success('Produto cadastrado e disponível na vitrine');
+      }
+      setModalProduto(false);
+      carregarProdutos();
+    } catch (err: any) {
+      toastError(err?.message || 'Erro ao salvar produto');
+    }
+  };
 
+  const abrirNovoProduto = () => {
+    setFormProduto({
+      id: null, nome: '', descricao: '', precoAtual: 0, unidadeMedida: 'kg',
+      estoqueAtual: 0, pesoKg: 0.5, imagemUrl: '',
+      categoriaId: categorias[0]?.id ?? null,
+    });
+    setModalProduto(true);
+  };
 
+  const abrirEditarProduto = (p: any) => {
+    setFormProduto({
+      id: p.id, nome: p.nome, descricao: p.descricao,
+      precoAtual: p.precoAtual, unidadeMedida: p.unidadeMedida,
+      estoqueAtual: p.estoqueAtual, pesoKg: p.pesoKg,
+      imagemUrl: p.imagemUrl, categoriaId: p.categoriaId ?? categorias[0]?.id,
+    });
+    setModalProduto(true);
+  };
 
+  const handleDeletarProduto = async (id: number) => {
+    try {
+      await deletarProduto(id);
+      success('Produto removido');
+      setConfirmarDelete({ aberto: false, id: null });
+      carregarProdutos();
+    } catch (err: any) {
+      toastError(err?.message || 'Erro ao remover produto');
+    }
+  };
+
+  const avancarStatusPedido = async (pedidoId: number, statusAtual: string) => {
+    const proximo = STATUS_PEDIDO_PROXIMO[statusAtual];
+    if (!proximo) return;
+    try {
+      await atualizarStatusEntrega(pedidoId, proximo);
+      success(`Pedido atualizado para ${proximo}`);
+      carregarPedidos();
+    } catch (err: any) {
+      toastError(err?.message || 'Erro ao avançar status');
+    }
+  };
+
+  // ── ONBOARDING: vendedor sem loja → wizard obrigatório ────────
+  if (carregandoLoja) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#F5F2ED]">
+        <div className="w-12 h-12 border-4 border-[#55833d] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!loja) {
+    return (
+      <div className="min-h-screen bg-[#F5F2ED] flex flex-col">
+        <PageHeader
+          titulo="Bem-vindo, vendedor"
+          subtitulo="Primeiro passo: criar sua loja"
+          voltarPara="/vendedor"
+          labelVoltar="Vitrine"
+          acoesDireita={<UserMenu perfilPath="/perfilvendedor" />}
+        />
+        <main className="flex-1 flex items-center justify-center p-6 pb-20 md:pb-6 page-enter">
+          <Card padding="lg" className="max-w-md w-full text-center space-y-4">
+            <div className="w-20 h-20 bg-[#55833d]/10 text-[#55833d] rounded-full flex items-center justify-center mx-auto">
+              <Store size={36} />
+            </div>
+            <h2 className="text-xl md:text-2xl font-black uppercase italic text-[#394158]">Crie sua loja</h2>
+            <p className="text-sm text-gray-500 leading-relaxed">
+              Para começar a vender no Rede Nordeste, você precisa criar e ter sua loja verificada por um administrador.
+            </p>
+            <Button fullWidth size="lg" onClick={() => setModalLoja(true)} iconLeft={<Plus size={18} />}>
+              Criar minha loja agora
+            </Button>
+          </Card>
+        </main>
+        {renderModalLoja()}
+      </div>
+    );
+  }
+
+  // ── Aviso quando loja não está verificada ─────────────────────
+  const lojaNaoVerificada = !loja.verificada || loja.suspensa;
+
+  // ────────────────────────────────────────────────────────────────
+  // PAINEL PRINCIPAL
+  // ────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-gray-50/30 text-[#394158] antialiased pb-20 font-sans">
-      
-      {/* NAVBAR */}
-      <header className="w-full bg-white py-4 px-4 md:px-8 border-b border-gray-100 sticky top-0 z-50 shadow-sm">
-        <div className="max-w-6xl mx-auto flex justify-between items-center gap-4 md:gap-8">
-          <div className="flex items-center gap-4 md:gap-10 flex-shrink-0 -ml-2 md:-ml-6">
-            <Link to="/vendedor"><img src="/assets/logo-home.png" alt="Logo" className="h-10 md:h-12" /></Link>
-            <nav className="hidden lg:flex gap-6 text-xs md:text-sm font-medium text-[#394158]">
-              <Link to="/vendedor" className="hover:text-[#f9943b] transition-colors">Início</Link>
-              <Link to="/receitasvendedor" className="hover:text-[#f9943b] transition-colors">Receitas</Link>
-              <Link to="/blog" className="hover:text-[#f9943b] transition-colors">Notícias</Link>
-               <Link to="/painelvendedor" className="text-[#f9943b] border-b-2 border-[#f9943b] pb-1">Painel Vendedor</Link>
-            </nav>
-          </div>
-          <div className="relative flex-1 max-w-xl hidden md:block">
-            <input type="text" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar nos meus produtos..." className="w-full bg-[#F5F2ED] py-2.5 pl-5 pr-12 rounded-full outline-none text-sm" />
-            <button className="absolute right-1.5 top-1/2 -translate-y-1/2 bg-[#55833d] text-white p-2 rounded-full"><Search size={16} /></button>
-          </div>
-          <div className="flex items-center gap-3 md:gap-6 flex-shrink-0">
-            <div className="hidden md:flex items-center gap-1 relative">
-              <div className="relative">
-                <button onClick={() => setNotifAberta(!notifAberta)} className={`p-2.5 rounded-full transition-all duration-300 relative ${notifAberta ? 'bg-[#f9943b] text-white shadow-lg' : 'hover:bg-[#f9943b] hover:text-white text-[#394158]'}`}>
-                  <Bell size={22} />
-                  {notificacoes.filter(n => !n.lida).length > 0 && <span className="absolute top-1 right-1 bg-red-500 text-white text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center border-2 border-white">{notificacoes.filter(n => !n.lida).length}</span>}
-                </button>
-
-                {notifAberta && (
-                  <>
-                    <div className="fixed inset-0 z-[60]" onClick={() => setNotifAberta(false)}></div>
-                    <div className="absolute top-14 right-0 w-[320px] md:w-[380px] bg-white rounded-[1rem] shadow-[0_10px_40px_rgba(0,0,0,0.15)] border border-gray-100 z-[70] animate-in slide-in-from-top-2 overflow-hidden">
-                      <header className="p-4 border-b border-gray-50 flex justify-between items-center bg-white">
-                        <h3 className="text-sm font-black uppercase italic text-[#394158]">Notificações</h3>
-                        <div className="flex gap-2">
-                           <button onClick={() => setNotificacoes([])} className="text-gray-400 hover:text-red-500 p-1"><Trash2 size={16}/></button>
-                           <button onClick={() => setNotifAberta(false)} className="text-gray-400 hover:text-[#394158] p-1"><X size={16}/></button>
-                        </div>
-                      </header>
-                      <div className="max-h-[350px] overflow-y-auto no-scrollbar bg-white">
-                        {notificacoes.length > 0 ? notificacoes.map(n => (
-                          <div key={n.id} onClick={() => setNotificacoes(notificacoes.map(not => not.id === n.id ? {...not, lida: true} : not))} className={`flex gap-4 p-4 border-b border-gray-50 transition-all cursor-pointer hover:bg-gray-50 relative ${!n.lida ? 'bg-[#f9943b]/5' : 'opacity-60'}`}>
-                            <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${n.bg} ${n.cor}`}><n.icone size={18}/></div>
-                            <div className="flex-1 min-w-0">
-                               <h4 className="text-[11px] font-black uppercase truncate text-[#394158]">{n.titulo}</h4>
-                               <p className="text-[10px] font-bold text-gray-500 leading-snug line-clamp-2">{n.mensagem}</p>
-                            </div>
-                            {!n.lida && <div className="absolute right-3 top-1/2 -translate-y-1/2 w-2 h-2 bg-[#f9943b] rounded-full"></div>}
-                          </div>
-                        )) : <div className="py-16 text-center opacity-20 flex flex-col items-center gap-2"><Bell size={40}/><p className="text-[10px] font-black uppercase italic">Vazio</p></div>}
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-
-              <Link to="/chat" className="p-2.5 rounded-full hover:bg-[#f9943b] hover:text-white transition-all text-[#394158]"><MessageCircle size={22} /></Link>
-              <Link to="/carrinho" className="p-2.5 rounded-full hover:bg-[#f9943b] hover:text-white transition-all text-[#394158] relative group">
-                <ShoppingCart size={22} />
-                {carrinhoCount > 0 && <span className="absolute top-0 right-0 bg-white text-[#f9943b] text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center border-2 border-white shadow-sm">{carrinhoCount}</span>}
-              </Link>
-              <Link to="/perfilvendedor" className="p-2.5 rounded-full hover:bg-[#f9943b] hover:text-white transition-all text-[#394158]"><User size={22} /></Link>
-            </div>
-            <button onClick={() => setMenuAberto(true)} className="md:hidden p-2"><Menu size={28} /></button>
-          </div>
-        </div>
-      </header>
-
-      {/* MENU MOBILE COM TODAS AS OPÇÕES RESTAURADAS */}
-      {menuAberto && (
-        <div className="fixed inset-0 z-[110] md:hidden">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMenuAberto(false)}></div>
-          <div className="absolute right-0 top-0 h-full w-72 bg-white shadow-2xl p-8 flex flex-col gap-8 animate-in slide-in-from-right duration-300">
-            <button onClick={() => setMenuAberto(false)} className="self-end p-2 bg-[#F5F2ED] rounded-full text-[#394158] hover:text-red-500 transition-all"><X size={24} /></button>
-            <nav className="flex flex-col gap-5 text-sm font-black uppercase tracking-widest text-[#394158]">
-                <Link to="/vendedor" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d]"><ChevronRight size={14}/> Início</Link>
-                <Link to="/receitasvendedor" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d]"><ChevronRight size={14}/> Receitas</Link>
-                <Link to="/blog" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#f9943b]"><ChevronRight size={14}/> Notícias</Link>
-                <Link to="/painelvendedor" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 text-[#55833d]"><ChevronRight size={14}/> Painel Vendedor</Link>
-                <hr className="border-gray-50 my-2" />
-                <Link to="/notificacoes" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d]"><Bell size={20}/> Notificações</Link>
-                <Link to="/chat" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d]"><MessageCircle size={20}/> Chat</Link>
-                <Link to="/carrinho" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d] relative">
-                  <ShoppingCart size={20}/> Carrinho 
-                  {carrinhoCount > 0 && <span className="bg-[#f9943b] text-white text-[10px] px-2 py-0.5 rounded-full ml-auto">{carrinhoCount}</span>}
-                </Link>
-                <Link to="/perfilvendedor" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d]"><User size={20}/> Meu Perfil</Link>
-            </nav>
-          </div>
+    <div className="min-h-screen bg-[#F5F2ED] text-[#394158] font-sans pb-20 md:pb-0">
+      <main className="px-4 md:px-12 pt-6 md:pt-8 page-enter">
+        <PageHeader
+          titulo={loja.nomeLoja}
+          subtitulo={`${loja.cidade ?? ''}${loja.estado ? ' · ' + loja.estado : ''}`}
+          voltarPara="/vendedor"
+          labelVoltar="Vitrine"
+          acoesDireita={<UserMenu perfilPath="/perfilvendedor" />}
+        />
+      {/* Aviso de loja não verificada */}
+      {lojaNaoVerificada && (
+        <div className="bg-[#f9943b]/10 border border-[#f9943b]/20 rounded-2xl px-4 py-3 flex items-center gap-3 mb-4">
+          <AlertTriangle size={18} className="text-[#f9943b] shrink-0" />
+          <p className="text-xs font-bold text-[#394158]">
+            {loja.suspensa
+              ? `Loja suspensa${loja.motivoSuspensao ? `: ${loja.motivoSuspensao}` : ''}.`
+              : 'Sua loja está aguardando verificação do admin. Seus produtos só aparecem na vitrine após aprovação.'}
+          </p>
         </div>
       )}
 
-      {/* MODAL CADASTRAR PRODUTO ATUALIZADO COM UPLOAD REAL */}
-      {modalProduto && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-[#394158]/80 backdrop-blur-sm" onClick={() => setModalProduto(false)}></div>
-          <div className="relative bg-white w-full max-w-2xl rounded-[1rem] overflow-hidden shadow-2xl animate-in zoom-in-95 border border-[#F5F2ED]">
-            <header className="p-6 border-b border-gray-100 flex justify-between items-center bg-[#F5F2ED]/50">
-               <h3 className="text-lg font-black uppercase italic tracking-widest text-[#394158]">Novo Produto</h3>
-               <button onClick={() => setModalProduto(false)} className="p-2 hover:bg-white text-gray-400 hover:text-red-500 rounded-full transition-all"><X size={24}/></button>
-            </header>
-            
-            <div className="p-8 space-y-6 max-h-[80vh] overflow-y-auto no-scrollbar">
-               <div className="grid grid-cols-2 gap-5">
-                  <div className="col-span-2 space-y-1">
-                     <label className="text-[10px] font-black uppercase text-[#55833d] tracking-widest ml-2">Nome do Produto</label>
-                     <input 
-                        type="text" 
-                        value={formProduto.nome}
-                        onChange={e => setFormProduto({...formProduto, nome: e.target.value})}
-                        placeholder="Ex: Mel Silvestre" 
-                        className="w-full p-4 bg-[#F5F2ED]/50 text-[#394158] font-bold rounded-[1rem] outline-none border-2 border-transparent focus:border-[#f9943b] focus:bg-white transition-all" 
-                     />
-                  </div>
-                  
-                  <div className="col-span-2 sm:col-span-1 space-y-1">
-                     <label className="text-[10px] font-black uppercase text-[#55833d] tracking-widest ml-2">Categoria</label>
-                     <select 
-                        value={formProduto.categoria}
-                        onChange={e => setFormProduto({...formProduto, categoria: e.target.value})}
-                        className="w-full p-4 bg-[#F5F2ED]/50 text-[#394158] font-bold rounded-[1rem] outline-none border-2 border-transparent focus:border-[#f9943b] focus:bg-white transition-all cursor-pointer"
-                     >
-                       <option value="">Selecione...</option>
-                       <option value="Hortifruti">Hortifruti</option>
-                       <option value="Laticínios">Laticínios</option>
-                       <option value="Grãos">Grãos</option>
-                       <option value="Artesanato">Artesanato</option>
-                       <option value="Carnes">Carnes</option>
-                       <option value="Colheita">Colheita</option>
-                       <option value="Gastronomia">Gastronomia</option>
-                       <option value="Cama Mesa e Banho">Cama Mesa e Banho</option>
-                       <option value="Têxtil">Têxtil</option>
-                     </select>
-                  </div>
+      {/* Tabs desktop */}
+      <nav className="hidden md:flex gap-1 px-12 pt-6 border-b border-gray-100 bg-white">
+        {([
+          { id: 'dashboard', label: 'Visão geral', Icon: LayoutDashboard },
+          { id: 'produtos',  label: 'Produtos',    Icon: Package },
+          { id: 'pedidos',   label: 'Pedidos',     Icon: ShoppingBag },
+          { id: 'loja',      label: 'Minha loja',  Icon: Store },
+        ] as const).map(t => (
+          <button
+            key={t.id}
+            onClick={() => setAbaAtiva(t.id as Aba)}
+            className={`px-6 py-3 flex items-center gap-2 text-xs font-black uppercase tracking-widest border-b-2 transition-colors ${
+              abaAtiva === t.id
+                ? 'border-[#55833d] text-[#55833d]'
+                : 'border-transparent text-[#394158]/50 hover:text-[#394158]'
+            }`}
+          >
+            <t.Icon size={16} /> {t.label}
+          </button>
+        ))}
+      </nav>
 
-                  <div className="col-span-2 sm:col-span-1 space-y-1">
-                     <label className="text-[10px] font-black uppercase text-[#55833d] tracking-widest ml-2">Preço (R$)</label>
-                     <input 
-                        type="text" 
-                        value={formProduto.preco}
-                        onChange={e => setFormProduto({...formProduto, preco: e.target.value})}
-                        placeholder="00,00" 
-                        className="w-full p-4 bg-[#F5F2ED]/50 text-[#394158] font-bold rounded-[1rem] outline-none border-2 border-transparent focus:border-[#f9943b] focus:bg-white transition-all" 
-                     />
-                  </div>
+      {/* Tabs mobile (pills) */}
+      <nav className="md:hidden flex gap-2 px-4 py-3 overflow-x-auto no-scrollbar bg-white border-b border-gray-100">
+        {([
+          { id: 'dashboard', label: 'Visão' },
+          { id: 'produtos',  label: 'Produtos' },
+          { id: 'pedidos',   label: 'Pedidos' },
+          { id: 'loja',      label: 'Loja' },
+        ] as const).map(t => (
+          <button
+            key={t.id}
+            onClick={() => setAbaAtiva(t.id as Aba)}
+            className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-colors ${
+              abaAtiva === t.id ? 'bg-[#55833d] text-white' : 'bg-gray-100 text-[#394158]'
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </nav>
 
-                  <div className="col-span-2 sm:col-span-1 space-y-1">
-                     <label className="text-[10px] font-black uppercase text-[#55833d] tracking-widest ml-2">Estoque Inicial</label>
-                     <input 
-                        type="number" 
-                        value={formProduto.estoque}
-                        onChange={e => setFormProduto({...formProduto, estoque: e.target.value})}
-                        placeholder="10" 
-                        className="w-full p-4 bg-[#F5F2ED]/50 text-[#394158] font-bold rounded-[1rem] outline-none border-2 border-transparent focus:border-[#f9943b] focus:bg-white transition-all" 
-                     />
-                  </div>
+      <div className="py-4 md:py-6 space-y-6">
+        {/* DASHBOARD */}
+        {abaAtiva === 'dashboard' && (
+          <>
+            <section className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+              <Card padding="md" className="flex justify-between items-center gap-2">
+                <div className="min-w-0">
+                  <p className="text-[9px] md:text-[10px] font-black uppercase text-gray-400 truncate">Produtos</p>
+                  <h3 className="text-xl md:text-2xl font-black italic text-[#394158]">{produtos.length}</h3>
+                </div>
+                <Package className="text-[#55833d] shrink-0" size={24} />
+              </Card>
+              <Card padding="md" className="flex justify-between items-center gap-2">
+                <div className="min-w-0">
+                  <p className="text-[9px] md:text-[10px] font-black uppercase text-gray-400 truncate">Pedidos</p>
+                  <h3 className="text-xl md:text-2xl font-black italic text-[#394158]">{pedidos.length}</h3>
+                </div>
+                <ShoppingBag className="text-[#f9943b] shrink-0" size={24} />
+              </Card>
+              <Card padding="md" className="flex justify-between items-center gap-2">
+                <div className="min-w-0">
+                  <p className="text-[9px] md:text-[10px] font-black uppercase text-gray-400 truncate">Faturado</p>
+                  <h3 className="text-xl md:text-2xl font-black italic text-[#55833d]">
+                    R$ {pedidos.reduce((s, p) => s + Number(p.valorTotal || 0), 0).toFixed(0)}
+                  </h3>
+                </div>
+                <DollarSign className="text-[#55833d] shrink-0" size={24} />
+              </Card>
+              <Card padding="md" className="flex justify-between items-center gap-2">
+                <div className="min-w-0">
+                  <p className="text-[9px] md:text-[10px] font-black uppercase text-gray-400 truncate">Status</p>
+                  <h3 className={`text-[10px] md:text-xs font-black italic ${loja.verificada ? 'text-[#55833d]' : 'text-[#f9943b]'}`}>
+                    {loja.verificada ? 'Verificada' : 'Pendente'}
+                  </h3>
+                </div>
+                {loja.verificada
+                  ? <CheckCircle className="text-[#55833d] shrink-0" size={24} />
+                  : <ShieldOff className="text-[#f9943b] shrink-0" size={24} />}
+              </Card>
+            </section>
 
-                  <div className="col-span-2 sm:col-span-1 space-y-1">
-                     <label className="text-[10px] font-black uppercase text-[#55833d] tracking-widest ml-2">Unidade de Medida</label>
-                     <select 
-                        value={formProduto.unidade}
-                        onChange={e => setFormProduto({...formProduto, unidade: e.target.value})}
-                        className="w-full p-4 bg-[#F5F2ED]/50 text-[#394158] font-bold rounded-[1rem] outline-none border-2 border-transparent focus:border-[#f9943b] focus:bg-white transition-all cursor-pointer"
-                     >
-                       <option value="un">Unidade (un)</option>
-                       <option value="kg">Quilograma (kg)</option>
-                       <option value="g">Grama (g)</option>
-                       <option value="l">Litro (L)</option>
-                       <option value="ml">Mililitro (ml)</option>
-                       <option value="dz">Dúzia (dz)</option>
-                       <option value="bdj">Bandeja (bdj)</option>
-                     </select>
-                  </div>
-
-                  <div className="col-span-2 space-y-1 mt-2">
-                     <label className="text-[10px] font-black uppercase text-[#f9943b] tracking-widest ml-2 flex items-center gap-1">
-                        <Info size={14} /> Sobre o Produto
-                     </label>
-                     <textarea 
-                        rows={3} 
-                        value={formProduto.descricao}
-                        onChange={e => setFormProduto({...formProduto, descricao: e.target.value})}
-                        placeholder="Descreva os detalhes, origem e benefícios do seu produto..." 
-                        className="w-full p-4 bg-[#F5F2ED]/50 text-[#394158] font-medium rounded-[1rem] outline-none border-2 border-transparent focus:border-[#f9943b] focus:bg-white transition-all resize-none"
-                     ></textarea>
-                  </div>
-               </div>
-
-               {/* ÁREA DE FOTOS FUNCIONAL */}
-               <div className="space-y-2 mt-4">
-                  <label className="text-[10px] font-black uppercase text-[#55833d] tracking-widest ml-2">Fotos do Produto ({formProduto.imagens.length}/5)</label>
-                  <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar items-center">
-                     
-                     {/* BOTAO ADICIONAR FOTO (Oculto se tiver 5) */}
-                     {formProduto.imagens.length < 5 && (
-                        <label className="w-24 h-24 shrink-0 border-2 border-dashed border-[#f9943b]/40 rounded-[1rem] flex flex-col items-center justify-center text-[#f9943b] hover:bg-[#f9943b]/10 hover:border-[#f9943b] cursor-pointer transition-all bg-white relative">
-                          <input type="file" multiple accept="image/*" className="hidden" onChange={handleImageUpload} />
-                          <Plus size={24} />
-                          <span className="text-[8px] font-black uppercase mt-1">Adicionar</span>
-                        </label>
-                     )}
-
-                     {/* MINIATURAS DAS FOTOS SELECIONADAS */}
-                     {formProduto.imagens.map((imgBase64, index) => (
-                        <div key={index} className="w-24 h-24 shrink-0 relative rounded-[1rem] overflow-hidden border border-gray-100 group shadow-sm">
-                           <img src={imgBase64} alt={`Upload ${index+1}`} className="w-full h-full object-cover" />
-                           <button 
-                             onClick={() => removerImagem(index)} 
-                             className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
-                             title="Remover imagem"
-                           >
-                             <X size={12} />
-                           </button>
-                        </div>
-                     ))}
-
-                  </div>
-               </div>
-
-               <button 
-                  onClick={cadastrarProduto} 
-                  className="w-full py-5 bg-gradient-to-r from-[#f9943b] to-[#e88127] text-white rounded-[1rem] font-black uppercase text-xs tracking-widest shadow-xl shadow-orange-500/30 active:scale-95 transition-all flex justify-center items-center gap-2 mt-4"
-               >
-                 <CheckCircle size={18} /> Publicar Anúncio
-               </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* DASHBOARD PRINCIPAL */}
-      <main className="max-w-7xl mx-auto px-4 md:px-8 pt-8 md:pt-12 space-y-8">
-        
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-white p-6 md:p-8 rounded-[1rem] border border-gray-100 shadow-sm">
-            <div className="flex items-center gap-4">
-               {formLoja.logoUrl ? (
-                 <img src={formLoja.logoUrl} className="w-14 h-14 rounded-xl object-cover border border-gray-100" alt="Logo" />
-               ) : (
-                 <div className="p-3 bg-[#55833d]/10 rounded-xl text-[#55833d]"><Store size={28}/></div>
-               )}
-               <div>
-                  <h1 className="text-xl md:text-2xl font-black italic uppercase tracking-tighter text-[#394158]">Painel de Controle</h1>
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">{formLoja.nomeLoja}</p>
-               </div>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-               <button onClick={() => setModalLoja(true)} className="w-full sm:w-auto bg-white border border-gray-200 text-[#394158] px-6 py-4 rounded-[1rem] font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-2 hover:bg-gray-50 transition-all">
-                   <Settings size={16}/> Configurar Loja
-               </button>
-               <button onClick={() => setModalProduto(true)} className="w-full sm:w-auto bg-[#f9943b] text-white px-8 py-4 rounded-[1rem] font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-3 shadow-lg hover:bg-[#55833d] transition-all">
-                   <Plus size={16}/> Cadastrar Produto
-               </button>
-            </div>
-        </div>
-
-        <section className="bg-white p-6 md:p-8 rounded-[1rem] border border-gray-100 shadow-sm mb-8">
-           <div className="flex justify-between items-center mb-6">
-              <h3 className="font-black uppercase italic tracking-widest text-sm flex items-center gap-2 text-[#394158]">
-                 <ShoppingCart size={16} className="text-[#f9943b]"/> Gerenciamento de Pedidos
-              </h3>
-           </div>
-
-           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {pedidosGlobais.length > 0 ? pedidosGlobais.map((ped, i) => (
-                 <div key={i} className="flex flex-col gap-3 p-5 bg-[#F5F2ED]/50 rounded-[1rem] border border-gray-100 hover:border-[#f9943b]/30 transition-all">
-                    <div className="flex justify-between items-center">
-                       <span className="text-[11px] font-black uppercase text-[#394158]">{ped.id}</span>
-                       <span className={`px-2 py-1 rounded-md text-[9px] font-black uppercase ${
-                          ped.status === 'Pendente' ? 'bg-red-100 text-red-600' :
-                          ped.status === 'Preparando' ? 'bg-orange-100 text-orange-600' : 
-                          ped.status === 'A Caminho' ? 'bg-blue-100 text-blue-600' : 
-                          'bg-green-100 text-green-600'
-                       }`}>
-                          {ped.status}
-                       </span>
-                    </div>
-                    <div>
-                       <p className="text-[10px] text-gray-500 font-bold line-clamp-2">{ped.produtos?.map((p:any) => `${p.qtd}x ${p.nome}`).join(', ')}</p>
-                    </div>
-                    <div className="flex justify-between items-end mt-1">
-                       <span className="text-[9px] text-[#394158]/50 font-bold">{ped.data}</span>
-                       <span className="text-sm font-black text-[#55833d]">R$ {Number(ped.total).toFixed(2)}</span>
-                    </div>
-                    
-                    {/* Botões de Ação de Status */}
-                    <div className="grid grid-cols-3 gap-1 mt-2 border-t border-gray-200 pt-3">
-                       <button onClick={() => atualizarStatusPedido(ped.id, 'Preparando')} disabled={ped.status !== 'Pendente'} className={`text-[8px] py-2 rounded uppercase font-black transition-all ${ped.status === 'Pendente' ? 'bg-orange-100 text-orange-600 hover:bg-orange-200' : 'bg-gray-100 text-gray-300'}`}>Preparar</button>
-                       <button onClick={() => atualizarStatusPedido(ped.id, 'A Caminho')} disabled={ped.status !== 'Preparando'} className={`text-[8px] py-2 rounded uppercase font-black transition-all ${ped.status === 'Preparando' ? 'bg-blue-100 text-blue-600 hover:bg-blue-200' : 'bg-gray-100 text-gray-300'}`}>Enviar</button>
-                       <button onClick={() => atualizarStatusPedido(ped.id, 'Entregue')} disabled={ped.status !== 'A Caminho'} className={`text-[8px] py-2 rounded uppercase font-black transition-all ${ped.status === 'A Caminho' ? 'bg-green-100 text-green-600 hover:bg-green-200' : 'bg-gray-100 text-gray-300'}`}>Entregue</button>
-                    </div>
-                 </div>
-              )) : (
-                 <div className="col-span-full py-10 text-center opacity-40">
-                    <p className="text-[10px] font-black uppercase tracking-widest">Nenhum pedido recebido ainda.</p>
-                 </div>
-              )}
-           </div>
-        </section>
-
-        <section className="bg-white p-6 md:p-8 rounded-[1rem] border border-gray-100 shadow-sm">
-           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-              <h2 className="text-lg font-black italic uppercase tracking-tighter text-[#394158]">Meus Produtos Cadastrados</h2>
-              
-              <div className="flex items-center gap-2 bg-[#F5F2ED] px-4 py-2 rounded-xl border border-gray-100 shadow-sm w-full md:w-auto">
-                <Filter size={14} className="text-[#55833d]" />
-                <select value={ordenacaoProd} onChange={(e) => setOrdenacaoProd(e.target.value)} className="bg-transparent text-[10px] font-black uppercase outline-none cursor-pointer w-full text-[#394158]">
-                  <option value="a_z">Ordem Alfabética (A-Z)</option>
-                  <option value="z_a">Ordem Alfabética (Z-A)</option>
-                  <option value="menor_preco">Menor Valor</option>
-                  <option value="maior_preco">Maior Valor</option>
-                </select>
+            <Card padding="md">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-sm md:text-base font-black uppercase italic text-[#394158]">Últimos pedidos</h3>
+                <Link to="#" onClick={(e) => { e.preventDefault(); setAbaAtiva('pedidos'); }}
+                  className="text-[10px] font-black uppercase text-[#55833d] hover:underline">Ver todos</Link>
               </div>
-           </div>
-
-           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-              {produtosExibidos.length > 0 ? (
-                produtosExibidos.map((p: any) => (
-                  <div key={p.id} className="bg-[#F5F2ED]/50 p-4 rounded-[1rem] shadow-sm border border-transparent hover:border-[#f9943b]/30 transition-all flex flex-col gap-3 group">
-                    <div className="flex gap-4">
-                      <img src={p.img} className="w-16 h-16 rounded-xl object-cover shrink-0" alt={p.nome} />
-                      <div className="flex-1 flex flex-col justify-center">
-                        <h4 className="font-black text-[10px] uppercase leading-tight line-clamp-2 mb-1 text-[#394158]">{p.nome}</h4>
-                        <p className="text-[#f9943b] font-black text-sm">R$ {Number(p.preco).toFixed(2)}<span className="text-[8px] ml-0.5 text-gray-400 font-bold">/{p.un}</span></p>
-                      </div>
-                      <button onClick={() => deletarProdutoLocal(p.id)} className="text-gray-300 hover:text-red-500 self-start p-1 transition-colors" title="Excluir produto"><Trash2 size={16}/></button>
-                    </div>
-                    
-                    <div className="flex items-center justify-between mt-2 pt-3 border-t border-gray-200">
-                      <span className="text-[9px] font-bold text-[#394158]/50 uppercase">Estoque:</span>
-                      <div className="flex items-center gap-3 bg-white px-2 py-1 rounded-lg border border-gray-200 shadow-sm">
-                        <button onClick={() => atualizarEstoque(p.id, -1)} className="text-gray-400 hover:text-[#f9943b] px-1">-</button>
-                        <span className="text-xs font-black w-6 text-center">{p.estoque}</span>
-                        <button onClick={() => atualizarEstoque(p.id, 1)} className="text-gray-400 hover:text-[#55833d] px-1">+</button>
-                      </div>
-                    </div>
-                  </div>
-                ))
+              {pedidos.length === 0 ? (
+                <p className="text-xs text-gray-400 text-center py-8">Nenhum pedido ainda</p>
               ) : (
-                <div className="col-span-full py-10 text-center opacity-40">
-                   <p className="text-[10px] font-black uppercase tracking-widest">Nenhum produto cadastrado ainda.</p>
+                <div className="space-y-2">
+                  {pedidos.slice(0, 3).map(p => (
+                    <div key={p.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-xl">
+                      <div className="min-w-0">
+                        <p className="text-xs font-black text-[#394158]">#{p.id}</p>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase">{p.statusEntrega || '—'}</p>
+                      </div>
+                      <p className="text-sm font-black text-[#55833d]">R$ {Number(p.valorTotal).toFixed(2)}</p>
+                    </div>
+                  ))}
                 </div>
               )}
-           </div>
-        </section>
+            </Card>
+          </>
+        )}
 
+        {/* PRODUTOS */}
+        {abaAtiva === 'produtos' && (
+          <>
+            <div className="flex justify-between items-center">
+              <h2 className="text-base md:text-xl font-black uppercase italic text-[#394158]">Meus produtos</h2>
+              <Button onClick={abrirNovoProduto} iconLeft={<Plus size={16} />}>Adicionar</Button>
+            </div>
+            {produtos.length === 0 ? (
+              <Card padding="lg" className="text-center">
+                <Package className="text-gray-300 mx-auto mb-3" size={40} />
+                <p className="text-sm text-gray-400">Você ainda não tem produtos. Cadastre o primeiro!</p>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                {produtos.map(p => (
+                  <Card key={p.id} padding="sm" className="flex flex-col">
+                    <div className="aspect-square rounded-xl overflow-hidden bg-gray-100 mb-3">
+                      {p.imagemUrl
+                        ? <img src={p.imagemUrl} alt={p.nome} className="w-full h-full object-cover" />
+                        : <div className="w-full h-full flex items-center justify-center text-gray-300"><ImageIcon /></div>}
+                    </div>
+                    <h3 className="text-xs font-black uppercase text-[#394158] line-clamp-2 mb-1">{p.nome}</h3>
+                    <p className="text-[10px] font-bold text-gray-400">{p.nomeCategoria}</p>
+                    <p className="text-sm font-black text-[#55833d] mt-1">R$ {Number(p.precoAtual).toFixed(2)}/{p.unidadeMedida}</p>
+                    <p className="text-[10px] font-bold text-gray-400 mt-0.5">Estoque: {p.estoqueAtual}</p>
+                    <div className="mt-3 flex gap-2">
+                      <button onClick={() => abrirEditarProduto(p)}
+                        className="flex-1 p-2 bg-[#F5F2ED] text-[#394158] hover:bg-[#f9943b] hover:text-white rounded-lg transition-colors">
+                        <Edit2 size={12} className="mx-auto" />
+                      </button>
+                      <button onClick={() => setConfirmarDelete({ aberto: true, id: p.id })}
+                        className="flex-1 p-2 bg-red-50 text-red-500 hover:bg-red-500 hover:text-white rounded-lg transition-colors">
+                        <Trash2 size={12} className="mx-auto" />
+                      </button>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* PEDIDOS */}
+        {abaAtiva === 'pedidos' && (
+          <>
+            <h2 className="text-base md:text-xl font-black uppercase italic text-[#394158]">Pedidos recebidos</h2>
+            {pedidos.length === 0 ? (
+              <Card padding="lg" className="text-center">
+                <ShoppingBag className="text-gray-300 mx-auto mb-3" size={40} />
+                <p className="text-sm text-gray-400">Nenhum pedido ainda</p>
+              </Card>
+            ) : (
+              <div className="space-y-3">
+                {pedidos.map(p => (
+                  <Card key={p.id} padding="md" className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-black uppercase text-[#394158]">Pedido #{p.id}</h3>
+                      <p className="text-[10px] font-bold text-gray-400 uppercase mt-0.5">
+                        Status: {p.statusEntrega || '—'} · {p.itens?.length || 0} itens
+                      </p>
+                      <p className="text-[10px] font-bold text-gray-400 mt-0.5">Pago: {p.statusPagamento || '—'}</p>
+                    </div>
+                    <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2">
+                      <span className="text-base font-black text-[#55833d] md:mr-3">R$ {Number(p.valorTotal).toFixed(2)}</span>
+                      {STATUS_PEDIDO_PROXIMO[p.statusEntrega] && (
+                        <Button size="sm" onClick={() => avancarStatusPedido(p.id, p.statusEntrega)}>
+                          Avançar status
+                        </Button>
+                      )}
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* LOJA */}
+        {abaAtiva === 'loja' && (
+          <Card padding="lg">
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <h2 className="text-base md:text-xl font-black uppercase italic text-[#394158]">Minha loja</h2>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">
+                  {loja.verificada ? 'Verificada ✓' : 'Aguardando verificação'}
+                </p>
+              </div>
+              <Button onClick={() => { setFormLoja({ ...formLoja, ...loja }); setModalLoja(true); }}
+                variant="ghost" iconLeft={<Edit2 size={14} />}>Editar</Button>
+            </div>
+            <dl className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div><dt className="text-[10px] font-black uppercase text-gray-400">Nome</dt><dd className="font-bold mt-1">{loja.nomeLoja}</dd></div>
+              <div><dt className="text-[10px] font-black uppercase text-gray-400">Cidade</dt><dd className="font-bold mt-1">{loja.cidade}/{loja.estado}</dd></div>
+              <div><dt className="text-[10px] font-black uppercase text-gray-400">Aceita retirada</dt><dd className="font-bold mt-1">{loja.aceitaRetirada ? 'Sim' : 'Não'}</dd></div>
+              <div><dt className="text-[10px] font-black uppercase text-gray-400">Faz entrega</dt><dd className="font-bold mt-1">{loja.fazEntrega ? 'Sim' : 'Não'}</dd></div>
+              <div className="md:col-span-2"><dt className="text-[10px] font-black uppercase text-gray-400">Bio</dt><dd className="font-medium text-gray-600 mt-1">{loja.descricaoBio || '—'}</dd></div>
+            </dl>
+          </Card>
+        )}
+      </div>
       </main>
 
-      {/* MODAL EDITAR LOJINHA */}
-      {modalLoja && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-[#394158]/50 backdrop-blur-sm" onClick={() => setModalLoja(false)}></div>
-          <div className="relative bg-white w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-[2rem] shadow-2xl animate-in fade-in zoom-in-95 duration-300 flex flex-col">
-            <div className="sticky top-0 bg-white/90 backdrop-blur-md p-6 md:p-8 border-b border-gray-100 flex justify-between items-center z-10">
-              <div>
-                 <h2 className="text-xl md:text-2xl font-black italic uppercase tracking-tighter text-[#394158] flex items-center gap-2">
-                   <Store size={24} className="text-[#55833d]" /> Minha Loja
-                 </h2>
-                 <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mt-1">Configure o perfil público da sua lojinha</p>
-              </div>
-              <button onClick={() => setModalLoja(false)} className="p-2 bg-[#F5F2ED] rounded-full text-[#394158] hover:text-red-500 transition-all">
-                <X size={20} />
-              </button>
-            </div>
-            <div className="p-6 md:p-8 space-y-6 flex-1">
-               <div className="flex flex-col items-center gap-4">
-                  <div className="relative group">
-                     {formLoja.logoUrl ? (
-                        <img src={formLoja.logoUrl} className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg" alt="Logo Loja" />
-                     ) : (
-                        <div className="w-24 h-24 rounded-full bg-[#F5F2ED] border-4 border-white shadow-lg flex items-center justify-center text-gray-400"><Store size={32}/></div>
-                     )}
-                     <label className="absolute inset-0 bg-black/50 text-white rounded-full flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer transition-all">
-                        <ImageIcon size={20} />
-                        <span className="text-[8px] font-black uppercase mt-1">Alterar</span>
-                        <input type="file" className="hidden" accept="image/*" onChange={handleLogoUpload} />
-                     </label>
-                  </div>
-               </div>
+      {renderModalLoja()}
 
-               <div className="space-y-4">
-                  <div className="space-y-1.5">
-                    <label className="uppercase text-gray-400 ml-4 text-[10px] font-black">Nome da Loja *</label>
-                    <input type="text" value={formLoja.nomeLoja} onChange={(e) => setFormLoja({...formLoja, nomeLoja: e.target.value})} className="w-full bg-[#F5F2ED]/50 border-2 border-transparent focus:border-[#55833d]/20 focus:bg-white p-4 rounded-2xl outline-none text-sm font-bold text-[#394158] transition-all" placeholder="Ex: Fazenda Alvorada" />
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                     <div className="space-y-1.5">
-                       <label className="uppercase text-gray-400 ml-4 text-[10px] font-black">Cidade</label>
-                       <input type="text" value={formLoja.cidade} onChange={(e) => setFormLoja({...formLoja, cidade: e.target.value})} className="w-full bg-[#F5F2ED]/50 border-2 border-transparent focus:border-[#55833d]/20 focus:bg-white p-4 rounded-2xl outline-none text-sm font-bold text-[#394158] transition-all" placeholder="Ex: Aracaju" />
-                     </div>
-                     <div className="space-y-1.5">
-                       <label className="uppercase text-gray-400 ml-4 text-[10px] font-black">Estado</label>
-                       <input type="text" value={formLoja.estado} onChange={(e) => setFormLoja({...formLoja, estado: e.target.value})} className="w-full bg-[#F5F2ED]/50 border-2 border-transparent focus:border-[#55833d]/20 focus:bg-white p-4 rounded-2xl outline-none text-sm font-bold text-[#394158] transition-all" placeholder="Ex: SE" />
-                     </div>
-                  </div>
+      <Modal open={modalProduto} onClose={() => setModalProduto(false)}
+        title={formProduto.id ? 'Editar produto' : 'Novo produto'} size="lg">
+        <div className="space-y-4">
+          <FormField label="Nome" value={formProduto.nome}
+            onChange={e => setFormProduto({ ...formProduto, nome: e.target.value })} />
+          <div>
+            <label className="text-[10px] font-black uppercase text-[#55833d] tracking-widest ml-1 block mb-1.5">Categoria</label>
+            <select value={formProduto.categoriaId ?? ''}
+              onChange={e => setFormProduto({ ...formProduto, categoriaId: Number(e.target.value) })}
+              className="w-full p-3 bg-[#F5F2ED]/50 text-[#394158] font-bold rounded-2xl outline-none border-2 border-transparent focus:border-[#55833d]">
+              <option value="">Selecione...</option>
+              {categorias.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+            </select>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <FormField label="Preço (R$)" type="number" step="0.01" value={formProduto.precoAtual}
+              onChange={e => setFormProduto({ ...formProduto, precoAtual: e.target.value })} />
+            <FormField label="Unidade" value={formProduto.unidadeMedida}
+              onChange={e => setFormProduto({ ...formProduto, unidadeMedida: e.target.value })} />
+            <FormField label="Estoque" type="number" value={formProduto.estoqueAtual}
+              onChange={e => setFormProduto({ ...formProduto, estoqueAtual: e.target.value })} />
+            <FormField label="Peso (kg)" type="number" step="0.01" value={formProduto.pesoKg}
+              onChange={e => setFormProduto({ ...formProduto, pesoKg: e.target.value })} />
+          </div>
+          <div>
+            <label className="text-[10px] font-black uppercase text-[#55833d] tracking-widest ml-1 block mb-1.5">Descrição</label>
+            <textarea rows={3} value={formProduto.descricao}
+              onChange={e => setFormProduto({ ...formProduto, descricao: e.target.value })}
+              className="w-full p-3 bg-[#F5F2ED]/50 text-[#394158] font-medium rounded-2xl outline-none border-2 border-transparent focus:border-[#55833d] resize-none" />
+          </div>
+          <div>
+            <label className="text-[10px] font-black uppercase text-[#55833d] tracking-widest ml-1 block mb-1.5">Imagem</label>
+            <label className="w-full p-3 bg-[#F5F2ED]/50 text-gray-400 font-bold rounded-2xl border-2 border-dashed border-gray-200 hover:border-[#f9943b] flex items-center justify-center gap-2 cursor-pointer">
+              <ImageIcon size={18} /> {formProduto.imagemUrl ? 'Selecionada ✓' : 'Escolher imagem'}
+              <input type="file" className="hidden" accept="image/*"
+                onChange={e => lerImagemBase64(e, url => setFormProduto({ ...formProduto, imagemUrl: url }))} />
+            </label>
+            {formProduto.imagemUrl && <img src={formProduto.imagemUrl} className="mt-3 w-full h-32 object-cover rounded-xl" alt="preview" />}
+          </div>
+          <Button onClick={salvarProduto} fullWidth size="lg" iconLeft={<CheckCircle size={18} />}>
+            {formProduto.id ? 'Salvar' : 'Publicar produto'}
+          </Button>
+        </div>
+      </Modal>
 
-                  <div className="space-y-1.5">
-                    <label className="uppercase text-gray-400 ml-4 text-[10px] font-black">Descrição da Loja</label>
-                    <textarea value={formLoja.descricao} onChange={(e) => setFormLoja({...formLoja, descricao: e.target.value})} className="w-full bg-[#F5F2ED]/50 border-2 border-transparent focus:border-[#55833d]/20 focus:bg-white p-4 rounded-2xl outline-none text-sm font-bold text-[#394158] transition-all resize-none min-h-[100px]" placeholder="Conte um pouco sobre sua loja..."></textarea>
-                  </div>
-               </div>
-
-               <button onClick={salvarLoja} className="w-full py-5 bg-[#55833d] hover:bg-[#466d32] text-white rounded-[1rem] font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all mt-4">
-                  Salvar Configurações
-               </button>
-            </div>
+      <Modal open={confirmarDelete.aberto} onClose={() => setConfirmarDelete({ aberto: false, id: null })} size="sm">
+        <div className="text-center space-y-4">
+          <div className="w-14 h-14 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto"><AlertTriangle size={28} /></div>
+          <h3 className="text-lg font-black uppercase italic text-[#394158]">Remover produto?</h3>
+          <div className="flex gap-2 pt-2">
+            <Button variant="ghost" fullWidth onClick={() => setConfirmarDelete({ aberto: false, id: null })}>Cancelar</Button>
+            <Button variant="danger" fullWidth onClick={() => confirmarDelete.id && handleDeletarProduto(confirmarDelete.id)}>Remover</Button>
           </div>
         </div>
-      )}
+      </Modal>
 
-      <footer className="w-full text-center p-10 md:p-20 bg-transparent text-[#394158]/40 border-t border-gray-100 mt-10">
-        <span className="text-[8px] md:text-[9px] font-black uppercase tracking-[0.3em]">© 2026 Rede Nordeste - Todos os direitos reservados.</span>
-      </footer>
+      <BottomTabBar
+        tabs={[
+          { to: '/vendedor',         label: 'Vitrine',  Icon: HomeIcon },
+          { to: '/painelvendedor',   label: 'Painel',   Icon: LayoutDashboard },
+          { to: '/receitasvendedor', label: 'Receitas', Icon: BookOpen },
+          { to: '/chat',             label: 'Chat',     Icon: MessageCircle },
+          { to: '/perfilvendedor',   label: 'Perfil',   Icon: User },
+        ]}
+      />
     </div>
   );
+
+  // ── Modal de Loja (compartilhado entre onboarding e edição) ───
+  function renderModalLoja() {
+    return (
+      <Modal open={modalLoja} onClose={() => setModalLoja(false)}
+        title={loja ? 'Editar minha loja' : 'Criar minha loja'} size="lg">
+        <div className="space-y-4">
+          <FormField label="Nome da loja" value={formLoja.nomeLoja}
+            onChange={e => setFormLoja({ ...formLoja, nomeLoja: e.target.value })} />
+          <div>
+            <label className="text-[10px] font-black uppercase text-[#55833d] tracking-widest ml-1 block mb-1.5">Bio</label>
+            <textarea rows={2} value={formLoja.descricaoBio || ''}
+              onChange={e => setFormLoja({ ...formLoja, descricaoBio: e.target.value })}
+              className="w-full p-3 bg-[#F5F2ED]/50 text-[#394158] font-medium rounded-2xl outline-none border-2 border-transparent focus:border-[#55833d] resize-none" />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <FormField label="Cidade" value={formLoja.cidade || ''}
+              onChange={e => setFormLoja({ ...formLoja, cidade: e.target.value })} />
+            <FormField label="Estado (UF)" value={formLoja.estado || 'SE'} maxLength={2}
+              onChange={e => setFormLoja({ ...formLoja, estado: e.target.value.toUpperCase() })} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <FormField label="CEP" value={formLoja.cep || ''} maxLength={9}
+              onChange={e => setFormLoja({ ...formLoja, cep: e.target.value })} />
+            <FormField label="Bairro" value={formLoja.bairro || ''}
+              onChange={e => setFormLoja({ ...formLoja, bairro: e.target.value })} />
+          </div>
+          <FormField label="Logradouro" value={formLoja.logradouro || ''}
+            onChange={e => setFormLoja({ ...formLoja, logradouro: e.target.value })} />
+
+          <div>
+            <label className="text-[10px] font-black uppercase text-[#55833d] tracking-widest ml-1 block mb-1.5">Localização (opcional)</label>
+            <div className="flex gap-2 items-center">
+              <p className="text-xs text-gray-500 flex-1 truncate">
+                {formLoja.latitudeLoja
+                  ? `${formLoja.latitudeLoja.toFixed(4)}, ${formLoja.longitudeLoja.toFixed(4)}`
+                  : 'Não definida'}
+              </p>
+              <Button variant="ghost" size="sm" onClick={usarMinhaLocalizacao}>Usar minha localização</Button>
+            </div>
+          </div>
+
+          <div>
+            <label className="text-[10px] font-black uppercase text-[#55833d] tracking-widest ml-1 block mb-1.5">Logo</label>
+            <label className="w-full p-3 bg-[#F5F2ED]/50 text-gray-400 font-bold rounded-2xl border-2 border-dashed border-gray-200 hover:border-[#f9943b] flex items-center justify-center gap-2 cursor-pointer">
+              <ImageIcon size={18} /> {formLoja.logoUrl ? 'Selecionada ✓' : 'Escolher logo'}
+              <input type="file" className="hidden" accept="image/*"
+                onChange={e => lerImagemBase64(e, url => setFormLoja({ ...formLoja, logoUrl: url }))} />
+            </label>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 text-xs">
+            <label className="flex items-center gap-2 font-bold">
+              <input type="checkbox" checked={!!formLoja.aceitaRetirada}
+                onChange={e => setFormLoja({ ...formLoja, aceitaRetirada: e.target.checked })} />
+              Aceita retirada
+            </label>
+            <label className="flex items-center gap-2 font-bold">
+              <input type="checkbox" checked={!!formLoja.fazEntrega}
+                onChange={e => setFormLoja({ ...formLoja, fazEntrega: e.target.checked })} />
+              Faz entrega
+            </label>
+          </div>
+
+          <Button onClick={salvarLoja} fullWidth size="lg" iconLeft={<CheckCircle size={18} />}>
+            {loja ? 'Salvar alterações' : 'Criar loja'}
+          </Button>
+        </div>
+      </Modal>
+    );
+  }
 }

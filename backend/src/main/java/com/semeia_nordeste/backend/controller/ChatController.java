@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.semeia_nordeste.backend.dto.ChatResponse;
 import com.semeia_nordeste.backend.dto.MensagemRequest;
 import com.semeia_nordeste.backend.dto.MensagemResponse;
+import com.semeia_nordeste.backend.exception.UnauthorizedException;
 import com.semeia_nordeste.backend.model.Chat;
 import com.semeia_nordeste.backend.model.Usuario;
 import com.semeia_nordeste.backend.service.ChatService;
@@ -45,12 +47,11 @@ public class ChatController {
             @RequestParam Long lojaId,
             @AuthenticationPrincipal Usuario usuario) {
         Chat chat = chatService.abrirOuRetornarChat(usuario.getId(), lojaId);
-        long naoLidas = chatService.totalNaoLidas(usuario);
+        // Chat recém-aberto não tem mensagens, então preview é null e naoLidas = 0.
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ChatResponse.fromEntity(chat, naoLidas));
+                .body(ChatResponse.fromEntity(chat, 0L, null));
     }
 
-    // Lista chats do comprador
     @GetMapping("/comprador/chats")
     public ResponseEntity<List<ChatResponse>> chatsComprador(
             @AuthenticationPrincipal Usuario usuario) {
@@ -71,7 +72,6 @@ public class ChatController {
         return ResponseEntity.ok(chatService.listarMensagens(chatId, usuario, pageable));
     }
 
-    // Envio via REST (fallback quando WebSocket não conectar)
     @PostMapping("/chats/{chatId}/mensagens")
     public ResponseEntity<MensagemResponse> enviarREST(
             @PathVariable Long chatId,
@@ -81,7 +81,6 @@ public class ChatController {
                 .body(chatService.enviarMensagem(chatId, request, usuario));
     }
 
-    // Badge global de não lidas
     @GetMapping("/chats/nao-lidas")
     public ResponseEntity<Map<String, Long>> naoLidas(
             @AuthenticationPrincipal Usuario usuario) {
@@ -89,16 +88,21 @@ public class ChatController {
                 Map.of("total", chatService.totalNaoLidas(usuario)));
     }
 
-    // Cliente envia para /app/chat/{chatId}
-    // Servidor publica em /topic/chat/{chatId}
+    /**
+     * WebSocket — cliente envia para /app/chat/{chatId}.
+     * Servidor publica em /topic/chat/{chatId} via ChatService.enviarMensagem.
+     * O Principal vem do JWT validado em WebSocketSecurityConfig.
+     */
     @MessageMapping("/chat/{chatId}")
     public void enviarWebSocket(
             @DestinationVariable Long chatId,
             @Payload MensagemRequest request,
             Principal principal) {
 
-        // Principal vem do token JWT via WebSocket
-        // Ver WebSocketSecurityConfig abaixo
-        // chatService cuida do broadcast via SimpMessagingTemplate
+        if (!(principal instanceof UsernamePasswordAuthenticationToken auth)
+                || !(auth.getPrincipal() instanceof Usuario remetente))
+            throw new UnauthorizedException("Sessão WebSocket inválida.");
+
+        chatService.enviarMensagem(chatId, request, remetente);
     }
 }

@@ -20,19 +20,22 @@ public class PedidoService {
     private final FreteService freteService;
     private final EntregadorService entregadorService;
     private final LojaRepository lojaRepository;
+    private final NotificacaoService notificacaoService;
 
     public PedidoService(PedidoRepository pedidoRepository,
             CarrinhoService carrinhoService,
             ProdutoRepository produtoRepository,
             FreteService freteService,
             EntregadorService entregadorService,
-            LojaRepository lojaRepository) {
+            LojaRepository lojaRepository,
+            NotificacaoService notificacaoService) {
         this.pedidoRepository = pedidoRepository;
         this.carrinhoService = carrinhoService;
         this.produtoRepository = produtoRepository;
         this.freteService = freteService;
         this.entregadorService = entregadorService;
         this.lojaRepository = lojaRepository;
+        this.notificacaoService = notificacaoService;
     }
 
     @Transactional
@@ -144,6 +147,33 @@ public class PedidoService {
 
         Pedido salvo = pedidoRepository.save(pedido);
         carrinhoService.limpar(usuario);
+
+        // ── Notificações: comprador + cada produtor envolvido ────────────
+        // Best-effort: se a notificação falhar não desfazemos o pedido.
+        try {
+            notificacaoService.notificar(
+                    usuario,
+                    com.semeia_nordeste.backend.model.TipoNotificacao.PEDIDO,
+                    "Pedido confirmado",
+                    "Recebemos seu pedido #" + salvo.getId() + ". Total: R$ " + salvo.getValorTotal() + ".",
+                    "/perfil");
+
+            // Cada loja diferente envolvida recebe uma notificação de venda
+            salvo.getItens().stream()
+                    .map(i -> i.getProduto().getLoja().getUsuario())
+                    .distinct()
+                    .forEach(produtor -> notificacaoService.notificar(
+                            produtor,
+                            com.semeia_nordeste.backend.model.TipoNotificacao.PEDIDO,
+                            "Nova venda!",
+                            usuario.getNomeCompleto() + " comprou da sua loja. Pedido #" + salvo.getId() + ".",
+                            "/painelvendedor"));
+        } catch (Exception e) {
+            // Notificação falhou — pedido continua válido, mas registramos
+            org.slf4j.LoggerFactory.getLogger(PedidoService.class)
+                    .warn("Falha ao criar notificações para pedido {}: {}", salvo.getId(), e.getMessage());
+        }
+
         return salvo;
     }
 
@@ -179,6 +209,43 @@ public class PedidoService {
 
         pedido.getEntrega().setStatusEntrega(novoStatus);
         pedido.getEntrega().setDataAtualizacao(java.time.OffsetDateTime.now());
-        return pedidoRepository.save(pedido);
+        Pedido salvo = pedidoRepository.save(pedido);
+
+        // ── Notifica comprador sobre mudança de status (best-effort) ─────
+        try {
+            String titulo;
+            String mensagem;
+            switch (novoStatus) {
+                case SAIU_PARA_ENTREGA -> {
+                    titulo = "Seu pedido está a caminho";
+                    mensagem = "Pedido #" + salvo.getId() + " saiu para entrega. Acompanhe pelo rastreio.";
+                }
+                case ENTREGUE -> {
+                    titulo = "Pedido entregue";
+                    mensagem = "Seu pedido #" + salvo.getId() + " foi entregue. Avalie a loja!";
+                }
+                case CANCELADO -> {
+                    titulo = "Pedido cancelado";
+                    mensagem = "Seu pedido #" + salvo.getId() + " foi cancelado pela loja.";
+                }
+                case RETIRADA_DISPONIVEL -> {
+                    titulo = "Pedido disponível para retirada";
+                    mensagem = "Seu pedido #" + salvo.getId() + " está pronto na loja.";
+                }
+                default -> {
+                    titulo = "Atualização do pedido";
+                    mensagem = "O status do pedido #" + salvo.getId() + " mudou para " + novoStatus.name() + ".";
+                }
+            }
+            notificacaoService.notificar(
+                    salvo.getComprador(),
+                    com.semeia_nordeste.backend.model.TipoNotificacao.PEDIDO,
+                    titulo, mensagem, "/perfil");
+        } catch (Exception e) {
+            org.slf4j.LoggerFactory.getLogger(PedidoService.class)
+                    .warn("Falha ao notificar mudança de status do pedido {}: {}", salvo.getId(), e.getMessage());
+        }
+
+        return salvo;
     }
 }

@@ -1,6 +1,7 @@
 package com.semeia_nordeste.backend.dto;
 
 import com.semeia_nordeste.backend.model.Chat;
+import com.semeia_nordeste.backend.model.Mensagem;
 import java.time.OffsetDateTime;
 
 public record ChatResponse(
@@ -11,9 +12,12 @@ public record ChatResponse(
         String nomeLoja,
         String logoLoja,
         OffsetDateTime dataInicio,
-        long naoLidas // badge de notificação
+        long naoLidas,
+        String ultimaMensagem,
+        OffsetDateTime dataUltimaMensagem,
+        Long remetenteUltimaMensagem
 ) {
-    public static ChatResponse fromEntity(Chat c, long naoLidas) {
+    public static ChatResponse fromEntity(Chat c, long naoLidas, Mensagem ultima) {
         return new ChatResponse(
                 c.getId(),
                 c.getComprador().getId(),
@@ -22,6 +26,9 @@ public record ChatResponse(
                 c.getLoja().getNomeLoja(),
                 c.getLoja().getLogoUrl(),
                 c.getDataInicio(),
-                naoLidas);
+                naoLidas,
+                ultima != null ? ultima.getConteudo() : null,
+                ultima != null ? ultima.getDataEnvio() : null,
+                ultima != null ? ultima.getRemetente().getId() : null);
     }
 }
