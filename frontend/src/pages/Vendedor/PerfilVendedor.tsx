@@ -116,6 +116,8 @@ export default function PerfilVendedor() {
       setMeusEnderecos(ends);
       setMeusCartoes(cards);
     });
+    
+    setMeusFavoritos(JSON.parse(localStorage.getItem('favoritos_objetos') || '[]'));
   }, []);
 
   useEffect(() => {
@@ -218,6 +220,13 @@ export default function PerfilVendedor() {
     }
   };
 
+  const removerFavorito = (id: number) => {
+    const novos = meusFavoritos.filter(f => f.id !== id);
+    setMeusFavoritos(novos);
+    localStorage.setItem('favoritos_objetos', JSON.stringify(novos));
+    localStorage.setItem('favoritos_itens', JSON.stringify(novos.map(n => n.id)));
+  };
+
   const handleLogout = async () => {
     try {
       await logout();
@@ -241,7 +250,7 @@ export default function PerfilVendedor() {
       <h3 className="text-xl font-black uppercase italic text-[#394158] px-2 tracking-tighter">Visto Recentemente</h3>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 pb-10 px-2">
         {vistoRecently.map((prod) => (
-          <div key={prod.id} onClick={() => navigate(`/produto/${prod.id}`)} className="bg-white rounded-2xl p-3 shadow-md border border-white flex flex-col h-full cursor-pointer active:scale-95 transition-all group">
+          <div key={prod.id} onClick={() => navigate(`/produtovendedor/${prod.id}`)} className="bg-white rounded-2xl p-3 shadow-md border border-white flex flex-col h-full cursor-pointer active:scale-95 transition-all group">
             <div className="w-full aspect-square rounded-xl overflow-hidden bg-[#F5F2ED] mb-3">
               <img src={prod.img} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={prod.nome} />
             </div>
@@ -279,13 +288,13 @@ export default function PerfilVendedor() {
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 pb-10 px-2">
           {favoritosOrdenados.map((prod) => (
-            <div key={prod.id} className="bg-white rounded-2xl p-3 shadow-md border border-white relative">
-              <button onClick={() => setMeusFavoritos(meusFavoritos.filter(f => f.id !== prod.id))}
+            <div key={prod.id} onClick={() => navigate(`/produtovendedor/${prod.id}`)} className="bg-white rounded-2xl p-3 shadow-md border border-white relative cursor-pointer active:scale-95 transition-all group">
+              <button onClick={(e) => { e.stopPropagation(); removerFavorito(prod.id); }}
                       className="absolute top-3 right-3 z-10 p-2 bg-white/90 shadow-md rounded-full text-red-400 hover:text-red-600 active:scale-90 transition-all">
                 <HeartOff size={14} />
               </button>
               <div className="w-full aspect-square rounded-xl overflow-hidden bg-[#F5F2ED] mb-3">
-                <img src={prod.img} className="w-full h-full object-cover" alt={prod.nome} />
+                <img src={prod.img} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={prod.nome} />
               </div>
               <p className="text-[11px] font-black text-[#394158] leading-tight px-1">{prod.nome}</p>
             </div>

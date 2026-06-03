@@ -42,26 +42,51 @@ export default function Post() {
   };
 
   useEffect(() => {
-    const carregarPost = () => {
+    const carregarPost = async () => {
       const postId = Number(id);
       let postEncontrado = null;
       
-      const salvas = localStorage.getItem('noticias_globais');
-      if (salvas) {
-        const parseadas = JSON.parse(salvas);
-        const adminPost = parseadas.find((p: any) => p.id === postId);
-        if (adminPost) {
-          postEncontrado = {
-            id: adminPost.id,
-            titulo: adminPost.titulo,
-            subtitulo: adminPost.subtitulo,
-            categoria: "NOTÍCIA",
-            imagem: adminPost.imagem,
-            data: adminPost.data,
-            leitura: adminPost.tempoLeitura || '3 min',
-            conteudo: adminPost.descricao || '',
-            citacao: adminPost.citacao || ''
-          };
+      // 1. Tenta buscar da API primeiro
+      try {
+        const url = import.meta.env.VITE_API_URL || 'http://localhost:8090/api';
+        const res = await fetch(`${url}/noticias/${postId}`);
+        if (res.ok) {
+          const n = await res.json();
+          if (n && n.id) {
+            postEncontrado = {
+              id: n.id,
+              titulo: n.titulo,
+              subtitulo: n.subtitulo,
+              categoria: n.categoria || "NOTÍCIA",
+              imagem: n.imagemUrl || n.imagem,
+              data: n.dataCriacao ? new Date(n.dataCriacao).toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR'),
+              leitura: n.tempoLeitura || '3 min',
+              conteudo: n.descricao || '',
+              citacao: n.citacao || ''
+            };
+          }
+        }
+      } catch (e) { /* fallback */ }
+
+      // 2. Se não achou na API, tenta fallback do localStorage
+      if (!postEncontrado) {
+        const salvas = localStorage.getItem('noticias_globais');
+        if (salvas) {
+          const parseadas = JSON.parse(salvas);
+          const adminPost = parseadas.find((p: any) => p.id === postId);
+          if (adminPost) {
+            postEncontrado = {
+              id: adminPost.id,
+              titulo: adminPost.titulo,
+              subtitulo: adminPost.subtitulo,
+              categoria: adminPost.categoria || "NOTÍCIA",
+              imagem: adminPost.imagemUrl || adminPost.imagem,
+              data: adminPost.data || new Date().toLocaleDateString('pt-BR'),
+              leitura: adminPost.tempoLeitura || '3 min',
+              conteudo: adminPost.descricao || '',
+              citacao: adminPost.citacao || ''
+            };
+          }
         }
       }
 

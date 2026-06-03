@@ -29,6 +29,8 @@ import PainelVendedor  from './pages/Vendedor/PainelVendedor';
 import HomeAdmin       from './pages/Admin/HomeAdmin';
 import PerfilVendedor  from './pages/Vendedor/PerfilVendedor';
 import ReceitasVendedor from './pages/Vendedor/ReceitasVendedor';
+import CarrinhoVendedor from './pages/Vendedor/CarrinhoVendedor';
+import ProdutoDetalhesVendedor from './pages/Vendedor/ProdutoDetalhesVendedor';
 
 // ── Helpers ───────────────────────────────────────────────────────
 const HOME_POR_PERFIL: Record<TipoPerfil, string> = {
@@ -139,6 +141,8 @@ function App() {
           <Route path="/painelvendedor"   element={<RotaProtegida permitidos={['PRODUTOR']}><PainelVendedor /></RotaProtegida>} />
           <Route path="/perfilvendedor"   element={<RotaProtegida permitidos={['PRODUTOR']}><PerfilVendedor /></RotaProtegida>} />
           <Route path="/receitasvendedor" element={<RotaProtegida permitidos={['PRODUTOR']}><ReceitasVendedor /></RotaProtegida>} />
+          <Route path="/carrinhovendedor" element={<RotaProtegida permitidos={['PRODUTOR']}><CarrinhoVendedor /></RotaProtegida>} />
+          <Route path="/produtovendedor/:id" element={<RotaProtegida permitidos={['PRODUTOR']}><ProdutoDetalhesVendedor /></RotaProtegida>} />
 
           {/* ── ADMIN ────────────────────────────────────────── */}
           <Route path="/admin" element={<RotaProtegida permitidos={['ADMIN']}><HomeAdmin /></RotaProtegida>} />

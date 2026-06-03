@@ -30,14 +30,14 @@ export default function HomeComprador() {
 
   // ── Dados da API ─────────────────────────────────────────────────
   const [produtos, setProdutos] = useState<any[]>([]);
-  const [categorias, setCategorias] = useState<string[]>(['Todos']);
+  const [categorias, setCategorias] = useState<any[]>([{ id: null, nome: 'Todos' }]);
   const [totalPaginas, setTotalPaginas] = useState(1);
   const [carregando, setCarregando] = useState(false);
 
   // ── Filtros e UI ─────────────────────────────────────────────────
-  const [catAtiva, setCatAtiva] = useState('Todos');
-  const [busca, setBusca] = useState('');
-  const [termoPesquisado, setTermoPesquisado] = useState('');
+  const [catAtiva, setCatAtiva] = useState<any>({ id: null, nome: 'Todos' });
+  const [busca, setBusca] = useState(() => (location.state as any)?.buscaReceita || '');
+  const [termoPesquisado, setTermoPesquisado] = useState(() => (location.state as any)?.buscaReceita || '');
   const [ordenacao, setOrdenacao] = useState('recomendados');
   const [favoritos, setFavoritos] = useState<number[]>([]);
   const [menuAberto, setMenuAberto] = useState(false);
@@ -58,8 +58,8 @@ export default function HomeComprador() {
     }
 
     getCategorias()
-      .then((data: any[]) => setCategorias(['Todos', ...data.map((c: any) => c.nome)]))
-      .catch(() => setCategorias(['Todos']));
+      .then((data: any[]) => setCategorias([{ id: null, nome: 'Todos' }, ...data]))
+      .catch(() => setCategorias([{ id: null, nome: 'Todos' }]));
 
     const raw = localStorage.getItem('usuarioLogado');
     if (raw) {
@@ -72,24 +72,28 @@ export default function HomeComprador() {
 
   // ── Carrega produtos ──────────────────────────────────────────────
   useEffect(() => {
+    let ignorar = false;
     const carregar = async () => {
       setCarregando(true);
       try {
         const data = await buscarProdutos(
           termoPesquisado || undefined,
-          undefined,
+          catAtiva.id || undefined,
           paginaAtual
         );
-        setProdutos(data.content);
-        setTotalPaginas(data.totalPages);
+        if (!ignorar) {
+          setProdutos(data.content);
+          setTotalPaginas(data.totalPages);
+        }
       } catch {
-        setProdutos([]);
+        if (!ignorar) setProdutos([]);
       } finally {
-        setCarregando(false);
+        if (!ignorar) setCarregando(false);
       }
     };
     carregar();
-  }, [termoPesquisado, catAtiva, paginaAtual]);
+    return () => { ignorar = true; };
+  }, [termoPesquisado, catAtiva.id, paginaAtual]);
 
   // ── Redirect de receitas ──────────────────────────────────────────
   useEffect(() => {
@@ -97,19 +101,31 @@ export default function HomeComprador() {
       const termo = (location.state as any).buscaReceita;
       setBusca(termo);
       setTermoPesquisado(termo);
-      setCatAtiva('Todos');
+      setCatAtiva({ id: null, nome: 'Todos' });
       setPaginaAtual(0);
+      
+      // Limpa o estado da rota para evitar loops se o usuário recarregar a página
+      window.history.replaceState({}, document.title);
     }
   }, [location.state]);
 
   // ── Helpers ───────────────────────────────────────────────────────
-  const toggleFavorito = (e: React.MouseEvent, id: number) => {
+  const toggleFavorito = (e: React.MouseEvent, prod: any) => {
     e.preventDefault(); e.stopPropagation();
-    const novos = favoritos.includes(id)
-      ? favoritos.filter(f => f !== id)
-      : [...favoritos, id];
-    setFavoritos(novos);
-    localStorage.setItem('favoritos_itens', JSON.stringify(novos));
+    
+    let salvos = JSON.parse(localStorage.getItem('favoritos_objetos') || '[]');
+    const jaExiste = favoritos.includes(prod.id);
+    
+    if (jaExiste) {
+      salvos = salvos.filter((f: any) => f.id !== prod.id);
+      setFavoritos(favoritos.filter(id => id !== prod.id));
+    } else {
+      salvos.push({ id: prod.id, nome: prod.nome, preco: prod.precoAtual, img: prod.imagemUrl || 'https://via.placeholder.com/400' });
+      setFavoritos([...favoritos, prod.id]);
+    }
+    
+    localStorage.setItem('favoritos_objetos', JSON.stringify(salvos));
+    localStorage.setItem('favoritos_itens', JSON.stringify(salvos.map((s: any) => s.id)));
   };
 
   const adicionarRapido = async (e: React.MouseEvent, produtoId: number) => {
@@ -124,7 +140,7 @@ export default function HomeComprador() {
 
   const handlePesquisa = () => {
     setTermoPesquisado(busca);
-    setCatAtiva('Todos');
+    setCatAtiva({ id: null, nome: 'Todos' });
     setPaginaAtual(0);
   };
 
@@ -132,8 +148,8 @@ export default function HomeComprador() {
     if (e.key === 'Enter') handlePesquisa();
   };
 
-  const handleCategoriaClick = (nome: string) => {
-    setCatAtiva(nome);
+  const handleCategoriaClick = (cat: any) => {
+    setCatAtiva(cat);
     setTermoPesquisado('');
     setBusca('');
     setPaginaAtual(0);
@@ -185,7 +201,7 @@ export default function HomeComprador() {
               <Link title="Chat" to="/chat" className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full transition-all duration-300 hover:bg-[#f9943b] hover:text-white text-[#394158] group">
                 <MessageCircle className="w-[18px] h-[18px] md:w-[22px] md:h-[22px]" />
               </Link>
-              <Link title="Carrinho" to="/carrinho" className="relative w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full transition-all duration-300 hover:bg-[#f9943b] hover:text-white text-[#394158] group">
+              <Link title="Carrinho" to="/carrinhovendedor" className="relative w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full transition-all duration-300 hover:bg-[#f9943b] hover:text-white text-[#394158] group">
                 <ShoppingCart className="w-[18px] h-[18px] md:w-[22px] md:h-[22px]" />
                 {carrinhoCount > 0 && (
                   <span className="absolute top-0 right-0 md:top-1 md:right-1 bg-red-500 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center border-2 border-white group-hover:border-[#f9943b]">
@@ -227,7 +243,7 @@ export default function HomeComprador() {
                 Notificações
               </Link>
               <Link to="/chat" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d]"><MessageCircle size={20} /> Chat</Link>
-              <Link to="/carrinho" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d]">
+              <Link to="/carrinhovendedor" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d]">
                 <div className="relative">
                   <ShoppingCart size={20} />
                   {carrinhoCount > 0 && <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center border-2 border-white">{carrinhoCount}</span>}
@@ -305,7 +321,9 @@ export default function HomeComprador() {
                   <div className="flex items-center gap-2 mb-3 text-[#394158]/50 uppercase font-black text-[9px]"><BookOpen size={12} /> Nossa História</div>
                   <p className="text-sm text-[#394158] leading-relaxed italic">"{mulherSelecionada.historia}"</p>
                 </div>
-                <button onClick={() => setMulherSelecionada(null)} className="w-full bg-[#55833d] text-white py-4 rounded-2xl font-black uppercase text-[10px] flex items-center justify-center gap-3"><Store size={16} /> Ver Loja</button>
+                <button onClick={() => { setMulherSelecionada(null); navigate(`/loja/${mulherSelecionada.id}`); }} className="w-full bg-[#55833d] text-white py-4 rounded-2xl font-black uppercase text-[10px] flex items-center justify-center gap-3">
+                  <Store size={16} /> Ver Loja
+                </button>
               </div>
             </div>
           </div>
@@ -350,15 +368,16 @@ export default function HomeComprador() {
           <div className="mb-12">
             <h2 className="text-xs md:text-xl font-black uppercase tracking-widest italic mb-10 text-[#394158]">Categorias</h2>
             <div className="flex flex-wrap justify-center gap-y-5 gap-x-2 md:grid md:grid-cols-5 md:gap-8 justify-items-center max-w-4xl mx-auto px-1">
-              {categorias.map(nome => {
+              {categorias.map(cat => {
+                const nome = cat.nome;
                 const Icone = CATEGORIAS_ICONES[nome] || LayoutGrid;
                 return (
-                  <button key={nome} onClick={() => handleCategoriaClick(nome)}
+                  <button key={nome} onClick={() => handleCategoriaClick(cat)}
                     className="flex flex-col items-center gap-1.5 md:gap-3 w-[78px] md:w-[120px] group">
-                    <div className={`w-[52px] h-[52px] md:w-[72px] md:h-[72px] rounded-[18px] md:rounded-[24px] flex items-center justify-center border transition-all ${catAtiva === nome ? 'bg-[#f9943b] border-[#f9943b] text-white shadow-md scale-105' : 'bg-white border-gray-100 text-[#394158] shadow-sm group-hover:border-[#f9943b] group-hover:text-[#f9943b]'}`}>
+                    <div className={`w-[52px] h-[52px] md:w-[72px] md:h-[72px] rounded-[18px] md:rounded-[24px] flex items-center justify-center border transition-all ${catAtiva.id === cat.id ? 'bg-[#f9943b] border-[#f9943b] text-white shadow-md scale-105' : 'bg-white border-gray-100 text-[#394158] shadow-sm group-hover:border-[#f9943b] group-hover:text-[#f9943b]'}`}>
                       <Icone className="w-[22px] h-[22px] md:w-8 md:h-8" strokeWidth={1.5} />
                     </div>
-                    <span className={`text-[11px] md:text-[13px] leading-[1.1] text-center px-0.5 ${catAtiva === nome ? 'font-bold text-[#f9943b]' : 'font-medium text-gray-700'}`}>{nome}</span>
+                    <span className={`text-[11px] md:text-[13px] leading-[1.1] text-center px-0.5 ${catAtiva.id === cat.id ? 'font-bold text-[#f9943b]' : 'font-medium text-gray-700'}`}>{nome}</span>
                   </button>
                 );
               })}
@@ -367,7 +386,7 @@ export default function HomeComprador() {
 
           <div className="w-full">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
-              <h2 className="text-xl font-black italic uppercase text-[#394158]">{catAtiva !== 'Todos' ? catAtiva : 'Nossos Produtos'}</h2>
+              <h2 className="text-xl font-black italic uppercase text-[#394158]">{catAtiva.id !== null ? catAtiva.nome : 'Nossos Produtos'}</h2>
               <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-gray-100 shadow-sm self-start">
                 <Filter size={14} className="text-[#55833d]" />
                 <select value={ordenacao} onChange={e => setOrdenacao(e.target.value)}
@@ -387,12 +406,12 @@ export default function HomeComprador() {
               <div className="grid grid-cols-3 md:grid-cols-4 gap-3 md:gap-8">
                 {produtosExibidos.map(prod => (
                   <div key={prod.id} className="relative bg-white p-2 md:p-5 rounded-[1rem] shadow-xl flex flex-col group border border-transparent hover:border-[#55833d]/20 transition-all">
-                    <button onClick={e => toggleFavorito(e, prod.id)}
+                    <button onClick={e => toggleFavorito(e, prod)}
                       className="absolute top-3 left-3 z-20 p-1.5 bg-white/80 backdrop-blur-md rounded-full shadow-sm hover:scale-110 transition-transform">
                       <Heart size={14} className={favoritos.includes(prod.id) ? "fill-[#802D44] text-[#802D44]" : "text-gray-400"} />
                     </button>
                     <div className="relative overflow-hidden rounded-[1rem] mb-3 md:mb-4 aspect-square">
-                      <Link to={`/produto/${prod.id}`}>
+                      <Link to={`/produtovendedor/${prod.id}`}>
                         <img src={prod.imagemUrl || 'https://via.placeholder.com/400'}
                           className="w-full h-full object-cover group-hover:scale-105 transition-all duration-700" alt={prod.nome} />
                       </Link>
@@ -402,7 +421,7 @@ export default function HomeComprador() {
                       </button>
                     </div>
                     <span className="text-[6px] md:text-[9px] font-black uppercase text-[#55833d] mb-1">{prod.nomeCategoria}</span>
-                    <Link to={`/produto/${prod.id}`}>
+                    <Link to={`/produtovendedor/${prod.id}`}>
                       <h3 className="font-bold text-[#394158] text-[8px] md:text-sm leading-tight mb-1 line-clamp-1 hover:text-[#55833d] transition-colors">{prod.nome}</h3>
                     </Link>
                     <div className="flex items-center gap-1 text-[#394158]/50 mb-2 uppercase font-bold text-[6px] md:text-[9px]">
@@ -413,7 +432,7 @@ export default function HomeComprador() {
                         R$ {Number(prod.precoAtual).toFixed(2)}
                         <span className="text-[7px] md:text-[10px] opacity-40 ml-1">/{prod.unidadeMedida}</span>
                       </span>
-                      <Link to={`/produto/${prod.id}`} className="hidden md:block text-[9px] font-black uppercase bg-[#394158] text-white px-4 py-1.5 rounded-xl hover:bg-[#55833d]">Detalhes</Link>
+                      <Link to={`/produtovendedor/${prod.id}`} className="hidden md:block text-[9px] font-black uppercase bg-[#394158] text-white px-4 py-1.5 rounded-xl hover:bg-[#55833d]">Detalhes</Link>
                     </div>
                   </div>
                 ))}
