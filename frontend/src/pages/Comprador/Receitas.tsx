@@ -5,6 +5,7 @@ import {
   ChevronLeft, X, Flame, ChefHat, ScrollText, ShoppingBag, MessageCircle, Search, ChevronRight, Menu, Bell,
   Trash2, Truck, Tag, Info, Package
 } from 'lucide-react';
+import { listarReceitas } from '../../services/api';
 
 const NOTIFICACOES_DATA = [
   { id: 1, titulo: 'Pedido a caminho!', mensagem: 'Seu pedido #4582 saiu para entrega.', tempo: 'Há 2 horas', lida: false, icone: Truck, cor: 'text-[#f9943b]', bg: 'bg-[#f9943b]/10' },
@@ -12,71 +13,14 @@ const NOTIFICACOES_DATA = [
   { id: 3, titulo: 'Bem-vindo(a)!', mensagem: 'Explore os produtos da nossa terra.', tempo: 'Há 1 dia', lida: true, icone: Info, cor: 'text-blue-500', bg: 'bg-blue-500/10' },
 ];
 
-const RECEITAS_DATA = [
-  { 
-    id: 1, 
-    titulo: 'Escondidinho de Carne', 
-    tempo: '45 min', 
-    dificuldade: 'Média',
-    img: 'https://images.unsplash.com/photo-1595666548990-788e19dc3885?q=80&w=1170&auto=format&fit=crop',
-    descricao: 'O clássico sertanejo com macaxeira cremosa e queijo coalho gratinado.',
-    ingredientes: ['500g de carne de sol', '1kg de macaxeira cozida', '200g de queijo coalho', '1 cebola roxa', 'Nata a gosto'],
-    preparo: 'Dessalgue a carne, refogue com cebola. Amasse a macaxeira com nata para o purê. Monte em camadas e gratine com o queijo.'
-  },
-  { 
-    id: 2, 
-    titulo: 'Tapioca Gourmet de Queijo', 
-    tempo: '10 min', 
-    dificuldade: 'Fácil',
-    img: 'https://sabores-new.s3.amazonaws.com/public/2024/11/tapiocaalecrim_comqueijo.jpeg',
-    descricao: 'Crocante e recheada com o melhor queijo da nossa terra.',
-    ingredientes: ['1 xícara de goma de tapioca', '2 fatias grossas de queijo coalho', 'Manteiga de garrafa'],
-    preparo: 'Peneire a goma na frigideira quente. Quando ligar, coloque o queijo. Dobre e pincele manteiga de garrafa.'
-  },
-  { 
-    id: 3, 
-    titulo: 'Cuscuz Nordestino', 
-    tempo: '20 min', 
-    dificuldade: 'Fácil',
-    img: 'https://www.sabornamesa.com.br/media/k2/items/cache/4fd575b03eae045941eb58c35ab6b353_XL.jpg',
-    descricao: 'O café da manhã perfeito com ovos caipira e queijo derretido.',
-    ingredientes: ['2 xícaras de flocão de milho', '1 xícara de água', 'Sal a gosto', 'Ovos e queijo para acompanhar'],
-    preparo: 'Hidrate o flocão por 10 min. Cozinhe no vapor por 10 min. Sirva com ovos fritos na manteiga e queijo derretido.'
-  },
-  { 
-    id: 4, 
-    titulo: 'Bolo de Rolo', 
-    tempo: '1h 20min', 
-    dificuldade: 'Difícil',
-    img: 'https://images.unsplash.com/photo-1593872423141-bb230bd352c6?q=80&w=687&auto=format&fit=crop',
-    descricao: 'A iguaria mais famosa de Pernambuco, com camadas finas e goiabada cascão.',
-    ingredientes: ['Manteiga', 'Açúcar', 'Farinha de Trigo', 'Goiabada Cascão'],
-    preparo: 'Asse camadas finas, recheie com a goiabada derretida e enrole com cuidado ainda quente.'
-  },
-  { 
-    id: 5, 
-    titulo: 'Baião de Dois', 
-    tempo: '40 min', 
-    dificuldade: 'Média',
-    img: 'https://www.yoki.com.br/_next/image?url=https%3A%2F%2Fprodcontent.yoki.com.br%2Fwp-content%2Fuploads%2F2024%2F09%2FBaiao-de-dois-800x450-1.jpg&w=1400&q=75',
-    descricao: 'O arroz com feijão de corda que é a cara do Nordeste. Prático e delicioso.',
-    ingredientes: ['Arroz', 'Feijão de corda', 'Queijo coalho', 'Toucinho'],
-    preparo: 'Cozinhe o feijão, adicione o arroz e finalize com pedaços generosos de queijo coalho.'
-  },
-  { 
-    id: 6, 
-    titulo: 'Arroz doce verdadeiro', 
-    tempo: '1h 30min', 
-    dificuldade: 'Média',
-    img: 'https://bakeandcakegourmet.com.br/uploads/site/receitas/arroz-doce-sem-leite-ikz3g2us.jpg',
-    descricao: 'Para os amantes de doces clássicos, a receita de arroz doce verdadeiro é uma opção perfeita!',
-    ingredientes: ['1 e 1/2 litro de leite', '3 xícaras de açúcar', '1 lata de leite condensado', '2 xícaras de arroz branco (já lavado)', 'canela em pau a gosto'],
-    preparo: 'Cozinhe o arroz no leite, juntamente com a canela (utilize uma panela grande para que o leite ferva e não derrame). Após 20 minutos, mexa de tempos em tempos. Acrescente o açúcar e deixe por 20 minutos. Logo em seguida, acrescente o leite condensado e deixe por mais 20 minutos. Coloque em uma linda travessa.'
-  }
-];
+const classificarDificuldade = (min: number) => {
+  if (min <= 15) return 'Fácil';
+  if (min <= 45) return 'Média';
+  return 'Difícil';
+};
 
 export default function Receitas() {
-  const [receitas, setReceitas] = useState<any[]>(RECEITAS_DATA);
+  const [receitas, setReceitas] = useState<any[]>([]);
   const [receitaAberta, setReceitaAberta] = useState<any>(null);
   const [termoBusca, setTermoBusca] = useState('');
   const [dificuldadeFiltro, setDificuldadeFiltro] = useState('Todas');
@@ -91,12 +35,22 @@ export default function Receitas() {
   });
 
   useEffect(() => {
-    const carregarReceitas = () => {
-      const salvas = localStorage.getItem('receitas_globais');
-      if (salvas) {
-        setReceitas(JSON.parse(salvas));
-      } else {
-        localStorage.setItem('receitas_globais', JSON.stringify(RECEITAS_DATA));
+    const carregarReceitas = async () => {
+      try {
+        const data = await listarReceitas();
+        const lista = (data.content || []).map((r: any) => ({
+          ...r,
+          tempo: `${r.tempoPreparoMin} min`,
+          dificuldade: classificarDificuldade(r.tempoPreparoMin),
+          img: r.imagemUrl,
+          preparo: r.modoPreparo,
+          ingredientes: r.ingredientesTexto
+            ? r.ingredientesTexto.split('\n').filter(Boolean)
+            : (r.ingredientes || []).map((i: any) => i.nome),
+        }));
+        setReceitas(lista);
+      } catch {
+        // fallback vazio
       }
     };
     carregarReceitas();
@@ -104,7 +58,6 @@ export default function Receitas() {
     const atualizarDados = () => {
       const salvoCarrinho = localStorage.getItem('carrinho_count');
       setCarrinhoCount(salvoCarrinho ? parseInt(salvoCarrinho) : 0);
-      carregarReceitas();
     };
     window.addEventListener('storage', atualizarDados);
     return () => window.removeEventListener('storage', atualizarDados);

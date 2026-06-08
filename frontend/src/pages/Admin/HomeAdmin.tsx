@@ -5,6 +5,7 @@ import {
   AlertTriangle, CheckCircle, UserCheck,
   Newspaper, Image as ImageIcon, Plus, Edit2,
   Trash2, XCircle, ShieldOff, Package, FileText, Crown, ArrowDownCircle,
+  UtensilsCrossed, Clock, Flame,
 } from 'lucide-react';
 import {
   getProdutosPendentes, aprovarOuRejeitarProduto,
@@ -12,6 +13,7 @@ import {
   adminListarLojasPendentes, adminVerificarLoja, adminSuspenderLoja,
   adminListarBanners, adminCriarBanner, adminAtualizarBanner, adminDeletarBanner,
   adminListarNoticias, adminCriarNoticia, adminAtualizarNoticia, adminDeletarNoticia,
+  listarReceitas, criarReceita, atualizarReceita, deletarReceita,
 } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
 import { useAuth } from '../../context/AuthContext';
@@ -20,7 +22,13 @@ import { Button } from '../../components/ui/Button';
 import { Modal } from '../../components/ui/Modal';
 import { FormField } from '../../components/ui/Input';
 
-type Aba = 'dashboard' | 'verificacao' | 'usuarios' | 'destaques' | 'noticias';
+type Aba = 'dashboard' | 'verificacao' | 'usuarios' | 'destaques' | 'noticias' | 'receitas';
+
+const classificarDificuldade = (min: number) => {
+  if (min <= 15) return 'Fácil';
+  if (min <= 45) return 'Média';
+  return 'Difícil';
+};
 
 export default function HomeAdmin() {
   const { success, error: toastError } = useToast();
@@ -38,14 +46,16 @@ export default function HomeAdmin() {
   const [totalProdutosPendentes, setTotalProdutosPendentes] = useState(0);
   const [banners, setBanners] = useState<any[]>([]);
   const [noticias, setNoticias] = useState<any[]>([]);
+  const [receitas, setReceitas] = useState<any[]>([]);
   const [carregando, setCarregando] = useState(false);
 
   // ── Modais ────────────────────────────────────────────────────
   const [modalBanner, setModalBanner] = useState(false);
   const [modalNoticia, setModalNoticia] = useState(false);
+  const [modalReceita, setModalReceita] = useState(false);
   const [confirmar, setConfirmar] = useState<{
     aberto: boolean;
-    tipo: 'banner' | 'noticia' | 'suspenderLoja' | null;
+    tipo: 'banner' | 'noticia' | 'suspenderLoja' | 'receita' | null;
     id: number | null;
     motivo?: string;
   }>({ aberto: false, tipo: null, id: null });
@@ -58,6 +68,10 @@ export default function HomeAdmin() {
     id: null, titulo: '', subtitulo: '', categoria: 'NOTICIA',
     imagemUrl: '', descricao: '', citacao: '', tempoLeitura: '3 min', publicada: true,
   });
+  const [formReceita, setFormReceita] = useState<any>({
+    id: null, titulo: '', descricao: '', modoPreparo: '',
+    tempoPreparoMin: 30, imagemUrl: '', ingredientesTexto: '',
+  });
 
   // ── Carrega dados conforme aba ────────────────────────────────
   useEffect(() => {
@@ -66,6 +80,7 @@ export default function HomeAdmin() {
     if (abaAtiva === 'usuarios')    carregarUsuarios();
     if (abaAtiva === 'destaques')   carregarBanners();
     if (abaAtiva === 'noticias')    carregarNoticias();
+    if (abaAtiva === 'receitas')    carregarReceitas();
   }, [abaAtiva]);
 
   const carregarMetricas = async () => {
@@ -107,6 +122,13 @@ export default function HomeAdmin() {
       const data = await adminListarNoticias();
       setNoticias(data.content || []);
     } catch { setNoticias([]); }
+  };
+
+  const carregarReceitas = async () => {
+    try {
+      const data = await listarReceitas();
+      setReceitas(data.content || []);
+    } catch { setReceitas([]); }
   };
 
   // ── Ações: usuários ──────────────────────────────────────────
@@ -213,12 +235,13 @@ export default function HomeAdmin() {
     setFormNoticia({
       id: null, titulo: '', subtitulo: '', categoria: 'NOTICIA',
       imagemUrl: '', descricao: '', citacao: '', tempoLeitura: '3 min', publicada: true,
+      adicionarNoCarrossel: false
     });
     setModalNoticia(true);
   };
 
   const abrirEditarNoticia = (n: any) => {
-    setFormNoticia({ ...n });
+    setFormNoticia({ ...n, adicionarNoCarrossel: false });
     setModalNoticia(true);
   };
 
@@ -228,13 +251,49 @@ export default function HomeAdmin() {
       return;
     }
     try {
+      let idNoticia = formNoticia.id;
       if (formNoticia.id) {
         await adminAtualizarNoticia(formNoticia.id, formNoticia);
         success('Notícia atualizada');
       } else {
-        await adminCriarNoticia(formNoticia);
+        const res = await adminCriarNoticia(formNoticia);
+        idNoticia = res?.id || res?.data?.id || idNoticia;
+        
+        // Se a API não retornou o ID, buscamos a última notícia cadastrada pelo maior ID
+        if (!idNoticia) {
+          try {
+            const lista = await adminListarNoticias();
+            const items = lista.content || lista;
+            if (Array.isArray(items) && items.length > 0) {
+              const ultima = items.sort((a: any, b: any) => b.id - a.id)[0];
+              idNoticia = ultima.id;
+            }
+          } catch (e) {}
+        }
         success('Notícia publicada');
       }
+      
+      if (formNoticia.adicionarNoCarrossel) {
+        try {
+          await adminCriarBanner({
+            tipo: formNoticia.categoria || 'NOTÍCIA',
+            titulo: formNoticia.titulo,
+            subtitulo: formNoticia.subtitulo || formNoticia.descricao?.substring(0, 100),
+            imagemUrl: formNoticia.imagemUrl || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=2000',
+            corDestaque: 'text-[#55833d]',
+            linkBlogId: idNoticia || null,
+            ativo: true,
+            ordem: 0
+          });
+          carregarBanners();
+        } catch (e) {
+          const salvos = JSON.parse(localStorage.getItem('noticias_globais') || '[]');
+          salvos.push({ ...formNoticia, id: idNoticia || Date.now(), adicionarNoCarrossel: true });
+          localStorage.setItem('noticias_globais', JSON.stringify(salvos));
+          window.dispatchEvent(new Event('storage'));
+        }
+      }
+
       setModalNoticia(false);
       carregarNoticias();
     } catch (err: any) { toastError(err?.message || 'Erro ao salvar notícia'); }
@@ -247,6 +306,64 @@ export default function HomeAdmin() {
       setConfirmar({ aberto: false, tipo: null, id: null });
       carregarNoticias();
     } catch (err: any) { toastError(err?.message || 'Erro ao remover notícia'); }
+  };
+
+  // ── Ações: receitas ──────────────────────────────────────────
+  const abrirNovaReceita = () => {
+    setFormReceita({
+      id: null, titulo: '', descricao: '', modoPreparo: '',
+      tempoPreparoMin: 30, imagemUrl: '', ingredientesTexto: '',
+    });
+    setModalReceita(true);
+  };
+
+  const abrirEditarReceita = (r: any) => {
+    setFormReceita({
+      id: r.id,
+      titulo: r.titulo,
+      descricao: r.descricao || '',
+      modoPreparo: r.modoPreparo || '',
+      tempoPreparoMin: r.tempoPreparoMin || 30,
+      imagemUrl: r.imagemUrl || '',
+      ingredientesTexto: r.ingredientesTexto || '',
+    });
+    setModalReceita(true);
+  };
+
+  const salvarReceita = async () => {
+    if (!formReceita.titulo || !formReceita.modoPreparo) {
+      toastError('Preencha título e modo de preparo');
+      return;
+    }
+    try {
+      const dados = {
+        titulo: formReceita.titulo,
+        descricao: formReceita.descricao,
+        modoPreparo: formReceita.modoPreparo,
+        tempoPreparoMin: Number(formReceita.tempoPreparoMin),
+        imagemUrl: formReceita.imagemUrl,
+        ingredientesTexto: formReceita.ingredientesTexto,
+        ingredienteIds: [],
+      };
+      if (formReceita.id) {
+        await atualizarReceita(formReceita.id, dados);
+        success('Receita atualizada');
+      } else {
+        await criarReceita(dados);
+        success('Receita criada');
+      }
+      setModalReceita(false);
+      carregarReceitas();
+    } catch (err: any) { toastError(err?.message || 'Erro ao salvar receita'); }
+  };
+
+  const handleDeletarReceita = async (id: number) => {
+    try {
+      await deletarReceita(id);
+      success('Receita removida');
+      setConfirmar({ aberto: false, tipo: null, id: null });
+      carregarReceitas();
+    } catch (err: any) { toastError(err?.message || 'Erro ao remover receita'); }
   };
 
   // ── Upload de imagem (base64) ─────────────────────────────────
@@ -272,6 +389,7 @@ export default function HomeAdmin() {
     { id: 'usuarios',    label: 'Usuários',            icon: Users },
     { id: 'destaques',   label: 'Banners da Home',     icon: ImageIcon },
     { id: 'noticias',    label: 'Blog',                icon: Newspaper },
+    { id: 'receitas',    label: 'Receitas',            icon: UtensilsCrossed },
   ];
 
   // ────────────────────────────────────────────────────────────────
@@ -593,6 +711,51 @@ export default function HomeAdmin() {
               </div>
             </div>
           )}
+
+          {/* RECEITAS */}
+          {abaAtiva === 'receitas' && (
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-4 md:p-6 rounded-2xl border border-gray-100 gap-3 shadow-sm">
+                <div>
+                  <h2 className="text-lg md:text-xl font-black uppercase italic text-[#394158]">Receitas</h2>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Gerencie as receitas exibidas na plataforma</p>
+                </div>
+                <Button onClick={abrirNovaReceita} variant="warning" iconLeft={<Plus size={16} />}>Nova Receita</Button>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {receitas.map(r => (
+                  <div key={r.id} className="bg-white rounded-2xl overflow-hidden shadow-md border border-white flex flex-col">
+                    <div className="aspect-video relative overflow-hidden bg-gray-100">
+                      {r.imagemUrl && <img src={r.imagemUrl} className="w-full h-full object-cover" alt={r.titulo} />}
+                      <div className="absolute top-3 left-3 flex gap-2">
+                        <span className="bg-white/90 backdrop-blur px-2 py-0.5 rounded-full text-[8px] font-black uppercase flex items-center gap-1 text-[#f9943b]">
+                          <Clock size={8} /> {r.tempoPreparoMin} min
+                        </span>
+                        <span className="bg-white/90 backdrop-blur px-2 py-0.5 rounded-full text-[8px] font-black uppercase flex items-center gap-1 text-[#55833d]">
+                          <Flame size={8} /> {classificarDificuldade(r.tempoPreparoMin)}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="p-4 flex-1 flex flex-col">
+                      <h3 className="font-black text-sm uppercase text-[#394158] line-clamp-1">{r.titulo}</h3>
+                      <p className="text-[10px] font-bold text-gray-400 line-clamp-2 italic mt-1">{r.descricao}</p>
+                      <p className="text-[9px] font-bold text-[#55833d] mt-2">por {r.nomeAutor}</p>
+                      <div className="mt-auto pt-3 flex justify-end gap-2">
+                        <button onClick={() => abrirEditarReceita(r)} className="w-8 h-8 flex items-center justify-center rounded-full bg-[#F5F2ED] text-[#394158] hover:bg-[#f9943b] hover:text-white transition-colors"><Edit2 size={12} /></button>
+                        <button onClick={() => setConfirmar({ aberto: true, tipo: 'receita', id: r.id })} className="w-8 h-8 flex items-center justify-center rounded-full bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-colors"><Trash2 size={12} /></button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {receitas.length === 0 && (
+                <div className="py-12 text-center opacity-30 flex flex-col items-center gap-3">
+                  <UtensilsCrossed size={32} />
+                  <p className="text-[10px] font-black uppercase tracking-widest">Nenhuma receita cadastrada</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </main>
 
@@ -663,8 +826,52 @@ export default function HomeAdmin() {
               onChange={e => setFormNoticia({ ...formNoticia, descricao: e.target.value })}
               className="w-full p-3 bg-[#F5F2ED]/50 text-[#394158] font-medium rounded-2xl outline-none border-2 border-transparent focus:border-[#55833d] resize-none" />
           </div>
+          <div className="flex items-center gap-2">
+            <input type="checkbox" id="noticia-carrossel" checked={!!formNoticia.adicionarNoCarrossel}
+              onChange={e => setFormNoticia({ ...formNoticia, adicionarNoCarrossel: e.target.checked })} />
+            <label htmlFor="noticia-carrossel" className="text-xs font-bold text-[#394158]">Adicionar como Banner no Carrossel da Home</label>
+          </div>
           <Button onClick={salvarNoticia} fullWidth size="lg" iconLeft={<CheckCircle size={18} />}>
             {formNoticia.id ? 'Atualizar' : 'Publicar'}
+          </Button>
+        </div>
+      </Modal>
+
+      {/* MODAL RECEITA */}
+      <Modal open={modalReceita} onClose={() => setModalReceita(false)}
+        title={formReceita.id ? 'Editar receita' : 'Nova receita'}>
+        <div className="space-y-4">
+          <FormField label="Título" value={formReceita.titulo}
+            onChange={e => setFormReceita({ ...formReceita, titulo: e.target.value })} />
+          <FormField label="Descrição curta" value={formReceita.descricao}
+            onChange={e => setFormReceita({ ...formReceita, descricao: e.target.value })} />
+          <FormField label="Tempo de preparo (min)" type="number" value={formReceita.tempoPreparoMin}
+            onChange={e => setFormReceita({ ...formReceita, tempoPreparoMin: e.target.value })} />
+          <div>
+            <label className="text-[10px] font-black uppercase text-[#55833d] tracking-widest ml-1 block mb-1.5">Imagem</label>
+            <label className="w-full p-3 bg-[#F5F2ED]/50 text-gray-400 font-bold rounded-2xl border-2 border-dashed border-gray-200 hover:border-[#f9943b] flex items-center justify-center gap-2 cursor-pointer">
+              <ImageIcon size={18} />
+              {formReceita.imagemUrl ? 'Selecionada ✓' : 'Escolher imagem'}
+              <input type="file" className="hidden" accept="image/*"
+                onChange={e => lerImagemBase64(e, url => setFormReceita({ ...formReceita, imagemUrl: url }))} />
+            </label>
+            {formReceita.imagemUrl && <img src={formReceita.imagemUrl} className="mt-3 w-full h-32 object-cover rounded-xl" alt="preview" />}
+          </div>
+          <div>
+            <label className="text-[10px] font-black uppercase text-[#55833d] tracking-widest ml-1 block mb-1.5">Ingredientes (um por linha)</label>
+            <textarea rows={5} value={formReceita.ingredientesTexto}
+              onChange={e => setFormReceita({ ...formReceita, ingredientesTexto: e.target.value })}
+              placeholder="500g de carne de sol&#10;200g de queijo coalho&#10;1 cebola roxa"
+              className="w-full p-3 bg-[#F5F2ED]/50 text-[#394158] font-medium rounded-2xl outline-none border-2 border-transparent focus:border-[#55833d] resize-none" />
+          </div>
+          <div>
+            <label className="text-[10px] font-black uppercase text-[#55833d] tracking-widest ml-1 block mb-1.5">Modo de Preparo</label>
+            <textarea rows={5} value={formReceita.modoPreparo}
+              onChange={e => setFormReceita({ ...formReceita, modoPreparo: e.target.value })}
+              className="w-full p-3 bg-[#F5F2ED]/50 text-[#394158] font-medium rounded-2xl outline-none border-2 border-transparent focus:border-[#55833d] resize-none" />
+          </div>
+          <Button onClick={salvarReceita} fullWidth size="lg" iconLeft={<CheckCircle size={18} />}>
+            {formReceita.id ? 'Atualizar' : 'Publicar'}
           </Button>
         </div>
       </Modal>
@@ -678,12 +885,14 @@ export default function HomeAdmin() {
             {confirmar.tipo === 'banner' && 'Este banner será removido da home.'}
             {confirmar.tipo === 'noticia' && 'Esta notícia será removida do blog.'}
             {confirmar.tipo === 'suspenderLoja' && 'A loja será suspensa e não poderá vender.'}
+            {confirmar.tipo === 'receita' && 'Esta receita será removida permanentemente.'}
           </p>
           <div className="flex gap-2 pt-2">
             <Button variant="ghost" fullWidth onClick={() => setConfirmar({ aberto: false, tipo: null, id: null })}>Cancelar</Button>
             <Button variant="danger" fullWidth onClick={async () => {
               if (confirmar.tipo === 'banner' && confirmar.id) await deletarBanner(confirmar.id);
               if (confirmar.tipo === 'noticia' && confirmar.id) await deletarNoticia(confirmar.id);
+              if (confirmar.tipo === 'receita' && confirmar.id) await handleDeletarReceita(confirmar.id);
               if (confirmar.tipo === 'suspenderLoja' && confirmar.id) {
                 try {
                   await adminSuspenderLoja(confirmar.id, 'Recusado pelo admin');

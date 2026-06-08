@@ -55,11 +55,37 @@ export default function Home() {
 
   useEffect(() => {
     sessionStorage.setItem('origemBlog', 'inicio');
-    const loadDestaques = () => {
+    const loadDestaques = async () => {
+      // 1. Tenta carregar os banners reais do backend
+      try {
+        const url = import.meta.env.VITE_API_URL || 'http://localhost:8090/api';
+        const res = await fetch(`${url}/banners`);
+        if (res.ok) {
+          const body = await res.json();
+          const data = body.content || body; // Adaptação para paginação do Spring Boot
+          if (Array.isArray(data) && data.length > 0) {
+            setDestaques(data.map((b: any) => ({
+              id: b.id, tipo: b.tipo || 'DESTAQUE', titulo: b.titulo, subtitulo: b.subtitulo,
+              img: b.imagemUrl, corDestaque: b.corDestaque || 'text-[#f9943b]', blogId: b.linkBlogId
+            })));
+            return;
+          }
+        }
+      } catch (e) { /* fallback */ }
+
+      // 2. Fallback: Lê localStorage e puxa as notícias marcadas para o carrossel
       const saved = localStorage.getItem('destaques_home');
-      if (saved) {
-        setDestaques(JSON.parse(saved));
-      }
+      const bannersBase = saved ? JSON.parse(saved) : SLIDES_DESTAQUE;
+
+      const noticiasSalvas = JSON.parse(localStorage.getItem('noticias_globais') || '[]');
+      const noticiasCarrossel = noticiasSalvas
+        .filter((n: any) => n.adicionarNoCarrossel)
+        .map((n: any) => ({
+          id: `news-${n.id}`, tipo: n.categoria || 'NOTÍCIA', titulo: n.titulo, subtitulo: n.subtitulo || n.descricao,
+          img: n.imagemUrl || n.img || n.imagem, corDestaque: "text-[#55833d]", blogId: n.id
+        }));
+
+      setDestaques([...bannersBase, ...noticiasCarrossel]);
     };
     loadDestaques();
     window.addEventListener('storage', loadDestaques);
@@ -98,12 +124,17 @@ export default function Home() {
                   <h2 className="font-black text-3xl md:text-5xl text-white uppercase italic leading-tight tracking-tight max-w-3xl">{slide.titulo}</h2>
                   <div className="flex flex-col md:flex-row md:items-center gap-4 pt-2 w-full justify-between">
                     <p className="text-sm md:text-base text-white/80 font-medium max-w-xl">{slide.subtitulo}</p>
-                    <button 
-                      onClick={() => navigate(`/blog/${slide.blogId}`)}
-                      className="cursor-pointer flex items-center gap-2 text-white font-black uppercase text-[10px] tracking-widest bg-white/10 hover:bg-white/30 py-3 px-6 rounded-full border border-white/20 transition-all z-50"
-                    >
-                      Saiba Mais <ArrowRight size={14} />
-                    </button>
+                    {slide.blogId ? (
+                      <button onClick={() => navigate(`/blog/${slide.blogId}`)}
+                        className="cursor-pointer flex items-center gap-2 text-white font-black uppercase text-[10px] tracking-widest bg-white/10 hover:bg-white/30 py-3 px-6 rounded-full border border-white/20 transition-all z-50">
+                        Ler Notícia <ArrowRight size={14} />
+                      </button>
+                    ) : (
+                      <button onClick={() => navigate(`/home2`)}
+                        className="cursor-pointer flex items-center gap-2 text-white font-black uppercase text-[10px] tracking-widest bg-[#f9943b] hover:bg-[#55833d] py-3 px-6 rounded-full transition-all z-50">
+                        Ir para Loja <ArrowRight size={14} />
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

@@ -57,6 +57,7 @@ const STORAGE_LIXOS = [
   "tutorial_visto_comprador",
   "tutorial_visto_vendedor",
   "favoritos_itens",
+  "favoritos_objetos",
 ];
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);

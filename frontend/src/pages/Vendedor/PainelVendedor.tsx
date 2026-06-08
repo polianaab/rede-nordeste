@@ -51,7 +51,7 @@ export default function PainelVendedor() {
   const [categorias, setCategorias] = useState<any[]>([]);
   const [modalProduto, setModalProduto] = useState(false);
   const [formProduto, setFormProduto] = useState<any>({
-    id: null, nome: '', descricao: '', precoAtual: 0, unidadeMedida: 'kg',
+    id: null, nome: '', descricao: '', precoAtual: '', unidadeMedida: 'kg',
     estoqueAtual: 0, pesoKg: 0.5, imagemUrl: '', categoriaId: null,
   });
   const [confirmarDelete, setConfirmarDelete] = useState<{aberto: boolean; id: number | null}>({ aberto: false, id: null });
@@ -175,7 +175,7 @@ export default function PainelVendedor() {
       const dados = {
         nome: formProduto.nome,
         descricao: formProduto.descricao,
-        precoAtual: Number(formProduto.precoAtual),
+        precoAtual: Number(String(formProduto.precoAtual).replace(/\./g, '').replace(',', '.')),
         unidadeMedida: formProduto.unidadeMedida,
         estoqueAtual: Number(formProduto.estoqueAtual || 0),
         pesoKg: Number(formProduto.pesoKg || 0.5),
@@ -198,7 +198,7 @@ export default function PainelVendedor() {
 
   const abrirNovoProduto = () => {
     setFormProduto({
-      id: null, nome: '', descricao: '', precoAtual: 0, unidadeMedida: 'kg',
+      id: null, nome: '', descricao: '', precoAtual: '', unidadeMedida: 'kg',
       estoqueAtual: 0, pesoKg: 0.5, imagemUrl: '',
       categoriaId: categorias[0]?.id ?? null,
     });
@@ -208,7 +208,8 @@ export default function PainelVendedor() {
   const abrirEditarProduto = (p: any) => {
     setFormProduto({
       id: p.id, nome: p.nome, descricao: p.descricao,
-      precoAtual: p.precoAtual, unidadeMedida: p.unidadeMedida,
+      precoAtual: Number(p.precoAtual).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+      unidadeMedida: p.unidadeMedida,
       estoqueAtual: p.estoqueAtual, pesoKg: p.pesoKg,
       imagemUrl: p.imagemUrl, categoriaId: p.categoriaId ?? categorias[0]?.id,
     });
@@ -531,8 +532,16 @@ export default function PainelVendedor() {
             </select>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <FormField label="Preço (R$)" type="number" step="0.01" value={formProduto.precoAtual}
-              onChange={e => setFormProduto({ ...formProduto, precoAtual: e.target.value })} />
+            <FormField label="Preço (R$)" type="text" value={formProduto.precoAtual}
+              onChange={e => {
+                let v = e.target.value.replace(/\D/g, '');
+                if (v === '') {
+                  setFormProduto({ ...formProduto, precoAtual: '' });
+                  return;
+                }
+                const formatado = (parseInt(v, 10) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                setFormProduto({ ...formProduto, precoAtual: formatado });
+              }} />
             <FormField label="Unidade" value={formProduto.unidadeMedida}
               onChange={e => setFormProduto({ ...formProduto, unidadeMedida: e.target.value })} />
             <FormField label="Estoque" type="number" value={formProduto.estoqueAtual}

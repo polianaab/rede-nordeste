@@ -30,7 +30,33 @@ export default function Blog() {
   }, [filtroAtivo, ordem]);
 
   useEffect(() => {
-    const carregarPosts = () => {
+    const carregarPosts = async () => {
+      // 1. Tenta carregar as notícias da API real
+      try {
+        const url = import.meta.env.VITE_API_URL || 'http://localhost:8090/api';
+        const res = await fetch(`${url}/noticias`);
+        if (res.ok) {
+          const body = await res.json();
+          const data = body.content || body;
+          if (Array.isArray(data) && data.length > 0) {
+            const apiPosts = data.map((n: any) => ({
+              id: n.id,
+              titulo: n.titulo,
+              subtitulo: n.subtitulo,
+              categoria: n.categoria || "NOTÍCIA",
+              imagem: n.imagemUrl || n.imagem,
+              data: n.dataCriacao ? new Date(n.dataCriacao).toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR'),
+              leitura: n.tempoLeitura || '3 min',
+              conteudo: n.descricao || '',
+              citacao: n.citacao || ''
+            }));
+            setPosts(apiPosts);
+            return; // Se achou na API, para por aqui!
+          }
+        }
+      } catch (e) { /* fallback */ }
+
+      // 2. Fallback de emergência (localStorage)
       const salvas = localStorage.getItem('noticias_globais');
       if (salvas) {
         const parseadas = JSON.parse(salvas);
@@ -39,8 +65,8 @@ export default function Blog() {
           titulo: n.titulo,
           subtitulo: n.subtitulo,
           categoria: n.categoria || "NOTÍCIA",
-          imagem: n.imagem,
-          data: n.data,
+          imagem: n.imagemUrl || n.imagem,
+          data: n.data || new Date().toLocaleDateString('pt-BR'),
           leitura: n.tempoLeitura || '3 min',
           conteudo: n.descricao || '',
           citacao: n.citacao || ''

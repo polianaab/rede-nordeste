@@ -25,7 +25,7 @@ Três tipos de usuário convivem na mesma plataforma:
 |                   |  ----------------------> |                       |
 |   Frontend        |                          |   Backend             |
 |   React + Vite    |  <---------------------- |   Spring Boot 4       |
-|   localhost:5173  |        WebSocket         |   localhost:8080      |
+|   localhost:5174  |        WebSocket         |   localhost:8090      |
 |                   |  <---------------------> |                       |
 +-------------------+                          +-----------+-----------+
                                                            |
@@ -176,7 +176,7 @@ DB_URL=jdbc:postgresql://localhost:5432/rede_nordeste
 DB_USERNAME=postgres
 DB_PASSWORD=sua_senha_local
 JWT_SECRET=uma_string_aleatoria_de_pelo_menos_32_caracteres!!
-CORS_ALLOWED_ORIGINS=http://localhost:5173
+CORS_ALLOWED_ORIGINS=http://localhost:5174,http://127.0.0.1:5174
 
 ADMIN_SEED_EMAIL=admin@redenordeste.com
 ADMIN_SEED_SENHA=RedeNordeste@2026
@@ -185,7 +185,7 @@ ADMIN_SEED_FORCAR_RESET=true
 DEMO_SEED=true
 DEMO_SENHA=Demo@2026
 
-VITE_API_URL=http://localhost:8080/api
+VITE_API_URL=http://localhost:8090/api
 ```
 
 ### Passo 3 — Backend (terminal 1)
@@ -208,7 +208,7 @@ cd frontend
 npm install      # primeira vez
 npm run dev
 
-# Abrirá http://localhost:5173
+# Abrirá http://localhost:5174
 ```
 
 ### Passo 5 — Login
@@ -417,7 +417,7 @@ Todos sob o prefixo `/api`. Coluna **Auth**: `público` = sem token, `auth` = qu
 3. **15 min de access** é trade-off entre UX (não pedir relogin) e janela de exploração.
 4. **`conta_ativa = TRUE` direto** facilita a aula; em produção real, confirmar por e-mail.
 5. **Validação no front é UX**, não segurança — segurança real é no backend.
-6. **Não há rate limit** em `/login` (próxima iteração).
+6. **Rate limit in-memory** em `/login` (5 req/min por IP) e `/registrar` (3 req/min por IP) via `RateLimitFilter`.
 
 ---
 
@@ -582,7 +582,7 @@ Histórico técnico completo em [`.dev/raMemory.md`](.dev/raMemory.md).
 - [ ] **Implementar "esqueci minha senha":** endpoint backend + envio de e-mail + tela de reset.
 
 ### Prioridade média
-- [ ] **Rate limit** em `/login` e `/refresh` (Bucket4j).
+- [x] **Rate limit** em `/login` (5/min) e `/registrar` (3/min) — implementado com `RateLimitFilter` in-memory.
 - [ ] **Confirmação de e-mail** no cadastro (`conta_ativa = false` até clicar no link).
 - [ ] **Audit log** de ações administrativas (quem aprovou loja X, quando).
 - [ ] **Tela "minhas sessões"** para o usuário revogar sessões individuais.

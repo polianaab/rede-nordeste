@@ -108,7 +108,7 @@ apiService.interceptors.response.use(
       }
     } else if (error.request) {
       mensagem =
-        "Não foi possível conectar ao servidor. Verifique se o backend está rodando na porta 8080.";
+        "Não foi possível conectar ao servidor. Verifique se o backend está rodando na porta 8090.";
     }
 
     return Promise.reject(new Error(mensagem));
@@ -674,6 +674,56 @@ export const adminAtualizarCategoria = async (id: number, dados: any) => {
 
 export const adminDeletarCategoria = async (id: number) => {
   await apiService.delete(`/admin/categorias/${id}`);
+};
+
+// ============================================================
+// RECEITAS
+// ============================================================
+export const listarReceitas = async (titulo?: string, page = 0) => {
+  const params = new URLSearchParams();
+  if (titulo) params.append("titulo", titulo);
+  params.append("page", String(page));
+  params.append("size", "20");
+  const res = await apiService.get(`/receitas?${params.toString()}`);
+  return res.data;
+};
+
+export const getReceitaPorId = async (id: number) => {
+  const res = await apiService.get(`/receitas/${id}`);
+  return res.data;
+};
+
+export const criarReceita = async (dados: {
+  titulo: string;
+  descricao?: string;
+  modoPreparo: string;
+  tempoPreparoMin: number;
+  imagemUrl?: string;
+  ingredientesTexto?: string;
+  ingredienteIds?: number[];
+}) => {
+  const res = await apiService.post("/produtor/receitas", dados);
+  return res.data;
+};
+
+export const atualizarReceita = async (
+  id: number,
+  dados: {
+    titulo: string;
+    descricao?: string;
+    modoPreparo: string;
+    tempoPreparoMin: number;
+    imagemUrl?: string;
+    ingredientesTexto?: string;
+    ingredienteIds?: number[];
+  }
+) => {
+  const res = await apiService.put(`/produtor/receitas/${id}`, dados);
+  return res.data;
+};
+
+export const deletarReceita = async (id: number) => {
+  await apiService.delete(`/produtor/receitas/${id}`);
 };
 
 export default apiService;

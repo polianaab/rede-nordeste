@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { listarReceitas } from '../../services/api';
 import { 
   ShoppingCart, User, UtensilsCrossed, Clock, 
   ChevronLeft, X, Flame, ChefHat, ScrollText, ShoppingBag, MessageCircle, Search, ChevronRight, Menu, Bell,
@@ -75,8 +76,14 @@ const RECEITAS_DATA = [
   }
 ];
 
+const classificarDificuldade = (min: number) => {
+  if (min <= 15) return 'Fácil';
+  if (min <= 45) return 'Média';
+  return 'Difícil';
+};
+
 export default function Receitas() {
-  const [receitas, setReceitas] = useState<any[]>(RECEITAS_DATA);
+  const [receitas, setReceitas] = useState<any[]>([]);
   const [receitaAberta, setReceitaAberta] = useState<any>(null);
   const [termoBusca, setTermoBusca] = useState('');
   const [dificuldadeFiltro, setDificuldadeFiltro] = useState('Todas');
@@ -91,12 +98,22 @@ export default function Receitas() {
   });
 
   useEffect(() => {
-    const carregarReceitas = () => {
-      const salvas = localStorage.getItem('receitas_globais');
-      if (salvas) {
-        setReceitas(JSON.parse(salvas));
-      } else {
-        localStorage.setItem('receitas_globais', JSON.stringify(RECEITAS_DATA));
+    const carregarReceitas = async () => {
+      try {
+        const data = await listarReceitas();
+        const lista = (data.content || []).map((r: any) => ({
+          ...r,
+          tempo: `${r.tempoPreparoMin} min`,
+          dificuldade: classificarDificuldade(r.tempoPreparoMin),
+          img: r.imagemUrl,
+          preparo: r.modoPreparo,
+          ingredientes: r.ingredientesTexto
+            ? r.ingredientesTexto.split('\n').filter(Boolean)
+            : (r.ingredientes || []).map((i: any) => i.nome),
+        }));
+        setReceitas(lista);
+      } catch {
+        // fallback: keep empty
       }
     };
     carregarReceitas();
@@ -104,7 +121,6 @@ export default function Receitas() {
     const atualizarDados = () => {
       const salvoCarrinho = localStorage.getItem('carrinho_count');
       setCarrinhoCount(salvoCarrinho ? parseInt(salvoCarrinho) : 0);
-      carregarReceitas();
     };
     window.addEventListener('storage', atualizarDados);
     return () => window.removeEventListener('storage', atualizarDados);
@@ -127,8 +143,8 @@ export default function Receitas() {
 
   const extrairTermoBusca = (ingrediente: string) => {
     return ingrediente
-      .replace(/^[\d\/\se]+(g|kg|l|ml|xícaras?|fatias?|latas?|pacotes?|litros?)?\s*(grossas\s*)?(de\s*)?/i, '')
-      .replace(/ para acompanhar| a gosto|\(já lavado\)/gi, '')
+      .replace(/^[\d\/\se\.,]+(g|kg|l|ml|xícaras?|fatias?|latas?|pacotes?|litros?|colheres?|dentes?)?\s*(de\s*(sopa|chá)?\s*)?(grossas\s*)?(de\s*)?/i, '')
+      .replace(/ para acompanhar| a gosto|\(já lavado\)| picada| ralado/gi, '')
       .trim();
   };
 
@@ -199,7 +215,7 @@ export default function Receitas() {
               <Link to="/chat" className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full transition-all duration-300 hover:bg-[#f9943b] hover:text-white text-[#394158] group">
                 <MessageCircle className="w-[18px] h-[18px] md:w-[22px] md:h-[22px]" />
               </Link>
-              <Link to="/carrinho" className="relative w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full transition-all duration-300 hover:bg-[#f9943b] hover:text-white text-[#394158] group">
+              <Link to="/carrinhovendedor" className="relative w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full transition-all duration-300 hover:bg-[#f9943b] hover:text-white text-[#394158] group">
                 <ShoppingCart className="w-[18px] h-[18px] md:w-[22px] md:h-[22px]" />
                 {carrinhoCount > 0 && (
                   <span className="absolute top-0 right-0 md:top-1 md:right-1 bg-red-500 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center border-2 border-white group-hover:border-[#f9943b]">
@@ -239,7 +255,7 @@ export default function Receitas() {
                   Notificações
                 </button>
                 <Link to="/chat" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d]"><MessageCircle size={20}/> Chat</Link>
-                <Link to="/carrinho" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d]">
+                <Link to="/carrinhovendedor" onClick={() => setMenuAberto(false)} className="flex items-center gap-4 hover:text-[#55833d]">
                   <div className="relative">
                     <ShoppingCart size={20} />
                     {carrinhoCount > 0 && <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center border-2 border-white">{carrinhoCount}</span>}
