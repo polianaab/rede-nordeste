@@ -6,7 +6,7 @@ A aplicação busca reduzir a dependência de intermediários (atravessadores), 
 
 ---
 
-# 📌 Problema
+#  Problema
 
 Pequenos produtores rurais frequentemente enfrentam:
 
@@ -20,7 +20,7 @@ Ao mesmo tempo, consumidores têm dificuldade em encontrar **produtos locais fre
 
 ---
 
-# 💡 Solução
+#  Solução
 
 O **Rede Nordeste** oferece um marketplace digital simples e acessível que permite:
 
@@ -37,7 +37,7 @@ A plataforma foi projetada com foco em:
 
 ---
 
-# 👥 Público-Alvo
+#  Público-Alvo
 
 ### Produtores
 
@@ -56,7 +56,7 @@ A plataforma foi projetada com foco em:
 
 ---
 
-# 🚀 Funcionalidades Principais
+#  Funcionalidades Principais
 
 ### 👤 Gestão de Usuários
 
@@ -119,7 +119,7 @@ Banco de Dados / Serviços
 
 ---
 
-# 🧰 Tecnologias Utilizadas
+#  Tecnologias Utilizadas
 
 ## Backend
 
@@ -146,7 +146,7 @@ Banco de Dados / Serviços
 
 ---
 
-# 🗂 Estrutura do Projeto
+#  Estrutura do Projeto
 
 ```
 semeia-nordeste
@@ -174,7 +174,7 @@ semeia-nordeste
 
 ---
 
-# 🔐 Segurança
+#  Segurança
 
 A aplicação utiliza:
 
@@ -184,7 +184,7 @@ A aplicação utiliza:
 
 ---
 
-# 📊 Modelo de Dados
+#  Modelo de Dados
 
 Principais entidades do sistema:
 
@@ -201,7 +201,7 @@ Principais entidades do sistema:
 
 ---
 
-# 📦 Como Executar o Projeto
+#  Como Executar o Projeto
 
 ## Backend
 
@@ -234,9 +234,9 @@ http://localhost:5173
 
 ---
 
-# 🌍 Impacto Esperado
+#  Impacto Esperado
 
-O **Semeia Nordeste** pretende:
+O **Rede Nordeste** pretende:
 
 * fortalecer a economia local
 * aumentar a renda de pequenos produtores
@@ -245,13 +245,13 @@ O **Semeia Nordeste** pretende:
 
 ---
 
-## 📄 Licença
+##  Licença
 
 Este projeto está licenciado sob a licença MIT.
 
 Copyright (c) 2026 Equipe Semeia Nordeste.
 ---
 
-# ✍️ Autor
+#  Autor
 
 Projeto desenvolvido como parte de estudo e desenvolvimento de solução digital para apoio à economia local e agricultura familiar.
